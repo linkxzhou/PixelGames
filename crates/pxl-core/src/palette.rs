@@ -120,8 +120,46 @@ impl Palette {
             .and_then(|r| r.iter().position(|&c| c == index))
     }
 
+    /// Names of every ramp that contains `index`, in name order.
+    pub fn ramps_containing(&self, index: u8) -> Vec<&str> {
+        self.ramps
+            .iter()
+            .filter(|(_, ramp)| ramp.contains(&index))
+            .map(|(name, _)| name.as_str())
+            .collect()
+    }
+
+    /// Move `index` by `delta` steps inside the named ramp, clamped to its ends.
+    /// Returns `index` unchanged when the ramp is missing or does not hold it.
+    pub fn shift_in_ramp(&self, ramp: &str, index: u8, delta: i32) -> u8 {
+        if index == 0 {
+            return 0;
+        }
+        let Some(list) = self.ramps.get(ramp) else {
+            return index;
+        };
+        let Some(pos) = list.iter().position(|&c| c == index) else {
+            return index;
+        };
+        let next = (pos as i32 + delta).clamp(0, list.len() as i32 - 1);
+        list[next as usize]
+    }
+
+    /// Move `index` along its ramp only when exactly one ramp holds it. A colour
+    /// shared by several ramps has no single material, so it stays put instead
+    /// of following whichever ramp sorts first by name.
+    pub fn shift_on_unique_ramp(&self, index: u8, delta: i32) -> u8 {
+        match self.ramps_containing(index).as_slice() {
+            [only] => self.shift_in_ramp(only, index, delta),
+            _ => index,
+        }
+    }
+
     /// Move `index` by `delta` steps inside whichever ramp contains it.
     /// Indices that are not on a ramp are left unchanged.
+    ///
+    /// When several ramps share `index` this picks the first by name. Prefer
+    /// `shift_in_ramp` or `shift_on_unique_ramp`.
     pub fn shift_on_ramp(&self, index: u8, delta: i32) -> u8 {
         if index == 0 {
             return 0;
@@ -252,5 +290,60 @@ mod tests {
         assert_eq!(m[&3], 1);
         let id = p.cycle_map("tread", 0).unwrap();
         assert_eq!(id[&1], 1);
+    }
+}
+
+#[cfg(test)]
+mod ramp_tests {
+    use super::*;
+
+    fn shared() -> Palette {
+        Palette {
+            id: "t".into(),
+            colors: (0..6)
+                .map(|i| {
+                    if i == 0 {
+                        Rgba::TRANSPARENT
+                    } else {
+                        Rgba::rgb(i as u8, 0, 0)
+                    }
+                })
+                .collect(),
+            ramps: BTreeMap::from([
+                ("a".into(), alloc::vec![1, 2, 3]),
+                ("b".into(), alloc::vec![3, 4, 5]),
+            ]),
+            cycles: BTreeMap::new(),
+            special: Special {
+                transparent: 0,
+                outline: 1,
+                flash: 5,
+            },
+        }
+    }
+
+    #[test]
+    fn unique_membership_moves_and_clamps() {
+        let p = shared();
+        assert_eq!(p.shift_on_unique_ramp(2, 1), 3);
+        assert_eq!(p.shift_on_unique_ramp(2, -5), 1);
+        assert_eq!(p.shift_on_unique_ramp(4, 9), 5);
+    }
+
+    #[test]
+    fn shared_colour_does_not_pick_a_ramp_by_name() {
+        let p = shared();
+        assert_eq!(p.ramps_containing(3), alloc::vec!["a", "b"]);
+        assert_eq!(p.shift_on_unique_ramp(3, 1), 3);
+        assert_eq!(p.shift_in_ramp("a", 3, -1), 2);
+        assert_eq!(p.shift_in_ramp("b", 3, 1), 4);
+    }
+
+    #[test]
+    fn named_ramp_ignores_colours_it_does_not_hold() {
+        let p = shared();
+        assert_eq!(p.shift_in_ramp("a", 5, 1), 5);
+        assert_eq!(p.shift_in_ramp("missing", 2, 1), 2);
+        assert_eq!(p.shift_in_ramp("a", 0, 1), 0);
     }
 }

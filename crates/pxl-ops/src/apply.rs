@@ -124,12 +124,29 @@ pub fn apply_op(frame: &IndexFrame, op: &Op, cx: &ApplyCx, index: u64) -> PxlRes
             dir,
             amount,
             region,
+            ramp,
         } => {
             if !(-4..=4).contains(amount) {
                 return Err(PxlError::schema("shade amount must be in -4..=4"));
             }
+            if let Some(name) = ramp {
+                if !cx.palette.ramps.contains_key(name) {
+                    return Err(
+                        PxlError::semantic(format!("shade ramp '{name}' is missing"))
+                            .with_path("/ramp")
+                            .with_hint("name a ramp declared on the palette"),
+                    );
+                }
+            }
             let rect = resolve_region(region, frame)?;
-            Ok(shade(frame, dir, *amount, cx.palette, rect)?)
+            Ok(shade(
+                frame,
+                dir,
+                *amount,
+                cx.palette,
+                rect,
+                ramp.as_deref(),
+            )?)
         }
         Op::Outline {
             color,
@@ -154,7 +171,10 @@ pub fn apply_op(frame: &IndexFrame, op: &Op, cx: &ApplyCx, index: u64) -> PxlRes
             step,
             pattern,
         } => {
-            let sub = op_seed(cx.seed ^ seed, index, cx.frame_name);
+            // The frame name is left out on purpose. Each animation frame runs
+            // from the same source, so every frame must draw the same pixel
+            // ranks; otherwise a pixel that vanished could come back.
+            let sub = op_seed(cx.seed ^ seed, index, "");
             dissolve(frame, sub, *steps, *step, pattern)
         }
         Op::MaskErase { region, mask, x, y } => Ok(mask_edit(frame, region, mask, *x, *y, None)?),
@@ -686,6 +706,7 @@ fn shade(
     amount: i32,
     palette: &Palette,
     region: Option<[i32; 4]>,
+    ramp: Option<&str>,
 ) -> PxlResult<IndexFrame> {
     let (lx, ly) = match dir {
         "top_left" | "nw" => (-1, -1),
@@ -709,7 +730,8 @@ fn shade(
                 continue;
             }
             let c = frame.get(x, y);
-            if c == 0 {
+            // The outline colour is not a surface: shading never repaints it.
+            if c == 0 || c == palette.special.outline {
                 continue;
             }
             let mut delta = 0;
@@ -720,7 +742,11 @@ fn shade(
                 delta -= amount;
             }
             if delta != 0 {
-                out.set(x, y, palette.shift_on_ramp(c, delta));
+                let next = match ramp {
+                    Some(name) => palette.shift_in_ramp(name, c, delta),
+                    None => palette.shift_on_unique_ramp(c, delta),
+                };
+                out.set(x, y, next);
             }
         }
     }
@@ -1027,6 +1053,7 @@ mod tests {
                 dir: "top".into(),
                 amount: 1,
                 region: None,
+                ramp: None,
             },
             &cx(&pal),
             0,
@@ -1048,6 +1075,122 @@ mod tests {
         )
         .unwrap();
         assert_eq!(gone.count_opaque(), 0);
+    }
+
+    fn shade_op(ramp: Option<&str>) -> Op {
+        Op::Shade {
+            dir: "top".into(),
+            amount: 1,
+            region: None,
+            ramp: ramp.map(str::to_string),
+        }
+    }
+
+    /// Colour 8 sits on both `sideR` and `metal`, like the shaded-crate palette.
+    fn shared_ramp_palette() -> Palette {
+        use pxl_core::{Rgba, Special};
+        Palette {
+            id: "shared".into(),
+            colors: (0..12)
+                .map(|i| {
+                    if i == 0 {
+                        Rgba::TRANSPARENT
+                    } else {
+                        Rgba::rgb(i as u8 * 20, 0, 0)
+                    }
+                })
+                .collect(),
+            ramps: BTreeMap::from([
+                ("metal".to_string(), vec![8, 10]),
+                ("sideR".to_string(), vec![8, 4, 9]),
+            ]),
+            cycles: BTreeMap::new(),
+            special: Special {
+                transparent: 0,
+                outline: 1,
+                flash: 11,
+            },
+        }
+    }
+
+    #[test]
+    fn shade_leaves_a_colour_shared_by_two_ramps_alone() {
+        let pal = shared_ramp_palette();
+        let f = grid(&["888", "888"]);
+        let out = apply_op(&f, &shade_op(None), &cx(&pal), 0).unwrap();
+        // Top edge would move 8 along a ramp, but two ramps claim it.
+        assert_eq!(out.pixels, f.pixels);
+    }
+
+    #[test]
+    fn shade_with_a_named_ramp_stays_on_that_ramp() {
+        let pal = shared_ramp_palette();
+        let f = grid(&["888", "888"]);
+        let wood = apply_op(&f, &shade_op(Some("sideR")), &cx(&pal), 0).unwrap();
+        let metal = apply_op(&f, &shade_op(Some("metal")), &cx(&pal), 0).unwrap();
+        // Top row is the exposed edge, so it steps up one slot; bottom steps down.
+        assert_eq!(text(&wood)[0], "444");
+        assert_eq!(text(&metal)[0], "aaa");
+        assert_eq!(text(&wood)[1], "888");
+    }
+
+    #[test]
+    fn shade_rejects_an_unknown_ramp() {
+        let pal = shared_ramp_palette();
+        let f = grid(&["88"]);
+        let err = apply_op(&f, &shade_op(Some("nope")), &cx(&pal), 0).unwrap_err();
+        assert!(err.message.contains("nope"), "{err:?}");
+    }
+
+    #[test]
+    fn shade_never_repaints_the_outline_colour() {
+        // Index 1 is the tank outline and also sits on the tread ramp.
+        let pal = pal();
+        let f = grid(&["111", "121", "111"]);
+        let out = apply_op(&f, &shade_op(None), &cx(&pal), 0).unwrap();
+        for y in 0..3 {
+            for x in 0..3 {
+                if f.get(x, y) == 1 {
+                    assert_eq!(out.get(x, y), 1, "outline moved at {x},{y}");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn dissolve_only_removes_pixels_as_steps_advance() {
+        let pal = pal();
+        let f = grid(&["2222", "2222", "2222", "2222"]);
+        for pattern in ["bayer4", "random"] {
+            let mut previous = f.count_opaque();
+            let mut previous_set: Vec<bool> = f.pixels.iter().map(|p| *p != 0).collect();
+            for step in 0..=5u32 {
+                // Different frame names must not change which pixels go first.
+                let mut c = cx(&pal);
+                let name = format!("frame_{step}");
+                c.frame_name = &name;
+                let out = apply_op(
+                    &f,
+                    &Op::Dissolve {
+                        seed: 7,
+                        steps: 5,
+                        step,
+                        pattern: pattern.into(),
+                    },
+                    &c,
+                    0,
+                )
+                .unwrap();
+                let now: Vec<bool> = out.pixels.iter().map(|p| *p != 0).collect();
+                for (was, is) in previous_set.iter().zip(&now) {
+                    assert!(*was || !*is, "{pattern}: a pixel came back at step {step}");
+                }
+                assert!(out.count_opaque() <= previous, "{pattern} step {step}");
+                previous = out.count_opaque();
+                previous_set = now;
+            }
+            assert_eq!(previous, 0, "{pattern}: last step must be empty");
+        }
     }
 
     #[test]

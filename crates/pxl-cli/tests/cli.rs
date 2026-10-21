@@ -491,6 +491,193 @@ fn reference_recipes_build_and_validate() {
     }
 }
 
+fn build_to(recipe: &std::path::Path, tag: &str) -> PathBuf {
+    let out = std::env::temp_dir().join(format!("pxl-{tag}-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&out);
+    let (code, stdout, stderr) = pxl(&[
+        "--json",
+        "build",
+        recipe.to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+    ]);
+    assert_eq!(code, 0, "{tag}\nstdout={stdout}\nstderr={stderr}");
+    out
+}
+
+#[test]
+fn sheet_keeps_an_anim_entry_for_every_asset_that_reuses_a_name() {
+    let out = build_to(
+        &repo_root().join("examples/farmer/farmer.recipe.json"),
+        "dup-anim",
+    );
+    let sheet: Value =
+        serde_json::from_str(&fs::read_to_string(out.join("farmer.sheet.json")).unwrap()).unwrap();
+    let anims = sheet["meta"]["pxl"]["anims"].as_object().unwrap();
+    for key in ["walk", "farmer_blonde_walk", "farmer_raven_walk"] {
+        let dirs = anims[key]["dirs"].as_object().unwrap();
+        assert_eq!(dirs.len(), 4, "{key} lost directions: {dirs:?}");
+    }
+    // Each recolour's frames must be its own, not the first asset's.
+    let first = &anims["walk"]["dirs"]["down"][0];
+    let blonde = &anims["farmer_blonde_walk"]["dirs"]["down"][0];
+    assert_ne!(first, blonde);
+    assert!(blonde.as_str().unwrap().starts_with("farmer_blonde_"));
+    let _ = fs::remove_dir_all(&out);
+}
+
+#[test]
+fn qa_checks_a_recolour_whose_walk_was_broken() {
+    let out = build_to(
+        &repo_root().join("examples/farmer/farmer.recipe.json"),
+        "dup-qa",
+    );
+    let sheet_path = out.join("farmer.sheet.json");
+    let mut sheet: Value = serde_json::from_str(&fs::read_to_string(&sheet_path).unwrap()).unwrap();
+    // Point every blonde walk frame at one pose so the animation is frozen.
+    let dirs = sheet["meta"]["pxl"]["anims"]["farmer_blonde_walk"]["dirs"]
+        .as_object_mut()
+        .unwrap();
+    for list in dirs.values_mut() {
+        let first = list[0].clone();
+        for slot in list.as_array_mut().unwrap() {
+            *slot = first.clone();
+        }
+    }
+    fs::write(&sheet_path, serde_json::to_string(&sheet).unwrap()).unwrap();
+    let (code, stdout, _) = pxl(&[
+        "--json",
+        "validate",
+        sheet_path.to_str().unwrap(),
+        "--rules",
+        "default",
+    ]);
+    assert_eq!(code, 5, "a frozen recolour walk must fail QA: {stdout}");
+    let report = json_line(&stdout);
+    let failed: Vec<&str> = report["checks"]
+        .as_array()
+        .map(|c| {
+            c.iter()
+                .filter(|c| c["pass"] == false)
+                .filter_map(|c| c["id"].as_str())
+                .collect()
+        })
+        .unwrap_or_default();
+    assert!(
+        failed.iter().any(|id| id.contains("farmer_blonde_walk")),
+        "no failing check names the broken anim: {report}"
+    );
+    let _ = fs::remove_dir_all(&out);
+}
+
+/// Read the NETSCAPE loop block: present means the GIF repeats.
+fn gif_repeats(bytes: &[u8]) -> bool {
+    bytes.windows(11).any(|w| w == b"NETSCAPE2.0")
+}
+
+#[test]
+fn one_shot_animation_previews_as_a_non_looping_gif() {
+    let dir = std::env::temp_dir().join(format!("pxl-gifloop-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&dir);
+    let out = build_to(
+        &repo_root().join("examples/farmer/farmer.recipe.json"),
+        "gifloop",
+    );
+    let doc = out.join("farmer.pxl.json");
+    let looping = out.join("walk.gif");
+    let once = out.join("hoe.gif");
+    let (code, stdout, _) = pxl(&[
+        "--json",
+        "render",
+        doc.to_str().unwrap(),
+        "--anim",
+        "walk",
+        "--dir",
+        "down",
+        "-o",
+        looping.to_str().unwrap(),
+    ]);
+    assert_eq!(code, 0, "{stdout}");
+    let (code, stdout, _) = pxl(&[
+        "--json",
+        "render",
+        doc.to_str().unwrap(),
+        "--anim",
+        "hoe",
+        "--dir",
+        "down",
+        "-o",
+        once.to_str().unwrap(),
+    ]);
+    assert_eq!(code, 0, "{stdout}");
+    assert!(gif_repeats(&fs::read(&looping).unwrap()), "walk loops");
+    assert!(!gif_repeats(&fs::read(&once).unwrap()), "hoe plays once");
+    let _ = fs::remove_dir_all(&out);
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn multi_frame_png_reports_the_real_strip_size() {
+    let out = build_to(
+        &repo_root().join("examples/farmer/farmer.recipe.json"),
+        "strip",
+    );
+    let doc = out.join("farmer.pxl.json");
+    let strip = out.join("strip.png");
+    let (code, stdout, _) = pxl(&[
+        "--json",
+        "render",
+        doc.to_str().unwrap(),
+        "--anim",
+        "walk",
+        "--dir",
+        "down",
+        "--scale",
+        "2",
+        "-o",
+        strip.to_str().unwrap(),
+    ]);
+    assert_eq!(code, 0, "{stdout}");
+    let v = json_line(&stdout);
+    let bytes = fs::read(&strip).unwrap();
+    let (w, h, _) = pxl_export::decode_png_rgba(&bytes).unwrap();
+    assert_eq!(v["png_w"].as_u64().unwrap(), w as u64);
+    assert_eq!(v["png_h"].as_u64().unwrap(), h as u64);
+    assert!(
+        w > 16 * 2,
+        "a strip of several frames is wider than one frame"
+    );
+    let _ = fs::remove_dir_all(&out);
+}
+
+#[test]
+fn misspelled_macro_argument_fails_the_build() {
+    let dir = std::env::temp_dir().join(format!("pxl-typo-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&dir);
+    let src = repo_root().join("examples/reference/meadow-slime");
+    fs::create_dir_all(&dir).unwrap();
+    for f in ["palette.json", "slime.shapes.json"] {
+        fs::copy(src.join(f), dir.join(f)).unwrap();
+    }
+    let recipe = fs::read_to_string(src.join("recipe.json"))
+        .unwrap()
+        .replace("idle_rumble(steps=2, amp=1)", "idle_rumble(step=2, amp=1)");
+    fs::write(dir.join("recipe.json"), recipe).unwrap();
+    let (code, stdout, _) = pxl(&[
+        "--json",
+        "build",
+        dir.join("recipe.json").to_str().unwrap(),
+        "-o",
+        dir.join("out").to_str().unwrap(),
+    ]);
+    assert_eq!(code, 3, "{stdout}");
+    assert!(json_line(&stdout)["error"]["message"]
+        .as_str()
+        .unwrap()
+        .contains("step"));
+    let _ = fs::remove_dir_all(&dir);
+}
+
 fn sha256(path: &std::path::Path) -> String {
     let bytes = fs::read(path).unwrap();
     pxl_core::sha256_hex(&bytes)

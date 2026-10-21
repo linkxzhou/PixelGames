@@ -8,8 +8,8 @@ use std::path::{Path, PathBuf};
 use clap::{Args, Subcommand};
 use pxl_core::{IndexFrame, Mirror, Palette, PxlError, GEN_VERSION, PXL_VERSION};
 use pxl_export::{
-    decode_indexed, decode_png_rgba, encode_gif, encode_indexed_png, encode_rgba_png, pack_sheet,
-    render_preview_png, scale_rgba, sheet_json, SheetCell,
+    decode_indexed, decode_png_rgba, encode_gif_timed, encode_indexed_png, encode_rgba_png,
+    gif_delays_cs, pack_sheet, render_preview_png, scale_rgba, sheet_json, SheetCell,
 };
 use pxl_format::{
     schema_json, Anim, AnimFrames, Meta, Op, PaletteFile, PxlDoc, Recipe, ShapesFile,
@@ -867,16 +867,29 @@ fn pack_loaded(
             }
         }
         for (name, anim) in &doc.doc.anims {
-            if !seen_anims.insert(name.clone()) {
-                continue;
-            }
-            fps.insert(name.clone(), json!(anim.fps));
+            // The first asset keeps the bare animation name. Later assets that
+            // reuse it (recolours, variants) are keyed `<asset>_<name>`, matching
+            // their renamed frame tags, so validation sees every asset's motion.
+            let key = if seen_anims.insert(name.clone()) {
+                name.clone()
+            } else {
+                let scoped = format!("{}_{name}", doc.id);
+                if !seen_anims.insert(scoped.clone()) {
+                    return Err(PxlError::semantic(format!(
+                        "animation '{name}' appears twice in asset '{}'",
+                        doc.id
+                    ))
+                    .into());
+                }
+                scoped
+            };
+            fps.insert(key.clone(), json!(anim.fps));
             let mut dir_map = Map::new();
             for row in &doc_rows {
                 if let Some(tag) = row.first().and_then(|c| c.tag.clone()) {
-                    if tag.starts_with(&format!("{name}_")) || tag == *name {
+                    if tag.starts_with(&format!("{key}_")) || tag == key {
                         let names: Vec<_> = row.iter().map(|c| c.name.clone()).collect();
-                        let dir = tag.strip_prefix(&format!("{name}_")).unwrap_or("");
+                        let dir = tag.strip_prefix(&format!("{key}_")).unwrap_or("");
                         if dir.is_empty() {
                             dir_map.insert("_".into(), json!(names));
                         } else {
@@ -886,7 +899,7 @@ fn pack_loaded(
                 }
             }
             pxl_anims.insert(
-                name.clone(),
+                key,
                 json!({"fps": anim.fps, "loop": anim.looped, "dirs": Value::Object(dir_map)}),
             );
         }
@@ -1081,7 +1094,7 @@ fn render_cmd(ctx: &Ctx, args: RenderArgs) -> CmdResult<()> {
     let (doc, doc_path) = util::load_doc(&args.input)?;
     let _ = path;
     let palette = util::doc_palette(&doc, &doc_path)?;
-    let (frames, delay) = if let Some(anim_name) = &args.anim {
+    let (frames, delays, looped) = if let Some(anim_name) = &args.anim {
         let anim = doc.anims.get(anim_name).ok_or_else(|| {
             PxlError::semantic(format!("unknown anim '{anim_name}'"))
                 .with_hint("pxl inspect lists animations")
@@ -1091,8 +1104,8 @@ fn render_cmd(ctx: &Ctx, args: RenderArgs) -> CmdResult<()> {
         for name in names {
             frames.push(doc.frame(&name)?);
         }
-        let delay = (100 / anim.fps.max(1)).max(1) as u16;
-        (frames, delay)
+        let delays = gif_delays_cs(anim.fps, frames.len());
+        (frames, delays, anim.looped)
     } else {
         let name = args.frame.unwrap_or_else(|| {
             if doc.frames.contains_key("base") {
@@ -1104,13 +1117,23 @@ fn render_cmd(ctx: &Ctx, args: RenderArgs) -> CmdResult<()> {
                     .unwrap_or_else(|| "base".into())
             }
         });
-        (vec![doc.frame(&name)?], 10u16)
+        (vec![doc.frame(&name)?], vec![10u16], true)
     };
     let gif = args.out.ends_with(".gif");
-    let bytes = if gif {
-        encode_gif(&frames, &palette, args.scale, delay)?
+    let (bytes, png_w, png_h) = if gif {
+        let bytes = encode_gif_timed(&frames, &palette, args.scale, &delays, looped)?;
+        (
+            bytes,
+            frames[0].w as u32 * args.scale,
+            frames[0].h as u32 * args.scale,
+        )
     } else if frames.len() == 1 {
-        render_preview_png(&frames[0], &palette, args.scale, args.grid)?
+        let bytes = render_preview_png(&frames[0], &palette, args.scale, args.grid)?;
+        (
+            bytes,
+            frames[0].w as u32 * args.scale,
+            frames[0].h as u32 * args.scale,
+        )
     } else {
         // A horizontal strip so a multi-frame preview still has a PNG.
         let mut rows = Vec::new();
@@ -1125,12 +1148,15 @@ fn render_cmd(ctx: &Ctx, args: RenderArgs) -> CmdResult<()> {
         }
         rows.push(row);
         let packed = pack_sheet(&rows, "rows-by-anim", 1)?;
-        render_preview_png(&packed.image, &palette, args.scale, args.grid)?
+        let bytes = render_preview_png(&packed.image, &palette, args.scale, args.grid)?;
+        (
+            bytes,
+            packed.image.w as u32 * args.scale,
+            packed.image.h as u32 * args.scale,
+        )
     };
     let hash = util::hash_of(&bytes);
     util::write_out(&args.out, &bytes, ctx.overwrite, ctx.json)?;
-    let png_w = frames[0].w as u32 * args.scale;
-    let png_h = frames[0].h as u32 * args.scale;
     let mut body = util::ok_base("render");
     body.insert("out".into(), json!(args.out));
     body.insert("png".into(), json!(args.out));

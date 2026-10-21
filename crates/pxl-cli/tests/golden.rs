@@ -164,6 +164,7 @@ fn compute() -> BTreeMap<String, String> {
                 dir: "top_left".into(),
                 amount: 1,
                 region: None,
+                ramp: None,
             },
             &pal,
         ),

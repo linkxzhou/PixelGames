@@ -136,6 +136,10 @@ pub enum Op {
         amount: i32,
         #[serde(default)]
         region: Option<Region>,
+        /// Only pixels of this ramp are moved, along this ramp. Without it a
+        /// colour shared by several ramps is left alone rather than guessed.
+        #[serde(default)]
+        ramp: Option<String>,
     },
     Outline {
         #[serde(default = "default_outline_color")]

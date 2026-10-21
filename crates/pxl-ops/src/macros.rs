@@ -55,6 +55,44 @@ pub fn parse_macro_call(spec: &str) -> PxlResult<(String, BTreeMap<String, Strin
     Ok((name.to_string(), args))
 }
 
+/// Arguments each macro reads. A name outside this list is a typo or an option
+/// the macro does not implement, and silently ignoring it hides the mistake.
+fn allowed_args(name: &str) -> &'static [&'static str] {
+    match name {
+        "tread_cycle" => &["steps", "cycle", "bob", "region"],
+        "idle_rumble" => &["steps", "amp"],
+        "idle_breathe" => &["steps", "period", "amp"],
+        "bob" => &["amp"],
+        "walk_side" | "run_side" => &["stride", "bob"],
+        "hurt_flash" => &["steps"],
+        "death_dissolve" => &["steps", "seed", "pattern"],
+        "blink" => &["x", "y", "w", "h", "lid"],
+        "spin_projectile" => &["steps"],
+        "pulse_glow" => &["ramp"],
+        "doll" => &["anim"],
+        _ => &[],
+    }
+}
+
+fn check_args(name: &str, args: &BTreeMap<String, String>) -> PxlResult<()> {
+    let allowed = allowed_args(name);
+    for key in args.keys() {
+        if !allowed.contains(&key.as_str()) {
+            let hint = if allowed.is_empty() {
+                format!("{name} takes no arguments")
+            } else {
+                format!("{name} takes: {}", allowed.join(", "))
+            };
+            return Err(
+                PxlError::schema(format!("macro {name} has no argument '{key}'"))
+                    .with_path(format!("/{key}"))
+                    .with_hint(hint),
+            );
+        }
+    }
+    Ok(())
+}
+
 pub fn expand_macro(
     spec: &str,
     dir: Option<&str>,
@@ -67,6 +105,7 @@ pub fn expand_macro(
         return Err(PxlError::semantic(format!("unknown macro '{name}'"))
             .with_hint("run `pxl list macros`"));
     }
+    check_args(&name, &args)?;
     match name.as_str() {
         "tread_cycle" => tread_cycle(&args, dir, frame, palette),
         "idle_rumble" => idle_rumble(&args, dir),
@@ -76,7 +115,7 @@ pub fn expand_macro(
         "run_side" => walk_side(&args, frame, true),
         "hurt_flash" => hurt_flash(&args),
         "death_dissolve" => death_dissolve(&args),
-        "blink" => blink(&args, frame),
+        "blink" => blink(&args, frame, palette),
         "spin_projectile" => spin_projectile(&args),
         "pulse_glow" => pulse_glow(&args),
         "doll" => doll(&args, dir, parts),
@@ -425,7 +464,18 @@ fn idle_rumble(args: &BTreeMap<String, String>, dir: Option<&str>) -> PxlResult<
 }
 
 fn idle_breathe(args: &BTreeMap<String, String>, frame: &IndexFrame) -> PxlResult<Vec<Vec<Op>>> {
-    let period = steps_of(args, 4)?;
+    // `period` is the documented name for the frame count; `steps` stays valid.
+    let period = if args.contains_key("period") {
+        let n = arg_i32(args, "period", 4)?;
+        if !(1..=16).contains(&n) {
+            return Err(
+                PxlError::schema(format!("period {n} is outside 1..=16")).with_path("/period")
+            );
+        }
+        n as usize
+    } else {
+        steps_of(args, 4)?
+    };
     let amp = arg_i32(args, "amp", 1)?;
     let mut frames = Vec::new();
     for i in 0..period {
@@ -506,15 +556,23 @@ fn hurt_flash(args: &BTreeMap<String, String>) -> PxlResult<Vec<Vec<Op>>> {
     Ok(frames)
 }
 
+/// Frame 0 is the untouched sprite and the last frame is empty. `steps` is the
+/// frame count, so a 6-frame fade removes 1/5 of the sprite per frame.
 fn death_dissolve(args: &BTreeMap<String, String>) -> PxlResult<Vec<Vec<Op>>> {
     let steps = steps_of(args, 6)?;
+    if steps < 2 {
+        return Err(PxlError::schema("death_dissolve needs steps >= 2")
+            .with_path("/steps")
+            .with_hint("one frame cannot show both the sprite and its absence"));
+    }
     let seed = arg_i32(args, "seed", 7)? as u64;
     let pattern = arg_str(args, "pattern", "bayer4").to_string();
+    let transitions = (steps - 1) as u32;
     let mut frames = Vec::new();
     for i in 0..steps {
         frames.push(vec![Op::Dissolve {
             seed,
-            steps: steps as u32,
+            steps: transitions,
             step: i as u32,
             pattern: pattern.clone(),
         }]);
@@ -522,27 +580,90 @@ fn death_dissolve(args: &BTreeMap<String, String>) -> PxlResult<Vec<Vec<Op>>> {
     Ok(frames)
 }
 
-fn blink(args: &BTreeMap<String, String>, frame: &IndexFrame) -> PxlResult<Vec<Vec<Op>>> {
-    let _ = arg_i32(args, "amp", 1)?;
-    let top = [0, 0, frame.w as i32, (frame.h as i32 / 3).max(1)];
+/// Close the eyes inside the rect `x,y,w,h` by painting its opaque pixels with
+/// the lid colour. `lid` defaults to the most common surrounding skin tone: the
+/// commonest opaque, non-outline colour on the ring just outside the rect.
+fn blink(
+    args: &BTreeMap<String, String>,
+    frame: &IndexFrame,
+    palette: &Palette,
+) -> PxlResult<Vec<Vec<Op>>> {
+    let mut rect = [0i32; 4];
+    for (slot, key) in ["x", "y", "w", "h"].iter().enumerate() {
+        if !args.contains_key(*key) {
+            return Err(PxlError::schema(format!("blink needs {key}"))
+                .with_path(format!("/{key}"))
+                .with_hint("blink(x=5, y=6, w=4, h=1) names the eye rect to close"));
+        }
+        rect[slot] = arg_i32(args, key, 0)?;
+    }
+    let [x, y, w, h] = rect;
+    if w < 1 || h < 1 || x < 0 || y < 0 || x + w > frame.w as i32 || y + h > frame.h as i32 {
+        return Err(PxlError::schema(format!(
+            "blink rect [{x},{y},{w},{h}] is outside the {}x{} frame",
+            frame.w, frame.h
+        ))
+        .with_hint("x,y,w,h must lie inside the sprite"));
+    }
+    let eyes_open = (y..y + h).any(|py| (x..x + w).any(|px| frame.opaque_at(px, py)));
+    if !eyes_open {
+        return Err(PxlError::semantic("blink rect holds no opaque pixels")
+            .with_hint("point x,y,w,h at the eyes of the source frame"));
+    }
+    let lid = match args.get("lid") {
+        Some(name) => palette.resolve_color_name(name)?,
+        None => ring_color(frame, rect, palette).ok_or_else(|| {
+            PxlError::semantic("blink found no skin colour around the eyes")
+                .with_hint("pass lid=<palette index>")
+        })?,
+    };
     Ok(vec![
         vec![Op::Noop {}],
-        vec![Op::Shade {
-            dir: "top".into(),
-            amount: 1,
-            region: Some(Region::Rect(top)),
+        vec![Op::PaletteSwap {
+            map: format!("all->{lid}"),
+            region: Some(Region::Rect(rect)),
         }],
     ])
 }
 
+fn ring_color(frame: &IndexFrame, rect: [i32; 4], palette: &Palette) -> Option<u8> {
+    let [x, y, w, h] = rect;
+    let mut counts = [0u32; 256];
+    for py in y - 1..=y + h {
+        for px in x - 1..=x + w {
+            let inside = px >= x && px < x + w && py >= y && py < y + h;
+            if inside || !frame.in_bounds(px, py) {
+                continue;
+            }
+            let c = frame.get(px, py);
+            if c != 0 && c != palette.special.outline {
+                counts[c as usize] += 1;
+            }
+        }
+    }
+    let mut best: Option<(u32, u8)> = None;
+    for (c, n) in counts.iter().enumerate() {
+        if *n > 0 && best.map_or(true, |(bn, _)| *n > bn) {
+            best = Some((*n, c as u8));
+        }
+    }
+    best.map(|(_, c)| c)
+}
+
+/// Four poses: 0, 90, 180, 270 degrees. Finer steps need arbitrary-angle
+/// rotation, which `rotate` does not implement yet, so they are refused rather
+/// than faked with repeated frames.
 fn spin_projectile(args: &BTreeMap<String, String>) -> PxlResult<Vec<Vec<Op>>> {
     let steps = steps_of(args, 4)?;
-    if steps != 4 && steps != 8 {
-        return Err(PxlError::schema("spin_projectile steps must be 4 or 8"));
+    if steps != 4 {
+        return Err(
+            PxlError::schema(format!("spin_projectile steps={steps} is not supported"))
+                .with_path("/steps")
+                .with_hint("only steps=4 (0/90/180/270 degrees); 8 poses need 45-degree rotation"),
+        );
     }
     let mut frames = Vec::new();
-    for i in 0..steps {
-        let turns = if steps == 8 { i / 2 } else { i };
+    for turns in 0..steps {
         if turns == 0 {
             frames.push(vec![Op::Noop {}]);
         } else {
@@ -563,4 +684,116 @@ fn pulse_glow(args: &BTreeMap<String, String>) -> PxlResult<Vec<Vec<Op>>> {
         vec![Op::Noop {}],
         vec![Op::PaletteSwap { map, region: None }],
     ])
+}
+
+#[cfg(test)]
+mod tests {
+    use std::cell::RefCell;
+
+    use super::*;
+    use crate::{apply_ops, ApplyCx};
+
+    fn pal() -> Palette {
+        pxl_gen::builtin_palette("tank").unwrap()
+    }
+
+    fn grid(rows: &[&str]) -> IndexFrame {
+        let owned: Vec<String> = rows.iter().map(|s| (*s).to_string()).collect();
+        pxl_core::decode_matrix(&owned).unwrap()
+    }
+
+    fn run(frame: &IndexFrame, ops: &[Op], pal: &Palette) -> IndexFrame {
+        let cx = ApplyCx {
+            palette: pal,
+            seed: 1,
+            frame_name: "f",
+            load_template: None,
+            parts: None,
+            pose: RefCell::new(BTreeMap::new()),
+        };
+        apply_ops(frame, ops, &cx).unwrap()
+    }
+
+    fn expand(spec: &str, frame: &IndexFrame) -> PxlResult<Vec<Vec<Op>>> {
+        expand_macro(spec, None, frame, &pal(), None)
+    }
+
+    #[test]
+    fn unknown_macro_argument_is_an_error_not_a_silent_default() {
+        let f = grid(&["22", "22"]);
+        let err = expand("idle_rumble(step=2)", &f).unwrap_err();
+        assert!(err.message.contains("step"), "{err:?}");
+        let err = expand("hurt_flash(amount=3)", &f).unwrap_err();
+        assert!(err.message.contains("amount"), "{err:?}");
+        // The documented spellings keep working.
+        assert!(expand("idle_rumble(steps=2, amp=1)", &f).is_ok());
+        assert!(expand("idle_breathe(period=4)", &f).is_ok());
+    }
+
+    #[test]
+    fn idle_breathe_honours_period() {
+        let f = grid(&["22", "22"]);
+        assert_eq!(expand("idle_breathe(period=3)", &f).unwrap().len(), 3);
+        assert_eq!(expand("idle_breathe(steps=5)", &f).unwrap().len(), 5);
+        assert!(expand("idle_breathe(period=0)", &f).is_err());
+    }
+
+    #[test]
+    fn death_dissolve_starts_whole_and_ends_empty() {
+        let pal = pal();
+        let f = grid(&["2222", "2222", "2222", "2222"]);
+        for steps in [2, 6, 16] {
+            let frames = expand(&format!("death_dissolve(steps={steps})"), &f).unwrap();
+            assert_eq!(frames.len(), steps);
+            let first = run(&f, &frames[0], &pal);
+            let last = run(&f, frames.last().unwrap(), &pal);
+            assert_eq!(
+                first.pixels, f.pixels,
+                "steps={steps}: first frame is the sprite"
+            );
+            assert_eq!(last.count_opaque(), 0, "steps={steps}: last frame is empty");
+        }
+        assert!(expand("death_dissolve(steps=1)", &f).is_err());
+    }
+
+    #[test]
+    fn blink_closes_only_the_named_eye_rect() {
+        let pal = pal();
+        // Skin 3 around two eye pixels coloured 11.
+        let f = grid(&["3333", "3B3B", "3333"]);
+        let frames = expand("blink(x=0, y=1, w=4, h=1)", &f).unwrap();
+        assert_eq!(frames.len(), 2);
+        let open = run(&f, &frames[0], &pal);
+        let shut = run(&f, &frames[1], &pal);
+        assert_eq!(open.pixels, f.pixels);
+        assert_ne!(shut.pixels, f.pixels, "closed eyes must differ");
+        // Rows outside the rect never change.
+        for x in 0..4 {
+            assert_eq!(shut.get(x, 0), f.get(x, 0));
+            assert_eq!(shut.get(x, 2), f.get(x, 2));
+        }
+        // The lid takes the surrounding skin colour.
+        assert!((0..4).all(|x| shut.get(x, 1) == 3));
+    }
+
+    #[test]
+    fn blink_needs_a_rect_inside_the_frame() {
+        let f = grid(&["33", "33"]);
+        assert!(expand("blink", &f).is_err());
+        assert!(expand("blink(x=0, y=0, w=9, h=1)", &f).is_err());
+    }
+
+    #[test]
+    fn spin_projectile_only_offers_four_distinct_poses() {
+        let pal = pal();
+        let f = grid(&["2222", "2...", "2...", "...."]);
+        let frames = expand("spin_projectile(steps=4)", &f).unwrap();
+        let poses: Vec<_> = frames.iter().map(|o| run(&f, o, &pal).pixels).collect();
+        for i in 0..poses.len() {
+            for j in i + 1..poses.len() {
+                assert_ne!(poses[i], poses[j], "poses {i} and {j} repeat");
+            }
+        }
+        assert!(expand("spin_projectile(steps=8)", &f).is_err());
+    }
 }
