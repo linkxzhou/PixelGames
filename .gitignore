@@ -3,6 +3,7 @@
 examples/tank/out/
 demo/tank/out/
 examples/farmer/out/
+examples/reference/*/out/
 .DS_Store
 
 # local third-party checkouts

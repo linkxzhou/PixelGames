@@ -1,0 +1,37 @@
+{
+  "v": 1,
+  "asset": "shaded-crate",
+  "gen_version": 1,
+  "seed": 12,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "crate",
+      "base": { "gen": "shapes", "spec": "crate.shapes.json" },
+      "post": [
+        { "op": "shade", "dir": "top_left", "amount": 1 }
+      ],
+      "anims": [
+        {
+          "name": "glint",
+          "fps": 4,
+          "loop": true,
+          "frames": [
+            [{ "op": "noop" }],
+            [{ "op": "palette_swap", "map": "ramp:top+1", "region": [2, 2, 12, 4] }]
+          ]
+        }
+      ]
+    }
+  ],
+  "sheet": {
+    "sources": ["crate"],
+    "layout": "rows-by-anim",
+    "pad": 1,
+    "file": "shaded-crate.sheet.png"
+  },
+  "preview": [
+    { "source": "crate", "anim": "glint", "scale": 8, "file": "crate.png" }
+  ],
+  "validate": { "rules": "default" }
+}

@@ -852,7 +852,7 @@ fn pack_loaded(
                 cell.tag = Some(tag.clone());
             }
         }
-        if doc.doc.anims.is_empty() {
+        if doc.doc.anims.is_empty() && doc.doc.meta.kind.as_deref() == Some("tiles") {
             let names: Vec<String> = doc_rows.iter().flatten().map(|c| c.name.clone()).collect();
             if !names.is_empty() {
                 tiles.insert(

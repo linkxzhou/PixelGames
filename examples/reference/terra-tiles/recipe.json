@@ -1,0 +1,22 @@
+{
+  "v": 1,
+  "asset": "terra-tiles",
+  "gen_version": 1,
+  "seed": 16,
+  "palette": "palette.json",
+  "tiles": [
+    { "id": "dirt", "kind": "dirt", "size": 16, "seed": 21, "variants": 3, "ramp": "dirt" },
+    { "id": "grass", "kind": "grass", "size": 16, "seed": 34, "variants": 3, "ramp": "grass" },
+    { "id": "ore", "kind": "ore", "size": 16, "seed": 55, "variants": 3, "ramp": "ore" }
+  ],
+  "sheet": {
+    "sources": ["dirt", "grass", "ore"],
+    "layout": "rows-by-anim",
+    "pad": 1,
+    "file": "terra-tiles.sheet.png"
+  },
+  "preview": [
+    { "sheet": true, "scale": 4, "grid": false, "file": "tiles.png" }
+  ],
+  "validate": { "rules": "default" }
+}

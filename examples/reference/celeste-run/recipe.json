@@ -1,0 +1,36 @@
+{
+  "v": 1,
+  "asset": "celeste-run",
+  "gen_version": 1,
+  "seed": 8,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "runner",
+      "base": { "gen": "shapes", "spec": "runner.shapes.json" },
+      "anims": [
+        {
+          "name": "run",
+          "fps": 8,
+          "loop": true,
+          "frames": [
+            [{ "op": "noop" }],
+            [{ "op": "patch_pixels", "x": 0, "y": 4, "rows": [".66788..", "..8.88..", "..9..9.."] }],
+            [{ "op": "patch_pixels", "x": 0, "y": 4, "rows": [".667888.", "..88.88.", "...9.9.."] }],
+            [{ "op": "patch_pixels", "x": 0, "y": 4, "rows": [".667888.", ".8.8..8.", "98.9..89"] }]
+          ]
+        }
+      ]
+    }
+  ],
+  "sheet": {
+    "sources": ["runner"],
+    "layout": "rows-by-anim",
+    "pad": 1,
+    "file": "celeste-run.sheet.png"
+  },
+  "preview": [
+    { "source": "runner", "anim": "run", "scale": 8, "file": "run.png" }
+  ],
+  "validate": { "rules": "default" }
+}

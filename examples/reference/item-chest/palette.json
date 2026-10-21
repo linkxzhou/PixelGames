@@ -1,0 +1,20 @@
+{
+  "v": 1,
+  "id": "item-chest",
+  "colors": [
+    "#00000000",
+    "#000000",
+    "#3a2414",
+    "#8d5a2e",
+    "#c48a4a",
+    "#6b3e1e",
+    "#d0d4d8",
+    "#f4f1e8",
+    "#1c140e"
+  ],
+  "ramps": {
+    "wood": [2, 5, 3, 4],
+    "metal": [8, 6, 7]
+  },
+  "special": { "transparent": 0, "outline": 1, "flash": 7 }
+}

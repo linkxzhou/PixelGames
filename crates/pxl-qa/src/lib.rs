@@ -51,7 +51,10 @@ pub fn validate(input: &ValidateInput, rules: &str) -> PxlResult<Report> {
         "default" => {
             checks.extend(palette_checks(&input.palette));
             for (name, frame) in &input.frames {
-                checks.extend(frame_checks(&input.palette, name, frame, true));
+                // Full-bleed tiles are listed on the sheet. Character bbox limits
+                // do not apply to them; palette indices still do.
+                let structural = !input.tiles.iter().any(|(tile, _)| tile == name);
+                checks.extend(frame_checks(&input.palette, name, frame, structural));
             }
             for anim in &input.anims {
                 checks.extend(anim_diff(anim, 100, 3500, true));

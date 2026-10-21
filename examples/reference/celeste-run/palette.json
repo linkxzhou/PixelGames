@@ -1,0 +1,23 @@
+{
+  "v": 1,
+  "id": "celeste-run",
+  "colors": [
+    "#00000000",
+    "#000000",
+    "#7e2553",
+    "#ff004d",
+    "#ffccaa",
+    "#fff1e8",
+    "#29adff",
+    "#1d2b53",
+    "#5f574f",
+    "#ffa300"
+  ],
+  "ramps": {
+    "hair": [2, 3],
+    "skin": [4, 5],
+    "shirt": [7, 6],
+    "leg": [8, 9]
+  },
+  "special": { "transparent": 0, "outline": 1, "flash": 5 }
+}
