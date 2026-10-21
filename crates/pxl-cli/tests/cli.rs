@@ -659,9 +659,14 @@ fn misspelled_macro_argument_fails_the_build() {
     for f in ["palette.json", "slime.shapes.json"] {
         fs::copy(src.join(f), dir.join(f)).unwrap();
     }
+    // The meadow recipe's blink call is the fixture. A renamed argument must
+    // fail the build instead of being dropped.
     let recipe = fs::read_to_string(src.join("recipe.json"))
         .unwrap()
-        .replace("idle_rumble(steps=2, amp=1)", "idle_rumble(step=2, amp=1)");
+        .replace(
+            "blink(x=2, y=11, w=3, h=2, lid=5)",
+            "blink(step=2, y=11, w=3, h=2, lid=5)",
+        );
     fs::write(dir.join("recipe.json"), recipe).unwrap();
     let (code, stdout, _) = pxl(&[
         "--json",

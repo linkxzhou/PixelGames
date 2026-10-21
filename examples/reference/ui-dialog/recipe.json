@@ -7,28 +7,37 @@
   "sprites": [
     {
       "id": "dialog",
-      "base": { "gen": "shapes", "spec": "dialog.shapes.json" },
+      "base": {
+        "gen": "shapes",
+        "spec": "dialog.shapes.json"
+      },
       "anims": [
         {
-          "name": "blink",
+          "name": "cursor",
           "fps": 2,
           "loop": true,
-          "frames": [
-            [{ "op": "noop" }],
-            [{ "op": "patch_pixels", "x": 22, "y": 6, "rows": ["55", "55", "55", "55"] }]
-          ]
+          "macro": "blink(x=20, y=8, w=2, h=4, lid=3)"
         }
       ]
     }
   ],
   "sheet": {
-    "sources": ["dialog"],
+    "sources": [
+      "dialog"
+    ],
     "layout": "rows-by-anim",
     "pad": 1,
     "file": "ui-dialog.sheet.png"
   },
   "preview": [
-    { "source": "dialog", "anim": "blink", "scale": 4, "file": "dialog.png" }
+    {
+      "source": "dialog",
+      "anim": "cursor",
+      "scale": 4,
+      "file": "dialog.png"
+    }
   ],
-  "validate": { "rules": "default" }
+  "validate": {
+    "rules": "default"
+  }
 }

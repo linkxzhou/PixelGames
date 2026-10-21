@@ -7,9 +7,23 @@
   "sprites": [
     {
       "id": "tree",
-      "base": { "gen": "shapes", "spec": "tree.shapes.json" },
+      "base": {
+        "gen": "shapes",
+        "spec": "tree.shapes.json"
+      },
       "post": [
-        { "op": "shade", "dir": "top_left", "amount": 1, "region": [6, 5, 19, 18] }
+        {
+          "op": "shade",
+          "dir": "top_left",
+          "amount": 1,
+          "ramp": "leaf",
+          "region": [
+            2,
+            4,
+            28,
+            20
+          ]
+        }
       ],
       "anims": [
         {
@@ -17,21 +31,57 @@
           "fps": 4,
           "loop": true,
           "frames": [
-            [{ "op": "noop" }],
-            [{ "op": "row_shift", "rows": [5, 22], "dx": 1, "pattern": "sine4", "phase": 1 }]
+            [
+              {
+                "op": "noop"
+              }
+            ],
+            [
+              {
+                "op": "row_shift",
+                "rows": [
+                  4,
+                  22
+                ],
+                "dx": 1,
+                "pattern": "sine4",
+                "phase": 1
+              }
+            ],
+            [
+              {
+                "op": "row_shift",
+                "rows": [
+                  4,
+                  18
+                ],
+                "dx": 1,
+                "pattern": "sine4",
+                "phase": 3
+              }
+            ]
           ]
         }
       ]
     }
   ],
   "sheet": {
-    "sources": ["tree"],
+    "sources": [
+      "tree"
+    ],
     "layout": "rows-by-anim",
     "pad": 1,
     "file": "orchard-tree.sheet.png"
   },
   "preview": [
-    { "source": "tree", "anim": "wind", "scale": 3, "file": "wind.png" }
+    {
+      "source": "tree",
+      "anim": "wind",
+      "scale": 3,
+      "file": "wind.png"
+    }
   ],
-  "validate": { "rules": "default" }
+  "validate": {
+    "rules": "default"
+  }
 }

@@ -7,28 +7,89 @@
   "sprites": [
     {
       "id": "spikes",
-      "base": { "gen": "shapes", "spec": "spikes.shapes.json" },
+      "base": {
+        "gen": "shapes",
+        "spec": "spikes.shapes.json"
+      },
+      "post": [],
+      "directions": [
+        {
+          "id": "right",
+          "from": "base",
+          "ops": [
+            {
+              "op": "rotate90",
+              "dir": "cw"
+            }
+          ]
+        },
+        {
+          "id": "down",
+          "from": "right",
+          "ops": [
+            {
+              "op": "rotate90",
+              "dir": "cw"
+            }
+          ]
+        },
+        {
+          "id": "left",
+          "from": "down",
+          "ops": [
+            {
+              "op": "rotate90",
+              "dir": "cw"
+            }
+          ]
+        }
+      ],
       "anims": [
         {
           "name": "glint",
           "fps": 4,
           "loop": true,
+          "dirs": [
+            "base",
+            "right",
+            "down",
+            "left"
+          ],
           "frames": [
-            [{ "op": "noop" }],
-            [{ "op": "palette_swap", "map": "4->3" }]
+            [
+              {
+                "op": "noop"
+              }
+            ],
+            [
+              {
+                "op": "palette_swap",
+                "map": "4->5"
+              }
+            ]
           ]
         }
       ]
     }
   ],
   "sheet": {
-    "sources": ["spikes"],
+    "sources": [
+      "spikes"
+    ],
     "layout": "rows-by-anim",
     "pad": 1,
     "file": "celeste-spikes.sheet.png"
   },
   "preview": [
-    { "source": "spikes", "anim": "glint", "scale": 8, "file": "spikes.png" }
+    {
+      "source": "spikes",
+      "anim": "glint",
+      "dir": "base",
+      "scale": 8,
+      "file": "spikes.png"
+    }
   ],
-  "validate": { "rules": "default" }
+  "validate": {
+    "rules": "default"
+  }
 }

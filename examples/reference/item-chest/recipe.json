@@ -7,28 +7,77 @@
   "sprites": [
     {
       "id": "chest",
-      "base": { "gen": "shapes", "spec": "chest.shapes.json" },
+      "base": {
+        "gen": "shapes",
+        "spec": "chest.shapes.json"
+      },
+      "post": [
+        {
+          "op": "shade",
+          "dir": "top_left",
+          "amount": 1,
+          "ramp": "wood",
+          "region": [
+            1,
+            5,
+            13,
+            7
+          ]
+        }
+      ],
       "anims": [
         {
           "name": "lid",
           "fps": 4,
           "loop": true,
           "frames": [
-            [{ "op": "noop" }],
-            [{ "op": "shift", "dy": -1, "region": [1, 2, 14, 4] }]
+            [
+              {
+                "op": "noop"
+              }
+            ],
+            [
+              {
+                "op": "shift",
+                "dy": -1,
+                "region": [
+                  1,
+                  0,
+                  13,
+                  5
+                ]
+              },
+              {
+                "op": "patch_pixels",
+                "x": 1,
+                "y": 4,
+                "rows": [
+                  "2222222222222"
+                ]
+              }
+            ]
           ]
         }
       ]
     }
   ],
   "sheet": {
-    "sources": ["chest"],
+    "sources": [
+      "chest"
+    ],
     "layout": "rows-by-anim",
     "pad": 1,
     "file": "item-chest.sheet.png"
   },
   "preview": [
-    { "source": "chest", "anim": "lid", "scale": 8, "file": "chest.png" }
+    {
+      "source": "chest",
+      "anim": "lid",
+      "scale": 8,
+      "file": "chest.png"
+    }
   ],
-  "validate": { "rules": "default" }
+  "validate": {
+    "rules": "default"
+  }
 }
