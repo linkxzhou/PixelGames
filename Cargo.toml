@@ -8,6 +8,7 @@ members = [
     "crates/pxl-qa",
     "crates/pxl-export",
     "crates/pxl-cli",
+    "harness",
 ]
 
 [workspace.package]

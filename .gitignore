@@ -8,3 +8,4 @@ examples/reference/*/out/
 
 # local third-party checkouts
 /thirdparty/
+.session_tmps

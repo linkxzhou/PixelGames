@@ -43,6 +43,18 @@ pub struct ValidateInput {
     pub facings: BTreeMap<String, IndexFrame>,
     pub tiles: Vec<(String, IndexFrame)>,
     pub tile_ramp: String,
+    /// Ramp per tile frame when a sheet mixes materials. Falls back to
+    /// `tile_ramp` for any tile that is not listed here.
+    pub tile_ramps: BTreeMap<String, String>,
+}
+
+impl ValidateInput {
+    fn ramp_for(&self, name: &str) -> &str {
+        self.tile_ramps
+            .get(name)
+            .map(String::as_str)
+            .unwrap_or(&self.tile_ramp)
+    }
 }
 
 pub fn validate(input: &ValidateInput, rules: &str) -> PxlResult<Report> {
@@ -53,11 +65,19 @@ pub fn validate(input: &ValidateInput, rules: &str) -> PxlResult<Report> {
             for (name, frame) in &input.frames {
                 // Full-bleed tiles are listed on the sheet. Character bbox limits
                 // do not apply to them; palette indices still do.
-                let structural = !input.tiles.iter().any(|(tile, _)| tile == name);
+                // A fully clear final frame of a one-shot animation (death,
+                // despawn) is a valid end state, not a degenerate sprite.
+                let structural = !input.tiles.iter().any(|(tile, _)| tile == name)
+                    && !is_terminal_empty(input, frame);
                 checks.extend(frame_checks(&input.palette, name, frame, structural));
             }
             for anim in &input.anims {
                 checks.extend(anim_diff(anim, 100, 3500, true));
+            }
+            // A tile that is never expected to tile would slip through: match its
+            // opposite edges on the declared ramp the same way `tank` does.
+            if !input.tiles.is_empty() {
+                checks.extend(tile_seams(input));
             }
         }
         "tank" => {
@@ -207,21 +227,66 @@ fn anim_diff(anim: &AnimSeq, min_bps: u32, max_bps: u32, include_loop: bool) -> 
         pairs.push((anim.frames.len() - 1, 0));
     }
     for (a, b) in pairs {
-        let changed = anim.frames[a].diff_count(&anim.frames[b]);
+        let from = &anim.frames[a];
+        let to = &anim.frames[b];
+        let changed = from.diff_count(to);
         let bps = pct_bps(changed, total);
+        // Reaching a clear end state erases the sprite in one step; only the
+        // lower bound (the frames must differ) still applies there.
+        let to_clear_end =
+            !anim.looped && b == anim.frames.len() - 1 && anim.frames[b].count_opaque() == 0;
+        let max_bps = if to_clear_end { 10_000 } else { max_bps };
+        // A whole-frame pixel step changes every cell along the silhouette, so a
+        // smooth 1px bob scores like a hard cut when counted per cell. Too small
+        // is still a failure (the sprite is not moving); too large is a failure
+        // only when no integer shift explains it.
+        let residual = shift_residual_bps(from, to, total);
         let id = if b == 0 {
             format!("anim.{label}.loop_diff")
         } else {
             format!("anim.{label}.diff_{a}_{b}")
         };
+        let pass = bps >= min_bps && (bps <= max_bps || residual <= max_bps);
+        let value = if residual < bps {
+            format!("{} (shift-adjusted {})", fmt_pct(bps), fmt_pct(residual))
+        } else {
+            fmt_pct(bps)
+        };
         out.push(Check {
             id,
-            pass: (min_bps..=max_bps).contains(&bps),
-            value: fmt_pct(bps),
-            limit: format!("{}..{}", fmt_pct(min_bps), fmt_pct(max_bps)),
+            pass,
+            value,
+            limit: format!(
+                "at least {}, and at most {} unless a 1px shift explains it",
+                fmt_pct(min_bps),
+                fmt_pct(max_bps)
+            ),
         });
     }
     out
+}
+
+/// Smallest cell-difference left after translating `to` by -1..=1 px on each
+/// axis, as a percentage of the canvas. Uncorrelated changes stay large.
+fn shift_residual_bps(from: &IndexFrame, to: &IndexFrame, total: usize) -> u32 {
+    let mut best = from.diff_count(to);
+    for dy in -1i32..=1 {
+        for dx in -1i32..=1 {
+            if dx == 0 && dy == 0 {
+                continue;
+            }
+            let mut changed = 0usize;
+            for y in 0..from.h as i32 {
+                for x in 0..from.w as i32 {
+                    if from.get(x, y) != to.get(x + dx, y + dy) {
+                        changed += 1;
+                    }
+                }
+            }
+            best = best.min(changed);
+        }
+    }
+    pct_bps(best, total)
 }
 
 fn tread_motion(anim: &AnimSeq, palette: &Palette) -> Vec<Check> {
@@ -375,43 +440,97 @@ fn tile_checks(input: &ValidateInput) -> Vec<Check> {
         value: input.tiles.len().to_string(),
         limit: ">= 4".into(),
     });
+    out.extend(tile_seams(input));
+    out
+}
+
+fn tile_seams(input: &ValidateInput) -> Vec<Check> {
+    let mut out = Vec::new();
     for (name, frame) in &input.tiles {
         let mut worst = 0usize;
-        let mut bad = false;
+        let mut bad = 0usize;
+        let mut checked = 0usize;
         let w = frame.w as i32;
         let h = frame.h as i32;
+        let ramp = input.ramp_for(name);
+        let on_ramp = |i: u8| input.palette.in_ramp(ramp, i);
+        // Compare opposite edges only where both pixels sit on the declared
+        // ramp. A layered tile (grass over dirt, an ore vein in stone) puts
+        // several materials on the same edge; those bands are exempt from the
+        // one-ramp rule instead of failing as "off-ramp".
+        //
+        // Left and right edges always meet the same tile, so a mixed pair there
+        // is a broken edge. Top and bottom edges of a surface tile meet the
+        // material below instead: when the entire top row is one material and
+        // the entire bottom row is the other, that junction is a deliberate
+        // layer boundary and is exempt. A ragged boundary still fails - that is
+        // a stray pixel, not a layer.
+        let layer_boundary =
+            (0..w).all(|x| on_ramp(frame.get(x, 0)) != on_ramp(frame.get(x, h - 1)));
+        let mut pairs = Vec::new();
         for y in 0..h {
-            match input.palette.ramp_distance(
-                &input.tile_ramp,
-                frame.get(0, y),
-                frame.get(w - 1, y),
-            ) {
-                Some(d) => worst = worst.max(d),
-                None => bad = true,
+            pairs.push((frame.get(0, y), frame.get(w - 1, y)));
+        }
+        let mut layered = 0usize;
+        if layer_boundary {
+            layered = w as usize;
+        } else {
+            for x in 0..w {
+                pairs.push((frame.get(x, 0), frame.get(x, h - 1)));
             }
         }
-        for x in 0..w {
-            match input.palette.ramp_distance(
-                &input.tile_ramp,
-                frame.get(x, 0),
-                frame.get(x, h - 1),
-            ) {
-                Some(d) => worst = worst.max(d),
-                None => bad = true,
+        for (a, b) in pairs {
+            let a_on = on_ramp(a);
+            let b_on = on_ramp(b);
+            if !a_on && !b_on {
+                // Both sides are another material (grass over dirt, a vein).
+                // A layered tile may cross ramps; skipping keeps it honest.
+                continue;
+            }
+            if a_on != b_on {
+                // One side of the seam belongs to the tile material and the
+                // other does not: that is a hard edge, not a texture step.
+                bad += 1;
+                continue;
+            }
+            checked += 1;
+            match input.palette.ramp_distance(ramp, a, b) {
+                Some(d) if d <= 1 => worst = worst.max(d),
+                _ => bad += 1,
             }
         }
+        if checked == 0 {
+            out.push(Check {
+                id: format!("tile.{name}.seam"),
+                pass: false,
+                value: "no edge pixel on the declared ramp".into(),
+                limit: format!("edge pixels on ramp '{ramp}'"),
+            });
+            continue;
+        }
+        let worst = worst.max(bad.min(1));
         out.push(Check {
             id: format!("tile.{name}.seam"),
-            pass: !bad && worst <= 1,
-            value: if bad {
-                "off-ramp".into()
+            pass: bad == 0,
+            value: if layered == 0 {
+                format!("{checked} pairs, {bad} over one step, worst {worst}")
             } else {
-                worst.to_string()
+                format!("{checked} pairs, {bad} over one step, worst {worst}, {layered} on a layer boundary")
             },
-            limit: "opposite edges equal or adjacent on the ground ramp".into(),
+            limit: format!("opposite edge pixels on '{ramp}' match within one step"),
         });
     }
     out
+}
+
+/// True when `frame` is fully transparent and is the last frame of a
+/// non-looping animation.
+fn is_terminal_empty(input: &ValidateInput, frame: &IndexFrame) -> bool {
+    frame.count_opaque() == 0
+        && input
+            .anims
+            .iter()
+            .any(|a| !a.looped && a.frames.last().map(|l| l == frame).unwrap_or(false))
 }
 
 fn is_tread(palette: &Palette, c: u8) -> bool {
@@ -663,6 +782,7 @@ mod tests {
             facings: BTreeMap::new(),
             tiles: vec![],
             tile_ramp: "ground".into(),
+            tile_ramps: BTreeMap::new(),
         };
         let report = validate(&input, "default").unwrap();
         let check = report
@@ -672,6 +792,130 @@ mod tests {
             .unwrap();
         assert!(!check.pass);
         assert!(!report.ok());
+    }
+
+    fn death_input(bad_pixel: bool) -> ValidateInput {
+        let mut alive = IndexFrame::new(8, 8).unwrap();
+        for y in 1..7 {
+            for x in 1..7 {
+                alive.set(x, y, 2);
+            }
+        }
+        let mut half = alive.clone();
+        for x in 1..7 {
+            half.set(x, 1, 0);
+        }
+        let mut gone = alive.blank_like();
+        if bad_pixel {
+            gone.set(1, 1, 9);
+        }
+        let seq = vec![alive, half, gone];
+        let frames = seq
+            .iter()
+            .enumerate()
+            .map(|(i, f)| (format!("die_{i}"), f.clone()))
+            .collect();
+        ValidateInput {
+            palette: pal(),
+            frames,
+            anims: vec![AnimSeq {
+                name: "die".into(),
+                dir: None,
+                looped: false,
+                frames: seq,
+            }],
+            facings: BTreeMap::new(),
+            tiles: vec![],
+            tile_ramp: "ground".into(),
+            tile_ramps: BTreeMap::new(),
+        }
+    }
+
+    #[test]
+    fn a_one_pixel_bob_passes_but_a_flicker_does_not() {
+        // A sprite filling most of the canvas: a 1px step rewrites ~half the cells.
+        let mut high = IndexFrame::new(16, 16).unwrap();
+        for y in 2..14 {
+            for x in 2..14 {
+                high.set(x, y, 2);
+            }
+        }
+        let mut low = IndexFrame::new(16, 16).unwrap();
+        for y in 3..15 {
+            for x in 2..14 {
+                low.set(x, y, 2);
+            }
+        }
+        let bob = AnimSeq {
+            name: "bob".into(),
+            dir: None,
+            looped: true,
+            frames: vec![high.clone(), low.clone()],
+        };
+        let report = validate(
+            &ValidateInput {
+                palette: pal(),
+                frames: vec![],
+                anims: vec![bob],
+                facings: BTreeMap::new(),
+                tiles: vec![],
+                tile_ramp: "ground".into(),
+                tile_ramps: BTreeMap::new(),
+            },
+            "default",
+        )
+        .unwrap();
+        let failed: Vec<_> = report.checks.iter().filter(|c| !c.pass).collect();
+        assert!(failed.is_empty(), "1px bob rejected: {failed:?}");
+
+        // Same silhouette, every pixel recoloured. No integer shift explains a
+        // flat colour swap, so the residual equals the raw diff and this fails.
+        let mut a = IndexFrame::new(16, 16).unwrap();
+        let mut b = IndexFrame::new(16, 16).unwrap();
+        for y in 2..14 {
+            for x in 2..14 {
+                a.set(x, y, 2);
+                b.set(x, y, 3);
+            }
+        }
+        let flicker = AnimSeq {
+            name: "flicker".into(),
+            dir: None,
+            looped: true,
+            frames: vec![a, b],
+        };
+        let report = validate(
+            &ValidateInput {
+                palette: pal(),
+                frames: vec![],
+                anims: vec![flicker],
+                facings: BTreeMap::new(),
+                tiles: vec![],
+                tile_ramp: "ground".into(),
+                tile_ramps: BTreeMap::new(),
+            },
+            "default",
+        )
+        .unwrap();
+        assert!(!report.ok(), "a full-canvas colour swap must still fail");
+    }
+
+    #[test]
+    fn clear_final_frame_of_a_one_shot_anim_is_valid() {
+        let report = validate(&death_input(false), "default").unwrap();
+        let failed: Vec<_> = report.checks.iter().filter(|c| !c.pass).collect();
+        assert!(failed.is_empty(), "{failed:?}");
+    }
+
+    #[test]
+    fn clear_final_frame_still_fails_on_out_of_palette_index() {
+        let report = validate(&death_input(true), "default").unwrap();
+        let check = report
+            .checks
+            .iter()
+            .find(|c| c.id == "frame.die_2.palette")
+            .unwrap();
+        assert!(!check.pass);
     }
 
     #[test]
@@ -692,6 +936,7 @@ mod tests {
             facings: BTreeMap::new(),
             tiles: vec![("ground_tile_0".into(), tile)],
             tile_ramp: "ground".into(),
+            tile_ramps: BTreeMap::new(),
         };
         let report = validate(&input, "tank").unwrap();
         let seam = report
@@ -700,6 +945,63 @@ mod tests {
             .find(|c| c.id == "tile.ground_tile_0.seam")
             .unwrap();
         assert!(!seam.pass);
+    }
+
+    fn seam_report(tile: IndexFrame) -> Check {
+        let input = ValidateInput {
+            palette: pal(),
+            frames: vec![],
+            anims: vec![],
+            facings: BTreeMap::new(),
+            tiles: vec![("surface".into(), tile)],
+            tile_ramp: "ground".into(),
+            tile_ramps: BTreeMap::new(),
+        };
+        let report = validate(&input, "tank").unwrap();
+        report
+            .checks
+            .into_iter()
+            .find(|c| c.id == "tile.surface.seam")
+            .unwrap()
+    }
+
+    /// Grass over dirt: the top row is the surface material, the bottom row is
+    /// what sits underneath. That junction is a layer, not a broken tile.
+    #[test]
+    fn a_uniform_layer_boundary_is_not_a_seam() {
+        let mut tile = IndexFrame::new(4, 4).unwrap();
+        for y in 0..3 {
+            for x in 0..4 {
+                tile.set(x, y, 3);
+            }
+        }
+        for x in 0..4 {
+            tile.set(x, 3, 1);
+        }
+        let seam = seam_report(tile);
+        assert!(seam.pass, "{seam:?}");
+        assert!(seam.value.contains("on a layer boundary"), "{seam:?}");
+    }
+
+    /// The same tile with a hole punched through the layer boundary: only some
+    /// columns change material, so this is a stray pixel pattern, not a layer.
+    #[test]
+    fn a_ragged_layer_boundary_still_fails() {
+        let mut tile = IndexFrame::new(4, 4).unwrap();
+        for y in 0..3 {
+            for x in 0..4 {
+                tile.set(x, y, 3);
+            }
+        }
+        for x in 0..4 {
+            tile.set(x, 3, 1);
+        }
+        // Keep the left and right edges on the surface ramp, so only the
+        // top/bottom comparison can catch the break.
+        tile.set(0, 3, 3);
+        tile.set(3, 3, 3);
+        let seam = seam_report(tile);
+        assert!(!seam.pass, "{seam:?}");
     }
 
     fn flip_x(src: &IndexFrame) -> IndexFrame {
@@ -791,6 +1093,7 @@ mod tests {
             facings,
             tiles: vec![],
             tile_ramp: "ground".into(),
+            tile_ramps: BTreeMap::new(),
         };
         let report = validate(&input, "character").unwrap();
         let failed: Vec<_> = report.checks.iter().filter(|c| !c.pass).collect();

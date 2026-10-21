@@ -281,6 +281,19 @@ mask 必须跟随对应几何变换；不能只移动像素、不移动材质区
 | Q2.5 sheet QA | `pxl-cli/src/cmd.rs`、`pxl-qa/src/lib.rs` | 使用 asset+anim+direction 唯一标识，不依赖重命名 tag 的前缀猜测 | 两个同名 idle 都被检查；故意破坏第二个素材时必须失败 |
 | Q2.6 类别规则 | `pxl-qa/src/lib.rs`、`pxl-format` | 通用安全检查始终执行，类别规则按用途叠加 | tile 满铺合法；死亡空终帧合法但越界索引仍失败；生长序列不被当循环 |
 
+**实施状态（2026-10-21，提交 `e6d38a7` 及其后续修改）：** 已有测试覆盖的子任务如下，工作区测试 65 项通过。
+
+| 子任务 | 状态 | 依据 |
+|---|---|---|
+| Q2.1 ramp 归属 | 已实现 | `palette.rs` 的 `ramps_containing` / `shift_in_ramp` / `shift_on_unique_ramp`，含共享色不按名称猜测的测试 |
+| Q2.2 宏参数 | 已实现 | `macros.rs` 的 `allowed_args` / `check_args`，`blink` 限定眼区矩形；CLI 测试 `misspelled_macro_argument_fails_the_build` |
+| Q2.3 dissolve | 已实现 | `death_dissolve_starts_whole_and_ends_empty` 等测试 |
+| Q2.4 GIF/预览 | 已实现 | `encode_gif_timed`、`gif_delays_cs`；一次性动画不循环、PNG 帧条真实尺寸均有测试 |
+| Q2.5 sheet QA | 已实现 | `sheet_keeps_an_anim_entry_for_every_asset_that_reuses_a_name`、`qa_checks_a_recolour_whose_walk_was_broken` |
+| Q2.6 类别规则 | 已实现 | 非循环动画的全空末帧不再触发结构检查和帧差上限，越界索引仍失败；测试 `clear_final_frame_*` |
+
+Q2.6 的范围说明：只放宽“非循环动画的最后一帧全透明”这一种终态。其余帧的结构检查、tile 满铺、生长序列不当循环等规则仍按原逻辑；类别规则的进一步配置化（`pxl-format` 侧）尚未做，留待 Q4 之后按需求拉动。
+
 兼容性：涉及像素或宏输出变化时不得偷偷替换旧算法。先决定保留 legacy 路径还是明确拒绝不支持的旧版本，再提升相应生成/格式版本并更新有审阅依据的快照。
 
 Q2.3 的特别注意：若 `steps` 定义为总帧数，不能简单改成闭区间循环而多产一帧、突破 16 帧限制。单帧死亡语义要明确选择终态或拒绝该参数。

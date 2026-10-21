@@ -1,0 +1,53 @@
+{
+  "v": 1,
+  "asset": "units",
+  "gen_version": 1,
+  "seed": 1,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "player_tank",
+      "base": { "gen": "shapes", "spec": "tank_body.shapes.json", "seed": 1 },
+      "post": [
+        { "op": "texture", "gen": "bollinger", "template": "panel_4x8", "region": [4, 7, 8, 4], "ramp": "olive", "seed": 42 }
+      ],
+      "directions": [
+        {"id": "N", "from": "base", "ops": [{"op": "noop"}]},
+        {"id": "E", "from": "N", "ops": [{"op": "rotate90", "dir": "cw"}]},
+        {"id": "S", "from": "N", "ops": [{"op": "flip", "axis": "y"}]},
+        {"id": "W", "from": "E", "ops": [{"op": "flip", "axis": "x"}]}
+      ],
+      "anims": [
+        { "name": "move", "fps": 10, "loop": true, "dirs": ["N", "E", "S", "W"], "macro": "tread_cycle(steps=4, region=auto_tread, cycle=tread, bob=1)" },
+        { "name": "idle", "fps": 4, "loop": true, "dirs": ["N", "E", "S", "W"], "macro": "idle_rumble(steps=2, amp=1)" }
+      ]
+    },
+    {
+      "id": "enemy_tank",
+      "base": { "gen": "shapes", "spec": "tank_body.shapes.json", "seed": 2 },
+      "post": [
+        { "op": "texture", "gen": "bollinger", "template": "panel_4x8", "region": [4, 7, 8, 4], "ramp": "olive", "seed": 77 },
+        { "op": "palette_swap", "map": "ramp:olive->enemy" }
+      ],
+      "directions": [
+        {"id": "N", "from": "base", "ops": [{"op": "noop"}]},
+        {"id": "E", "from": "N", "ops": [{"op": "rotate90", "dir": "cw"}]},
+        {"id": "S", "from": "N", "ops": [{"op": "flip", "axis": "y"}]},
+        {"id": "W", "from": "E", "ops": [{"op": "flip", "axis": "x"}]}
+      ],
+      "anims": [
+        { "name": "move", "fps": 10, "loop": true, "dirs": ["N", "E", "S", "W"], "macro": "tread_cycle(steps=4, region=auto_tread, cycle=tread, bob=1)" },
+        { "name": "idle", "fps": 4, "loop": true, "dirs": ["N", "E", "S", "W"], "macro": "idle_rumble(steps=2, amp=1)" }
+      ]
+    }
+  ],
+  "tiles": [
+    {"id": "ground", "kind": "dirt", "size": 16, "seed": 7, "variants": 4, "ramp": "ground"}
+  ],
+  "sheet": { "sources": ["player_tank", "enemy_tank", "ground"], "layout": "rows-by-anim", "pad": 1, "file": "units.sheet.png" },
+  "preview": [
+    {"source": "player_tank", "anim": "move", "dir": "E", "scale": 6, "file": "player_tank_move_E.gif"},
+    {"sheet": true, "scale": 4, "grid": true, "file": "units.preview.png"}
+  ],
+  "validate": {"rules": "tank"}
+}

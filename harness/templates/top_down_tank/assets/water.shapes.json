@@ -1,0 +1,28 @@
+{
+  "w": 16,
+  "h": 16,
+  "draw": [
+    {
+      "pixels": [
+        "rrrrrrrrrrrrrrrr",
+        "rsssrrrrrsssrrrr",
+        "rrtrrrrrrrtrrrrr",
+        "rrrrrqqrrrrrrqqr",
+        "rrrrrrrrrrrrrrrr",
+        "rrrrrrsssrrrrrsr",
+        "rrrrrrrtrrrrrrrr",
+        "rrqqrrrrrrqqrrrr",
+        "rrrrrrrrrrrrrrrr",
+        "rrrsssrrrrrsssrr",
+        "rrrrtrrrrrrrtrrr",
+        "rrrrrrrqqrrrrrrr",
+        "rrrrrrrrrrrrrrrr",
+        "rssrrrrrsssrrrrr",
+        "rtrrrrrrrtrrrrrr",
+        "rrrrrrrrrrrrrrrr"
+      ],
+      "x": 0,
+      "y": 0
+    }
+  ]
+}

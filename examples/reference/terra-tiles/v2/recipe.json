@@ -1,0 +1,87 @@
+{
+  "v": 1,
+  "asset": "terra-tiles-v2",
+  "gen_version": 1,
+  "seed": 16,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "dirt",
+      "kind": "tiles",
+      "base": {
+        "gen": "shapes",
+        "spec": "dirt.shapes.json"
+      },
+      "tile_ramp": "dirt"
+    },
+    {
+      "id": "dirt_b",
+      "kind": "tiles",
+      "base": {
+        "gen": "shapes",
+        "spec": "dirt_b.shapes.json"
+      },
+      "tile_ramp": "dirt"
+    },
+    {
+      "id": "grass",
+      "kind": "tiles",
+      "base": {
+        "gen": "shapes",
+        "spec": "grass.shapes.json"
+      },
+      "tile_ramp": "grass"
+    },
+    {
+      "id": "grass_b",
+      "kind": "tiles",
+      "base": {
+        "gen": "shapes",
+        "spec": "grass_b.shapes.json"
+      },
+      "tile_ramp": "grass"
+    },
+    {
+      "id": "ore",
+      "kind": "tiles",
+      "base": {
+        "gen": "shapes",
+        "spec": "ore.shapes.json"
+      },
+      "tile_ramp": "stone"
+    },
+    {
+      "id": "ore_b",
+      "kind": "tiles",
+      "base": {
+        "gen": "shapes",
+        "spec": "ore_b.shapes.json"
+      },
+      "tile_ramp": "stone"
+    }
+  ],
+  "sheet": {
+    "sources": [
+      "dirt",
+      "dirt_b",
+      "grass",
+      "grass_b",
+      "ore",
+      "ore_b"
+    ],
+    "layout": "rows-by-anim",
+    "pad": 0,
+    "file": "terra-tiles.sheet.png"
+  },
+  "preview": [
+    {
+      "sheet": true,
+      "scale": 8,
+      "grid": false,
+      "file": "tiles.png"
+    }
+  ],
+  "validate": {
+    "rules": "default"
+  }
+}

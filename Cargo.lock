@@ -397,6 +397,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "pxl-harness"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "schemars",
+ "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
 name = "pxl-ops"
 version = "0.1.0"
 dependencies = [

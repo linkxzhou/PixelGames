@@ -1,0 +1,23 @@
+{
+  "v": 1,
+  "asset": "props",
+  "gen_version": 1,
+  "seed": 3,
+  "palette": "palette.json",
+  "sprites": [
+    { "id": "brick_wall", "kind": "tiles", "tile_ramp": "brick", "base": { "gen": "shapes", "spec": "brick.shapes.json" } },
+    { "id": "steel_wall", "kind": "tiles", "tile_ramp": "steel", "base": { "gen": "shapes", "spec": "steel.shapes.json" } },
+    { "id": "water", "kind": "tiles", "tile_ramp": "water", "base": { "gen": "shapes", "spec": "water.shapes.json" } },
+    { "id": "bullet", "base": { "gen": "shapes", "spec": "bullet.shapes.json" } },
+    { "id": "hq_base", "base": { "gen": "shapes", "spec": "hq_base.shapes.json" } },
+    {
+      "id": "explosion",
+      "base": { "gen": "shapes", "spec": "explosion.shapes.json" },
+      "anims": [ { "name": "burst", "fps": 8, "loop": false, "macro": "pulse_glow(ramp=fire)" } ]
+    },
+    { "id": "ui_life_icon", "base": { "gen": "shapes", "spec": "ui_life_icon.shapes.json" } }
+  ],
+  "sheet": { "sources": ["brick_wall", "steel_wall", "water", "bullet", "hq_base", "explosion", "ui_life_icon"], "layout": "rows-by-anim", "pad": 1, "file": "props.sheet.png" },
+  "preview": [ {"sheet": true, "scale": 4, "grid": true, "file": "props.preview.png"} ],
+  "validate": {"rules": "default"}
+}

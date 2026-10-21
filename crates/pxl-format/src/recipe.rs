@@ -65,6 +65,14 @@ pub struct RecipeSprite {
     pub directions: Vec<DirectionStep>,
     #[serde(default)]
     pub anims: Vec<RecipeAnim>,
+    /// Set to `tiles` for a hand-drawn tile. The document is then exempt from
+    /// sprite structure checks and gets seam checks instead.
+    #[serde(default)]
+    pub kind: Option<String>,
+    /// Ramp used to judge tile seams. Defaults to `ground` when the palette has
+    /// it, otherwise the first declared ramp.
+    #[serde(default)]
+    pub tile_ramp: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]

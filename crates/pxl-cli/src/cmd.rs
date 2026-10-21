@@ -398,6 +398,7 @@ fn doc_from_frames(
             gen_version: Some(GEN_VERSION),
             asset: None,
             kind: Some(kind.into()),
+            tile_ramp: None,
             parts: None,
         },
     })
@@ -855,12 +856,26 @@ fn pack_loaded(
         if doc.doc.anims.is_empty() && doc.doc.meta.kind.as_deref() == Some("tiles") {
             let names: Vec<String> = doc_rows.iter().flatten().map(|c| c.name.clone()).collect();
             if !names.is_empty() {
+                let ramp = doc
+                    .doc
+                    .meta
+                    .tile_ramp
+                    .clone()
+                    .or_else(|| {
+                        doc.palette
+                            .ramps
+                            .keys()
+                            .find(|k| k.as_str() == "ground")
+                            .cloned()
+                    })
+                    .or_else(|| doc.palette.ramps.keys().next().cloned())
+                    .unwrap_or_else(|| "ground".into());
                 tiles.insert(
                     doc.id.clone(),
                     json!({
                         "from": 0,
                         "to": 0,
-                        "ramp": doc.palette.ramps.keys().find(|k| k.as_str()=="ground").cloned().unwrap_or_else(|| "ground".into()),
+                        "ramp": ramp,
                         "frames": names,
                     }),
                 );
@@ -1318,13 +1333,30 @@ fn doc_input(doc: &PxlDoc, palette: &Palette) -> CmdResult<ValidateInput> {
     } else {
         Vec::new()
     };
+    let tile_ramp = doc.meta.tile_ramp.clone().unwrap_or_else(|| {
+        if palette.ramps.contains_key("ground") {
+            "ground".into()
+        } else {
+            palette
+                .ramps
+                .keys()
+                .next()
+                .cloned()
+                .unwrap_or_else(|| "ground".into())
+        }
+    });
+    let tile_ramps = tiles
+        .iter()
+        .map(|(name, _)| (name.clone(), tile_ramp.clone()))
+        .collect();
     Ok(ValidateInput {
         palette: palette.clone(),
         frames,
         anims,
         facings,
         tiles,
-        tile_ramp: "ground".into(),
+        tile_ramp,
+        tile_ramps,
     })
 }
 
@@ -1415,15 +1447,26 @@ fn sheet_input(json_path: &Path, value: &Value) -> CmdResult<ValidateInput> {
         }
     }
     let mut tiles = Vec::new();
-    let mut tile_ramp = "ground".to_string();
+    let mut tile_ramp = if palette.ramps.contains_key("ground") {
+        "ground".to_string()
+    } else {
+        palette.ramps.keys().next().cloned().unwrap_or_else(|| "ground".into())
+    };
+    let mut tile_ramps = BTreeMap::new();
     if let Some(obj) = pxl.get("tiles").and_then(|v| v.as_object()) {
         for (_id, tile) in obj {
-            if let Some(r) = tile.get("ramp").and_then(|v| v.as_str()) {
-                tile_ramp = r.to_string();
+            let ramp = tile
+                .get("ramp")
+                .and_then(|v| v.as_str())
+                .unwrap_or(&tile_ramp)
+                .to_string();
+            if palette.ramps.contains_key(&ramp) {
+                tile_ramp = ramp.clone();
             }
             for name in string_list(tile.get("frames").unwrap_or(&Value::Null)).unwrap_or_default()
             {
                 if let Some(frame) = named.get(&name) {
+                    tile_ramps.insert(name.clone(), ramp.clone());
                     tiles.push((name, frame.clone()));
                 }
             }
@@ -1436,6 +1479,7 @@ fn sheet_input(json_path: &Path, value: &Value) -> CmdResult<ValidateInput> {
         facings,
         tiles,
         tile_ramp,
+        tile_ramps,
     })
 }
 
@@ -1869,6 +1913,24 @@ fn build_sprite(
             .into(),
     );
     doc.meta.gen_version = Some(recipe.gen_version);
+    if let Some(kind) = &sprite.kind {
+        if kind != "sprite" && kind != "tiles" && kind != "parts" {
+            return Err(PxlError::schema(format!("unknown sprite kind '{kind}'"))
+                .with_path("/kind")
+                .with_hint("kind is sprite, tiles, or parts")
+                .into());
+        }
+        doc.meta.kind = Some(kind.clone());
+    }
+    if let Some(ramp) = &sprite.tile_ramp {
+        if !palette.ramps.contains_key(ramp) {
+            return Err(PxlError::semantic(format!("tile_ramp '{ramp}' is missing"))
+                .with_path("/tile_ramp")
+                .with_hint("name a ramp declared on the palette")
+                .into());
+        }
+        doc.meta.tile_ramp = Some(ramp.clone());
+    }
     if let Some(spec) = sprite.base.spec.as_ref().filter(|_| parts_mode) {
         doc.meta.parts = Some(spec_file_name(spec));
     }

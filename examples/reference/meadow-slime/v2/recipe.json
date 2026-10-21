@@ -1,0 +1,76 @@
+{
+  "v": 1,
+  "asset": "meadow-slime-v2",
+  "gen_version": 1,
+  "seed": 6,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "slime",
+      "base": {
+        "gen": "shapes",
+        "spec": "slime.shapes.json"
+      },
+      "anims": [
+        {
+          "name": "hop",
+          "fps": 6,
+          "loop": true,
+          "frames": [
+            [
+              {
+                "op": "noop"
+              }
+            ],
+            [
+              {
+                "op": "shift",
+                "dy": -1,
+                "wrap": false
+              }
+            ],
+            [
+              {
+                "op": "shift",
+                "dy": -2,
+                "wrap": false
+              }
+            ],
+            [
+              {
+                "op": "shift",
+                "dy": -1,
+                "wrap": false
+              }
+            ]
+          ]
+        },
+        {
+          "name": "blink",
+          "fps": 2,
+          "loop": true,
+          "macro": "blink(x=5, y=10, w=6, h=2, lid=5)"
+        }
+      ]
+    }
+  ],
+  "sheet": {
+    "sources": [
+      "slime"
+    ],
+    "layout": "rows-by-anim",
+    "pad": 1,
+    "file": "meadow-slime.sheet.png"
+  },
+  "preview": [
+    {
+      "source": "slime",
+      "anim": "hop",
+      "scale": 8,
+      "file": "hop.png"
+    }
+  ],
+  "validate": {
+    "rules": "default"
+  }
+}

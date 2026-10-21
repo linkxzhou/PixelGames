@@ -1,0 +1,65 @@
+{
+  "v": 1,
+  "asset": "item-chest-v2",
+  "gen_version": 1,
+  "seed": 4,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "chest",
+      "base": {
+        "gen": "shapes",
+        "spec": "chest.shapes.json"
+      },
+      "anims": [
+        {
+          "name": "lid",
+          "fps": 4,
+          "loop": true,
+          "frames": [
+            [
+              {
+                "op": "noop"
+              }
+            ],
+            [
+              {
+                "op": "patch_pixels",
+                "x": 0,
+                "y": 1,
+                "rows": [
+                  "....11111111....",
+                  "...1666666661...",
+                  "...1555555551...",
+                  "...1444444441...",
+                  "..114444444411..",
+                  "..122222222221..",
+                  "..122222222221.."
+                ]
+              }
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "sheet": {
+    "sources": [
+      "chest"
+    ],
+    "layout": "rows-by-anim",
+    "pad": 1,
+    "file": "item-chest.sheet.png"
+  },
+  "preview": [
+    {
+      "source": "chest",
+      "anim": "lid",
+      "scale": 8,
+      "file": "chest.png"
+    }
+  ],
+  "validate": {
+    "rules": "default"
+  }
+}

@@ -1,0 +1,22 @@
+[package]
+name = "pxl-harness"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Brief -> design package -> asset package harness that drives pxl"
+
+[lib]
+name = "pxl_harness"
+path = "src/lib.rs"
+
+[[bin]]
+name = "pxl-harness"
+path = "src/main.rs"
+
+[dependencies]
+serde = { workspace = true, features = ["std"] }
+serde_json = { workspace = true }
+schemars = { workspace = true }
+sha2 = { workspace = true }
+clap = { workspace = true }
