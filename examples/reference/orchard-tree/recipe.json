@@ -1,0 +1,37 @@
+{
+  "v": 1,
+  "asset": "orchard-tree",
+  "gen_version": 1,
+  "seed": 9,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "tree",
+      "base": { "gen": "shapes", "spec": "tree.shapes.json" },
+      "post": [
+        { "op": "shade", "dir": "top_left", "amount": 1, "region": [6, 5, 19, 18] }
+      ],
+      "anims": [
+        {
+          "name": "wind",
+          "fps": 4,
+          "loop": true,
+          "frames": [
+            [{ "op": "noop" }],
+            [{ "op": "row_shift", "rows": [5, 22], "dx": 1, "pattern": "sine4", "phase": 1 }]
+          ]
+        }
+      ]
+    }
+  ],
+  "sheet": {
+    "sources": ["tree"],
+    "layout": "rows-by-anim",
+    "pad": 1,
+    "file": "orchard-tree.sheet.png"
+  },
+  "preview": [
+    { "source": "tree", "anim": "wind", "scale": 3, "file": "wind.png" }
+  ],
+  "validate": { "rules": "default" }
+}

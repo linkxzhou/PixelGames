@@ -1,0 +1,34 @@
+{
+  "v": 1,
+  "asset": "item-chest",
+  "gen_version": 1,
+  "seed": 4,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "chest",
+      "base": { "gen": "shapes", "spec": "chest.shapes.json" },
+      "anims": [
+        {
+          "name": "lid",
+          "fps": 4,
+          "loop": true,
+          "frames": [
+            [{ "op": "noop" }],
+            [{ "op": "shift", "dy": -1, "region": [1, 2, 14, 4] }]
+          ]
+        }
+      ]
+    }
+  ],
+  "sheet": {
+    "sources": ["chest"],
+    "layout": "rows-by-anim",
+    "pad": 1,
+    "file": "item-chest.sheet.png"
+  },
+  "preview": [
+    { "source": "chest", "anim": "lid", "scale": 8, "file": "chest.png" }
+  ],
+  "validate": { "rules": "default" }
+}

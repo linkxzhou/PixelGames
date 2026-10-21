@@ -1,0 +1,36 @@
+{
+  "v": 1,
+  "asset": "soul-bullet",
+  "gen_version": 1,
+  "seed": 13,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "soul",
+      "base": { "gen": "shapes", "spec": "soul.shapes.json" },
+      "anims": [
+        {
+          "name": "dodge",
+          "fps": 8,
+          "loop": true,
+          "frames": [
+            [{ "op": "patch_pixels", "x": 1, "y": 13, "rows": ["55", "55"] }],
+            [{ "op": "patch_pixels", "x": 6, "y": 13, "rows": ["55", "55"] }],
+            [{ "op": "patch_pixels", "x": 11, "y": 13, "rows": ["55", "55"] }],
+            [{ "op": "patch_pixels", "x": 6, "y": 12, "rows": ["55", "55"] }]
+          ]
+        }
+      ]
+    }
+  ],
+  "sheet": {
+    "sources": ["soul"],
+    "layout": "rows-by-anim",
+    "pad": 1,
+    "file": "soul-bullet.sheet.png"
+  },
+  "preview": [
+    { "source": "soul", "anim": "dodge", "scale": 8, "file": "dodge.png" }
+  ],
+  "validate": { "rules": "default" }
+}

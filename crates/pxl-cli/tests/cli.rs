@@ -453,6 +453,44 @@ fn farmer_build_is_deterministic_and_validates() {
     let _ = fs::remove_dir_all(&b);
 }
 
+#[test]
+fn reference_recipes_build_and_validate() {
+    let root = repo_root().join("examples/reference");
+    let names = [
+        "celeste-run",
+        "celeste-spikes",
+        "terra-tiles",
+        "crop-stages",
+        "orchard-tree",
+        "item-chest",
+        "soul-bullet",
+        "ui-dialog",
+        "meadow-slime",
+        "shaded-crate",
+    ];
+    for name in names {
+        let out = std::env::temp_dir().join(format!("pxl-ref-{name}-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&out);
+        let recipe = root.join(name).join("recipe.json");
+        let (code, stdout, stderr) = pxl(&[
+            "--json",
+            "build",
+            recipe.to_str().unwrap(),
+            "-o",
+            out.to_str().unwrap(),
+        ]);
+        assert_eq!(code, 0, "{name}\nstdout={stdout}\nstderr={stderr}");
+        let report = json_line(&stdout);
+        assert_eq!(report["ok"], true, "{name}");
+        assert!(report["checks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|c| c["pass"] == true));
+        let _ = fs::remove_dir_all(&out);
+    }
+}
+
 fn sha256(path: &std::path::Path) -> String {
     let bytes = fs::read(path).unwrap();
     pxl_core::sha256_hex(&bytes)

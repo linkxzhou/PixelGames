@@ -1,0 +1,19 @@
+{
+  "v": 1,
+  "id": "ui-dialog",
+  "colors": [
+    "#00000000",
+    "#000000",
+    "#2a241c",
+    "#f4e8c8",
+    "#1c140e",
+    "#c43748",
+    "#8a7058"
+  ],
+  "ramps": {
+    "paper": [6, 3],
+    "ink": [2, 4],
+    "cursor": [5]
+  },
+  "special": { "transparent": 0, "outline": 1, "flash": 5 }
+}

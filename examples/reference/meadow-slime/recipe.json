@@ -1,0 +1,31 @@
+{
+  "v": 1,
+  "asset": "meadow-slime",
+  "gen_version": 1,
+  "seed": 6,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "slime",
+      "base": { "gen": "shapes", "spec": "slime.shapes.json" },
+      "anims": [
+        {
+          "name": "idle",
+          "fps": 4,
+          "loop": true,
+          "macro": "idle_rumble(steps=2, amp=1)"
+        }
+      ]
+    }
+  ],
+  "sheet": {
+    "sources": ["slime"],
+    "layout": "rows-by-anim",
+    "pad": 1,
+    "file": "meadow-slime.sheet.png"
+  },
+  "preview": [
+    { "source": "slime", "anim": "idle", "scale": 8, "file": "idle.png" }
+  ],
+  "validate": { "rules": "default" }
+}

@@ -1,0 +1,24 @@
+{
+  "v": 1,
+  "id": "shaded-crate",
+  "colors": [
+    "#00000000",
+    "#000000",
+    "#4a3018",
+    "#7a4e28",
+    "#a56b32",
+    "#c48a4a",
+    "#e6c07a",
+    "#f4e2a0",
+    "#6b4423",
+    "#8a5a30",
+    "#d8dce0"
+  ],
+  "ramps": {
+    "sideL": [2, 3, 5],
+    "sideR": [8, 4, 9],
+    "top": [6, 7],
+    "metal": [8, 10]
+  },
+  "special": { "transparent": 0, "outline": 1, "flash": 7 }
+}

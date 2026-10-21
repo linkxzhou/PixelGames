@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "id": "soul-bullet",
+  "colors": [
+    "#00000000",
+    "#000000",
+    "#4a0010",
+    "#c01028",
+    "#ff3154",
+    "#ffffff",
+    "#ffd0d8"
+  ],
+  "ramps": {
+    "heart": [2, 3, 4, 6],
+    "bullet": [5]
+  },
+  "special": { "transparent": 0, "outline": 1, "flash": 5 }
+}
