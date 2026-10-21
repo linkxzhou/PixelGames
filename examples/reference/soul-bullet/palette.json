@@ -4,15 +4,28 @@
   "colors": [
     "#00000000",
     "#000000",
-    "#4a0010",
-    "#c01028",
-    "#ff3154",
+    "#4a1020",
+    "#c01830",
+    "#ff4060",
     "#ffffff",
-    "#ffd0d8"
+    "#ffd0d8",
+    "#ff8898"
   ],
   "ramps": {
-    "heart": [2, 3, 4, 6],
-    "bullet": [5]
+    "heart": [
+      2,
+      3,
+      4,
+      6,
+      7
+    ],
+    "bullet": [
+      5
+    ]
   },
-  "special": { "transparent": 0, "outline": 1, "flash": 5 }
+  "special": {
+    "transparent": 0,
+    "outline": 1,
+    "flash": 5
+  }
 }

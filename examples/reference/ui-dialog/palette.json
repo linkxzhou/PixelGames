@@ -4,16 +4,28 @@
   "colors": [
     "#00000000",
     "#000000",
-    "#2a241c",
-    "#f4e8c8",
     "#1c140e",
-    "#c43748",
-    "#8a7058"
+    "#f4e8c8",
+    "#c8b48a",
+    "#1c140e",
+    "#e04048"
   ],
   "ramps": {
-    "paper": [6, 3],
-    "ink": [2, 4],
-    "cursor": [5]
+    "paper": [
+      4,
+      3
+    ],
+    "ink": [
+      2,
+      5
+    ],
+    "cursor": [
+      6
+    ]
   },
-  "special": { "transparent": 0, "outline": 1, "flash": 5 }
+  "special": {
+    "transparent": 0,
+    "outline": 1,
+    "flash": 6
+  }
 }

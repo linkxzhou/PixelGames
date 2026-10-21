@@ -7,9 +7,47 @@
   "sprites": [
     {
       "id": "crate",
-      "base": { "gen": "shapes", "spec": "crate.shapes.json" },
+      "base": {
+        "gen": "shapes",
+        "spec": "crate.shapes.json"
+      },
       "post": [
-        { "op": "shade", "dir": "top_left", "amount": 1 }
+        {
+          "op": "shade",
+          "dir": "top_left",
+          "amount": 1,
+          "ramp": "top",
+          "region": [
+            4,
+            1,
+            8,
+            6
+          ]
+        },
+        {
+          "op": "shade",
+          "dir": "top_left",
+          "amount": 1,
+          "ramp": "sideL",
+          "region": [
+            1,
+            5,
+            7,
+            9
+          ]
+        },
+        {
+          "op": "shade",
+          "dir": "top_left",
+          "amount": 1,
+          "ramp": "sideR",
+          "region": [
+            8,
+            5,
+            7,
+            9
+          ]
+        }
       ],
       "anims": [
         {
@@ -17,21 +55,45 @@
           "fps": 4,
           "loop": true,
           "frames": [
-            [{ "op": "noop" }],
-            [{ "op": "palette_swap", "map": "ramp:top+1", "region": [2, 2, 12, 4] }]
+            [
+              {
+                "op": "noop"
+              }
+            ],
+            [
+              {
+                "op": "palette_swap",
+                "map": "ramp:top+1",
+                "region": [
+                  4,
+                  1,
+                  8,
+                  6
+                ]
+              }
+            ]
           ]
         }
       ]
     }
   ],
   "sheet": {
-    "sources": ["crate"],
+    "sources": [
+      "crate"
+    ],
     "layout": "rows-by-anim",
     "pad": 1,
     "file": "shaded-crate.sheet.png"
   },
   "preview": [
-    { "source": "crate", "anim": "glint", "scale": 8, "file": "crate.png" }
+    {
+      "source": "crate",
+      "anim": "glint",
+      "scale": 8,
+      "file": "crate.png"
+    }
   ],
-  "validate": { "rules": "default" }
+  "validate": {
+    "rules": "default"
+  }
 }

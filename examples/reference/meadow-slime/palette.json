@@ -4,16 +4,30 @@
   "colors": [
     "#00000000",
     "#000000",
-    "#143018",
-    "#2f8a40",
-    "#78c080",
-    "#1c4a28",
-    "#f4f1e8",
-    "#141414"
+    "#2c2c3a",
+    "#4e4e5c",
+    "#8a8a96",
+    "#c8c8bc",
+    "#fff0c0",
+    "#16161c",
+    "#f6f4ea"
   ],
   "ramps": {
-    "body": [2, 5, 3, 4],
-    "eye": [7, 6]
+    "body": [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "eye": [
+      7,
+      8
+    ]
   },
-  "special": { "transparent": 0, "outline": 1, "flash": 6 }
+  "special": {
+    "transparent": 0,
+    "outline": 1,
+    "flash": 6
+  }
 }

@@ -4,20 +4,38 @@
   "colors": [
     "#00000000",
     "#000000",
-    "#7e2553",
-    "#ff004d",
-    "#ffccaa",
-    "#fff1e8",
-    "#29adff",
-    "#1d2b53",
-    "#5f574f",
-    "#ffa300"
+    "#2a1038",
+    "#a01840",
+    "#ff6840",
+    "#e8a070",
+    "#ffe0c8",
+    "#1a2848",
+    "#3a68c0",
+    "#4a4038",
+    "#f0a028"
   ],
   "ramps": {
-    "hair": [2, 3],
-    "skin": [4, 5],
-    "shirt": [7, 6],
-    "leg": [8, 9]
+    "hair": [
+      2,
+      3,
+      4
+    ],
+    "skin": [
+      5,
+      6
+    ],
+    "jacket": [
+      7,
+      8
+    ],
+    "leg": [
+      9,
+      10
+    ]
   },
-  "special": { "transparent": 0, "outline": 1, "flash": 5 }
+  "special": {
+    "transparent": 0,
+    "outline": 1,
+    "flash": 6
+  }
 }

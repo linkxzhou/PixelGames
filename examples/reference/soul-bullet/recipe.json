@@ -7,30 +7,90 @@
   "sprites": [
     {
       "id": "soul",
-      "base": { "gen": "shapes", "spec": "soul.shapes.json" },
+      "base": {
+        "gen": "shapes",
+        "spec": "soul.shapes.json"
+      },
       "anims": [
         {
           "name": "dodge",
           "fps": 8,
           "loop": true,
           "frames": [
-            [{ "op": "patch_pixels", "x": 1, "y": 13, "rows": ["55", "55"] }],
-            [{ "op": "patch_pixels", "x": 6, "y": 13, "rows": ["55", "55"] }],
-            [{ "op": "patch_pixels", "x": 11, "y": 13, "rows": ["55", "55"] }],
-            [{ "op": "patch_pixels", "x": 6, "y": 12, "rows": ["55", "55"] }]
+            [
+              {
+                "op": "patch_pixels",
+                "x": 1,
+                "y": 13,
+                "rows": [
+                  "55.",
+                  ".5."
+                ]
+              }
+            ],
+            [
+              {
+                "op": "palette_swap",
+                "map": "ramp:heart+1"
+              },
+              {
+                "op": "patch_pixels",
+                "x": 6,
+                "y": 13,
+                "rows": [
+                  "55.",
+                  ".5."
+                ]
+              }
+            ],
+            [
+              {
+                "op": "patch_pixels",
+                "x": 11,
+                "y": 13,
+                "rows": [
+                  "55.",
+                  ".5."
+                ]
+              }
+            ],
+            [
+              {
+                "op": "palette_swap",
+                "map": "ramp:heart+1"
+              },
+              {
+                "op": "patch_pixels",
+                "x": 8,
+                "y": 12,
+                "rows": [
+                  "55.",
+                  ".5."
+                ]
+              }
+            ]
           ]
         }
       ]
     }
   ],
   "sheet": {
-    "sources": ["soul"],
+    "sources": [
+      "soul"
+    ],
     "layout": "rows-by-anim",
     "pad": 1,
     "file": "soul-bullet.sheet.png"
   },
   "preview": [
-    { "source": "soul", "anim": "dodge", "scale": 8, "file": "dodge.png" }
+    {
+      "source": "soul",
+      "anim": "dodge",
+      "scale": 8,
+      "file": "dodge.png"
+    }
   ],
-  "validate": { "rules": "default" }
+  "validate": {
+    "rules": "default"
+  }
 }
