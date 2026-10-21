@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "id": "tank",
+  "colors": ["#00000000", "#14100c", "#3b4a2a", "#5a6e3a", "#86a052", "#b9c98a", "#4a4038", "#6e6258", "#9a8c7a", "#c9b994", "#e0533d", "#f2f2e6"],
+  "ramps": {
+    "olive": [2, 3, 4, 5],
+    "tread": [1, 6, 7],
+    "ground": [6, 7, 8, 9]
+  },
+  "cycles": {
+    "tread": { "indices": [6, 7, 1], "period": 3 }
+  },
+  "special": { "transparent": 0, "outline": 1, "flash": 11 }
+}

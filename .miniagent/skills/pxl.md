@@ -1,0 +1,1 @@
+../../examples/tank/.miniagent/skills/pxl.md

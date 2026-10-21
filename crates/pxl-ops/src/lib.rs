@@ -1,0 +1,11 @@
+//! Frame transforms and animation macros.
+//!
+//! Flip, rotate90, and shift follow Piskel `TransformUtils` semantics
+//! (Apache-2.0, reimplemented). Outline brushes follow Pixelorama's MIT
+//! outline modes via [`pxl_core::paint_outline`].
+
+mod apply;
+mod macros;
+
+pub use apply::{apply_op, apply_ops, ApplyCx};
+pub use macros::{expand_macro, parse_macro_call, MACRO_NAMES};

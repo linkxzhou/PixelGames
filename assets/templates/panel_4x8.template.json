@@ -1,0 +1,8 @@
+{
+  "v": 1,
+  "id": "panel_4x8",
+  "mirror": "none",
+  "cells": ["0000", "0310", "0000", "0030", "0000", "0130", "0000", "3000"],
+  "legend": {"0": "empty", "1": "maybe_body", "3": "body"},
+  "color": {"ramp_pool": ["olive", "metal"], "row_hue_change": 0.4, "edge": "outline", "noise": 0.35, "gradient": "vertical"}
+}

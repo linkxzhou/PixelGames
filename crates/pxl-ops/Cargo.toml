@@ -1,0 +1,12 @@
+[package]
+name = "pxl-ops"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Integer pixel transforms and animation macros"
+
+[dependencies]
+pxl-core = { workspace = true }
+pxl-format = { workspace = true }
+pxl-gen = { workspace = true }

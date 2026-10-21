@@ -1,0 +1,22 @@
+[package]
+name = "pxl-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "pxl command line"
+
+[[bin]]
+name = "pxl"
+path = "src/main.rs"
+
+[dependencies]
+pxl-core = { workspace = true }
+pxl-format = { workspace = true }
+pxl-gen = { workspace = true }
+pxl-ops = { workspace = true }
+pxl-qa = { workspace = true }
+pxl-export = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

@@ -1,0 +1,8 @@
+{
+  "v": 1,
+  "id": "gem_6x6",
+  "mirror": "x",
+  "cells": ["001", "012", "013", "012", "011", "001"],
+  "legend": {"0": "empty", "1": "maybe_body", "2": "body_or_border", "3": "body"},
+  "color": {"ramp_pool": ["heat"], "row_hue_change": 0.1, "edge": "outline", "noise": 0.1, "gradient": "vertical"}
+}

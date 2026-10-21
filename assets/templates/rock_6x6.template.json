@@ -1,0 +1,8 @@
+{
+  "v": 1,
+  "id": "rock_6x6",
+  "mirror": "none",
+  "cells": ["011110", "112221", "122321", "123221", "112211", "011110"],
+  "legend": {"0": "empty", "1": "maybe_body", "2": "body_or_border", "3": "body"},
+  "color": {"ramp_pool": ["metal", "skin"], "row_hue_change": 0.3, "edge": "outline", "noise": 0.4, "gradient": "vertical"}
+}

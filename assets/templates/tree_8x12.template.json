@@ -1,0 +1,8 @@
+{
+  "v": 1,
+  "id": "tree_8x12",
+  "mirror": "x",
+  "cells": ["0001", "0011", "0112", "0122", "1123", "0122", "0111", "0011", "0001", "0001", "0001", "0001"],
+  "legend": {"0": "empty", "1": "maybe_body", "2": "body_or_border", "3": "body"},
+  "color": {"ramp_pool": ["slime"], "row_hue_change": 0.2, "edge": "outline", "noise": 0.35, "gradient": "vertical"}
+}

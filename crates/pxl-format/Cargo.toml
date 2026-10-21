@@ -1,0 +1,13 @@
+[package]
+name = "pxl-format"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Serde models and JSON Schema for pxl documents, ops, recipes, and palettes"
+
+[dependencies]
+pxl-core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+schemars = { workspace = true }

@@ -1,0 +1,10 @@
+[package]
+name = "pxl-qa"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Programmatic QA rules for pxl sprites, animations, and tiles"
+
+[dependencies]
+pxl-core = { workspace = true }

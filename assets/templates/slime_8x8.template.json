@@ -1,0 +1,8 @@
+{
+  "v": 1,
+  "id": "slime_8x8",
+  "mirror": "x",
+  "cells": ["0011", "0112", "0122", "0134", "0122", "0112", "0012", "0001"],
+  "legend": {"0": "empty", "1": "maybe_body", "2": "body_or_border", "3": "body", "4": "highlight"},
+  "color": {"ramp_pool": ["slime"], "row_hue_change": 0.15, "edge": "outline", "noise": 0.2, "gradient": "vertical"}
+}

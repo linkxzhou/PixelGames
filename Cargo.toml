@@ -1,0 +1,32 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/pxl-core",
+    "crates/pxl-format",
+    "crates/pxl-gen",
+    "crates/pxl-ops",
+    "crates/pxl-qa",
+    "crates/pxl-export",
+    "crates/pxl-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[workspace.dependencies]
+serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+schemars = { version = "0.8", features = ["preserve_order"] }
+sha2 = { version = "0.10", default-features = false }
+png = "0.17"
+gif = "0.13"
+clap = { version = ">=4.5.23, <4.6", features = ["derive"] }
+pxl-core = { path = "crates/pxl-core" }
+pxl-format = { path = "crates/pxl-format" }
+pxl-gen = { path = "crates/pxl-gen" }
+pxl-ops = { path = "crates/pxl-ops" }
+pxl-qa = { path = "crates/pxl-qa" }
+pxl-export = { path = "crates/pxl-export" }

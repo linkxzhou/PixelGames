@@ -1,0 +1,8 @@
+{
+  "v": 1,
+  "id": "dragon_side_8x10",
+  "mirror": "none",
+  "cells": ["00001100", "00011210", "00112311", "01112341", "00112211", "00011210", "00001100", "00000100", "00000100", "00000010"],
+  "legend": {"0": "empty", "1": "maybe_body", "2": "body_or_border", "3": "body", "4": "highlight"},
+  "color": {"ramp_pool": ["heat"], "row_hue_change": 0.25, "edge": "outline", "noise": 0.25, "gradient": "horizontal"}
+}
