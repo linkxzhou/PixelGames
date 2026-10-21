@@ -1,19 +1,27 @@
+use std::cell::RefCell;
 use std::collections::BTreeMap;
 
 use pxl_core::{
     op_seed, paint_outline, Brush, IndexFrame, OutlineMode, Palette, Pcg32, PxlError, PxlResult,
 };
-use pxl_format::{ColorRef, Op, Region};
+use pxl_format::{ColorRef, Op, PartsFile, Region};
 use pxl_gen::{generate_bollinger, RuntimeMask};
+
+use crate::parts::{self, PartPose};
 
 pub struct ApplyCx<'a> {
     pub palette: &'a Palette,
     pub seed: u64,
     pub frame_name: &'a str,
     pub load_template: Option<&'a dyn Fn(&str) -> PxlResult<RuntimeMask>>,
+    /// Paper-doll rig used by `part_transform` and `compose`.
+    pub parts: Option<&'a PartsFile>,
+    /// Pose accumulated by `part_transform` inside one `apply_ops` call.
+    pub pose: RefCell<BTreeMap<String, PartPose>>,
 }
 
 pub fn apply_ops(frame: &IndexFrame, ops: &[Op], cx: &ApplyCx) -> PxlResult<IndexFrame> {
+    cx.pose.borrow_mut().clear();
     let mut cur = frame.clone();
     for (i, op) in ops.iter().enumerate() {
         cur = apply_op(&cur, op, cx, i as u64)?;
@@ -174,10 +182,43 @@ pub fn apply_op(frame: &IndexFrame, op: &Op, cx: &ApplyCx, index: u64) -> PxlRes
             let sub = seed.unwrap_or_else(|| op_seed(cx.seed, index, cx.frame_name));
             texture(frame, gen, template, rect, ramp.as_deref(), sub, cx)
         }
-        Op::PartTransform { .. } | Op::Compose { .. } => Err(PxlError::semantic(
-            "part transforms are not implemented yet",
-        )
-        .with_hint("parts, pivots, and compose arrive in M2")),
+        Op::PartTransform {
+            part,
+            dx,
+            dy,
+            rot90,
+            flip,
+        } => {
+            check_delta(*dx, *dy)?;
+            let rig = cx.parts.ok_or_else(|| {
+                PxlError::semantic("part_transform needs a parts spec")
+                    .with_hint("use base.gen parts, or set meta.parts to a .parts.json file")
+            })?;
+            rig.part(part)?;
+            let (flip_x, flip_y) = parts::parse_flip(flip.as_deref())?;
+            cx.pose.borrow_mut().insert(
+                part.clone(),
+                PartPose {
+                    dx: *dx,
+                    dy: *dy,
+                    rot: parts::parse_rot(rot90.as_deref())?,
+                    flip_x,
+                    flip_y,
+                },
+            );
+            Ok(frame.clone())
+        }
+        Op::Compose { parts: order, dir } => {
+            let rig = cx.parts.ok_or_else(|| {
+                PxlError::semantic("compose needs a parts spec")
+                    .with_hint("use base.gen parts, or set meta.parts to a .parts.json file")
+            })?;
+            let facing = dir.as_deref().unwrap_or("down");
+            let pose = cx.pose.borrow().clone();
+            let drawn = parts::compose_rig(frame, rig, facing, order, &pose)?;
+            cx.pose.borrow_mut().clear();
+            Ok(drawn)
+        }
     }
 }
 
@@ -500,6 +541,7 @@ enum SwapRule {
     One { from: u8, to: u8 },
     All(u8),
     Ramp { name: String, delta: i32 },
+    RampMap { from: String, to: String },
 }
 
 fn palette_swap(
@@ -515,6 +557,30 @@ fn palette_swap(
             continue;
         }
         if let Some(rest) = raw.strip_prefix("ramp:") {
+            if let Some((src, dst)) = rest.split_once("->") {
+                let from = src.trim().to_string();
+                let to = dst.trim().to_string();
+                let a = palette.ramps.get(&from).ok_or_else(|| {
+                    PxlError::semantic(format!("unknown ramp '{from}'"))
+                        .with_hint("ramp names are declared on the palette")
+                })?;
+                let b = palette.ramps.get(&to).ok_or_else(|| {
+                    PxlError::semantic(format!("unknown ramp '{to}'"))
+                        .with_hint("ramp names are declared on the palette")
+                })?;
+                if a.len() != b.len() {
+                    return Err(PxlError::semantic(format!(
+                        "ramp '{from}' has {} steps and '{to}' has {}",
+                        a.len(),
+                        b.len()
+                    ))
+                    .with_hint(
+                        "ramp:src->dst maps by step, so the ramps must be the same length",
+                    ));
+                }
+                rules.push(SwapRule::RampMap { from, to });
+                continue;
+            }
             let (name, delta) = split_ramp_delta(rest)?;
             if !palette.ramps.contains_key(&name) {
                 return Err(PxlError::semantic(format!("unknown ramp '{name}'"))
@@ -532,7 +598,7 @@ fn palette_swap(
             }
         } else {
             return Err(PxlError::schema(format!("bad palette_swap map '{raw}'"))
-                .with_hint("use 3->7, all->flash, or ramp:olive+1"));
+                .with_hint("use 3->7, all->flash, ramp:olive+1, or ramp:hair->blonde"));
         }
     }
     if rules.is_empty() {
@@ -556,6 +622,13 @@ fn palette_swap(
                             let ramp = &palette.ramps[name];
                             let next = (pos as i32 + delta).clamp(0, ramp.len() as i32 - 1);
                             ramp[next as usize]
+                        } else {
+                            c
+                        }
+                    }
+                    SwapRule::RampMap { from, to } => {
+                        if let Some(pos) = palette.ramp_pos(from, c) {
+                            palette.ramps[to][pos]
                         } else {
                             c
                         }
@@ -793,6 +866,9 @@ fn texture(
 
 #[cfg(test)]
 mod tests {
+    use std::cell::RefCell;
+    use std::collections::BTreeMap;
+
     use super::*;
 
     fn grid(rows: &[&str]) -> IndexFrame {
@@ -814,6 +890,8 @@ mod tests {
             seed: 1,
             frame_name: "base",
             load_template: None,
+            parts: None,
+            pose: RefCell::new(BTreeMap::new()),
         }
     }
 

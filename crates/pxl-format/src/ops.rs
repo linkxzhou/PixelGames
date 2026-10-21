@@ -193,7 +193,7 @@ pub enum Op {
         seed: Option<u64>,
     },
     Noop {},
-    /// Deferred to M2.
+    /// Record an absolute pose for `part`. Offsets are integers; `rot90` is cw, ccw, or 180.
     PartTransform {
         part: String,
         #[serde(default)]
@@ -205,10 +205,13 @@ pub enum Op {
         #[serde(default)]
         flip: Option<String>,
     },
-    /// Deferred to M2.
+    /// Draw parts in `parts` order (or the facing's order when empty).
+    /// `dir` selects sprites, z-order, and a whole-canvas mirror such as right←left.
     Compose {
         #[serde(default)]
         parts: Vec<String>,
+        #[serde(default)]
+        dir: Option<String>,
     },
 }
 

@@ -3,11 +3,13 @@
 
 mod model;
 mod ops;
+mod parts;
 mod recipe;
 mod schema;
 
 pub use model::*;
 pub use ops::*;
+pub use parts::*;
 pub use recipe::*;
 pub use schema::*;
 

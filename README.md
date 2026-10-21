@@ -4,7 +4,7 @@
 
 The same recipe, seed, and `pxl` version produce byte-identical outputs. Core crates do not touch the filesystem, threads, or the system clock, so they can move to WASM later. There is no UI in this tree.
 
-The design notes live in [`plan/`](plan/). This repository implements the M0 CLI and the M1 tank demo.
+The design notes live in [`plan/`](plan/). This repository implements the M0 CLI, the M1 tank demo, and the M2 paper-doll farmer.
 
 ## Layout
 
@@ -12,12 +12,13 @@ The design notes live in [`plan/`](plan/). This repository implements the M0 CLI
 | --- | --- |
 | `crates/pxl-core` | frames, palette, text matrices, SplitMix64 + PCG32. `no_std` + `alloc` |
 | `crates/pxl-gen` | Bollinger masks, shape programs, periodic ground tiles |
-| `crates/pxl-ops` | integer transforms and animation macros |
-| `crates/pxl-qa` | `default` and `tank` checks |
+| `crates/pxl-ops` | integer transforms, animation macros, paper-doll compose |
+| `crates/pxl-qa` | `default`, `tank`, and `character` checks |
 | `crates/pxl-format` | JSON documents and JSON Schema |
 | `crates/pxl-export` | indexed PNG and GIF, no `image` crate |
 | `crates/pxl-cli` | the `pxl` binary |
 | `examples/tank` | tank recipe. `demo/tank` points here |
+| `examples/farmer` | 16×32 paper-doll farmer, four facings, two recolors |
 | `assets/` | built-in palettes and mask templates |
 
 ## Build
@@ -40,6 +41,15 @@ pxl validate examples/tank/out/tank.sheet.json --rules tank
 ```
 
 `out/` is gitignored. A second build into the same directory overwrites those files and keeps the same sha256. The sheet has four directions, at least four move frames and two idle frames each, at least four dirt tiles, `tank.sheet.json` (Aseprite `frames` + `meta.frameTags`), `tank_move_E.gif`, and `preview.png`.
+
+## Farmer
+
+```bash
+pxl build examples/farmer/farmer.recipe.json -o examples/farmer/out/
+pxl validate examples/farmer/out/farmer.sheet.json --rules character
+```
+
+The farmer is original art assembled from parts (`part_transform`, `compose`, `doll`). The canvas is 16×32. Down, up, and left have their own sprites; right is a horizontal mirror of left. Walk is 4 frames with an arm swing, alternating feet, and a 1px head bob. Idle is a 2-frame breath. Hoe is 4 frames on the down facing and does not loop. `farmer_blonde` swaps hair to blonde and the shirt to red. `farmer_raven` swaps hair to black and the shirt to green. Both stay on the same palette so they pack into one sheet.
 
 `--json` prints one JSON object on stdout. Exit codes are `0` success, `1` I/O, `2` usage, `3` schema, `4` semantic, `5` QA, `6` output already exists. Single-file commands do not overwrite unless you pass `--overwrite`.
 

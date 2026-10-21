@@ -14,10 +14,10 @@ You do not have image libraries. Do not write PNG or GIF bytes yourself. Do not 
 ## How to call it
 
 1. Add `--json` to every command. Stdout is one JSON object. Logs stay on stderr.
-2. Before writing a JSON file, run `pxl list <kind> --json` or `pxl schema <kind> --json`. Kinds for list: `generators`, `ops`, `macros`, `templates`, `palettes`. Kinds for schema: `recipe`, `ops`, `op`, `pxl`, `palette`, `sheet`.
+2. Before writing a JSON file, run `pxl list <kind> --json` or `pxl schema <kind> --json`. Kinds for list: `generators`, `ops`, `macros`, `templates`, `palettes`. Kinds for schema: `recipe`, `ops`, `op`, `pxl`, `palette`, `parts`, `sheet`.
 3. Read the exit code. `0` is success. Anything else is a failure.
 4. On failure, read `error.code`, `error.message`, `error.path`, and `error.hint`. Fix the input and retry that step. Stop after 3 failed attempts on the same step and report the last hint.
-5. Finish only after `pxl validate <sheet.json> --rules tank --json` (or `--rules default` for a non-tank sprite) exits 0.
+5. Finish only after `pxl validate <sheet.json> --rules <rules> --json` exits 0. Use `tank` for the tank demo, `character` for a paper-doll, and `default` for anything else.
 
 Exit codes:
 
@@ -27,7 +27,7 @@ Exit codes:
 | 1 | E_IO | disk or stdin/stdout failure |
 | 2 | E_USAGE | bad arguments |
 | 3 | E_SCHEMA | JSON does not match the schema |
-| 4 | E_SEMANTIC | known fields, impossible combination. `rotate`, `part_transform`, `compose`, and `tile autotile` are not implemented yet |
+| 4 | E_SEMANTIC | known fields, impossible combination. Arbitrary-angle `rotate` and `tile autotile` are not implemented. `part_transform` and `compose` are. |
 | 5 | E_QA | `validate` or `build` checks failed. The `checks` array is on the same JSON object |
 | 6 | E_EXISTS | the output file already exists. Pass `--overwrite`, or pick a new path |
 
@@ -71,3 +71,28 @@ pxl validate out/tank.sheet.json --rules tank --json
 If a diff check is over 25%, the tread region is too big or the hull bob is repainting too many pixels. Shrink the tread rect. Do not loosen the checker.
 
 `pxl mcp` and `pxl tile autotile` are not available. Stay on the shell commands above.
+
+## Farmer (paper-doll)
+
+A character is a parts rig. `examples/farmer/` is the reference: 16×32, four facings, walk, idle, and a down-facing hoe. Right is a mirror of left. Build the body from parts with pivots and per-facing sprites.
+
+Working files:
+
+- `farmer.palette.json` — index 0 is `#00000000`. Ramps `skin`, `hair`, `shirt`, `pants`, plus swap targets `blonde`, `raven`, `red`, `green`.
+- `farmer.parts.json` — parts with pivots, per-facing sprites (or `"up": "down"` aliases), `order` per facing, and `anims` whose frames are integer `dx` / `dy` / `rot90`.
+- `farmer.recipe.json` — `base.gen` is `parts`. Each direction is `compose`. Animations use `doll(anim=walk)`, `doll(anim=idle)`, or `doll(anim=hoe)`.
+
+`post` on a parts sprite runs after every `compose` (outline, then a ramp swap for a variant). One palette serves the whole sheet. A variant is `palette_swap` with `ramp:hair->blonde`, not a second palette file.
+
+```bash
+pxl schema parts --json
+pxl gen parts --spec farmer.parts.json --dir down -o farmer.pxl.json --json
+pxl build farmer.recipe.json -o out/ --json
+pxl validate out/farmer.sheet.json --rules character --json
+```
+
+`--rules character` requires: palette indices only, facings down/up/left/right, left and right bounding boxes equal, right pixels the x-flip of left (idle and every walk/idle frame), down and up boxes within 2px, at least 4 walk frames and 2 idle frames per facing, walk diffs 1%–35% including the loop, idle diffs 0.5%–25%, one shared foot line across walk, idle, and the hoe, and a non-looping `hoe` of at least 4 frames on down.
+
+Keep the head bob on the head part. A torso shift drags the legs and moves the foot line. `rot90` is `cw`, `ccw`, or `180` around the part pivot. If a tool swing drops below the boots, shorten the tool. When a check fails, change the sprite or the pose.
+
+When several sprites share an animation name, the first one keeps tags like `walk_down`. Later sprites get `{id}_walk_down`. `--rules character` checks the first sprite's anims.

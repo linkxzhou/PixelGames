@@ -130,6 +130,9 @@ pub struct Meta {
     pub asset: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub kind: Option<String>,
+    /// Parts spec file name, relative to the document, when this sprite is a rig.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parts: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]

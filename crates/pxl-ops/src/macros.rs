@@ -4,7 +4,7 @@
 use std::collections::BTreeMap;
 
 use pxl_core::{IndexFrame, Palette, PxlError, PxlResult};
-use pxl_format::{Op, Region};
+use pxl_format::{Op, PartsFile, Region};
 
 pub const MACRO_NAMES: &[&str] = &[
     "tread_cycle",
@@ -18,6 +18,7 @@ pub const MACRO_NAMES: &[&str] = &[
     "blink",
     "spin_projectile",
     "pulse_glow",
+    "doll",
 ];
 
 pub fn parse_macro_call(spec: &str) -> PxlResult<(String, BTreeMap<String, String>)> {
@@ -59,6 +60,7 @@ pub fn expand_macro(
     dir: Option<&str>,
     frame: &IndexFrame,
     palette: &Palette,
+    parts: Option<&PartsFile>,
 ) -> PxlResult<Vec<Vec<Op>>> {
     let (name, args) = parse_macro_call(spec)?;
     if !MACRO_NAMES.contains(&name.as_str()) {
@@ -77,8 +79,53 @@ pub fn expand_macro(
         "blink" => blink(&args, frame),
         "spin_projectile" => spin_projectile(&args),
         "pulse_glow" => pulse_glow(&args),
+        "doll" => doll(&args, dir, parts),
         _ => unreachable!(),
     }
+}
+
+fn doll(
+    args: &BTreeMap<String, String>,
+    dir: Option<&str>,
+    parts: Option<&PartsFile>,
+) -> PxlResult<Vec<Vec<Op>>> {
+    let rig = parts.ok_or_else(|| {
+        PxlError::semantic("doll() needs a parts spec")
+            .with_hint("set the sprite base to gen parts and pass --spec farmer.parts.json")
+    })?;
+    let anim = arg_str(args, "anim", "idle");
+    let facing = dir.unwrap_or("down");
+    let (frames, order) = rig.anim_pose(anim, facing)?;
+    if frames.is_empty() || frames.len() > 16 {
+        return Err(
+            PxlError::schema(format!("doll anim '{anim}' has {} frames", frames.len()))
+                .with_hint("a doll anim has 1..=16 keyframes"),
+        );
+    }
+    let mut out = Vec::with_capacity(frames.len());
+    for frame_pose in frames {
+        let mut ops = Vec::new();
+        for (part, key) in &frame_pose {
+            rig.part(part)?;
+            let identity = key.dx == 0 && key.dy == 0 && key.rot90.is_none() && key.flip.is_none();
+            if identity {
+                continue;
+            }
+            ops.push(Op::PartTransform {
+                part: part.clone(),
+                dx: key.dx,
+                dy: key.dy,
+                rot90: key.rot90.clone(),
+                flip: key.flip.clone(),
+            });
+        }
+        ops.push(Op::Compose {
+            parts: order.clone(),
+            dir: Some(facing.to_string()),
+        });
+        out.push(ops);
+    }
+    Ok(out)
 }
 
 fn arg_i32(args: &BTreeMap<String, String>, key: &str, default: i32) -> PxlResult<i32> {

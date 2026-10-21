@@ -1,6 +1,7 @@
 //! Subcommand implementations. File IO stays here; pixel work stays in the libraries.
 
-use std::collections::BTreeMap;
+use std::cell::RefCell;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -17,7 +18,7 @@ use pxl_gen::{
     builtin_palette, builtin_template, generate_bollinger, generate_noise_tile, generate_shapes,
     palette_ids, template_ids, variant_seed, RuntimeMask,
 };
-use pxl_ops::{apply_ops, expand_macro, ApplyCx, MACRO_NAMES};
+use pxl_ops::{apply_ops, compose_rig, expand_macro, ApplyCx, MACRO_NAMES};
 use pxl_qa::{validate, AnimSeq, Report, ValidateInput};
 use serde_json::{json, Map, Value};
 
@@ -26,7 +27,7 @@ use crate::util::{self, Ctx};
 
 #[derive(Args, Debug)]
 pub struct GenArgs {
-    /// bollinger, shapes, or noise-tile.
+    /// bollinger, shapes, noise-tile, or parts.
     pub generator: String,
     #[arg(long)]
     pub template: Option<String>,
@@ -38,6 +39,9 @@ pub struct GenArgs {
     pub ramp: Option<String>,
     #[arg(long)]
     pub mirror: Option<String>,
+    /// Facing to draw when `generator` is `parts`. Omit for a blank canvas.
+    #[arg(long)]
+    pub dir: Option<String>,
     #[arg(long)]
     pub kind: Option<String>,
     #[arg(long)]
@@ -212,7 +216,7 @@ fn gen(ctx: &Ctx, args: GenArgs) -> CmdResult<()> {
     util::check_lock(ctx, None)?;
     let seed = ctx.seed.unwrap_or(1);
     let mut warnings = Vec::new();
-    if ctx.seed.is_none() && args.generator != "shapes" {
+    if ctx.seed.is_none() && args.generator != "shapes" && args.generator != "parts" {
         warnings.push("seed defaulted to 1; pass --seed to make the choice explicit".into());
     }
     let base = PathBuf::from(&args.out);
@@ -282,9 +286,31 @@ fn gen(ctx: &Ctx, args: GenArgs) -> CmdResult<()> {
             let doc = doc_from_frames(&palette_ref, &pairs, seed, kind_name)?;
             (doc, frames)
         }
+        "parts" => {
+            let spec_path = args.spec.as_deref().ok_or_else(|| {
+                PxlError::usage("parts requires --spec")
+                    .with_hint("pass a .parts.json rig, for example farmer.parts.json")
+            })?;
+            let text = util::read_text(spec_path)?;
+            let rig = pxl_format::parse_parts(&text)?;
+            let blank = IndexFrame::new(rig.w, rig.h)?;
+            let frame = if let Some(dir) = &args.dir {
+                compose_rig(&blank, &rig, dir, &[], &BTreeMap::new())?
+            } else {
+                blank
+            };
+            let mut pairs = vec![("base".into(), frame.clone())];
+            if let Some(dir) = &args.dir {
+                pairs.push((dir.clone(), frame.clone()));
+            }
+            let mut doc = doc_from_frames(&palette_ref, &pairs, seed, "parts")?;
+            doc.meta.parts = Some(spec_file_name(spec_path));
+            let frames = pairs.into_iter().map(|(_, f)| f).collect();
+            (doc, frames)
+        }
         other => {
             return Err(PxlError::usage(format!("unknown generator '{other}'"))
-                .with_hint("generators: bollinger, shapes, noise-tile")
+                .with_hint("generators: bollinger, shapes, noise-tile, parts")
                 .into());
         }
     };
@@ -310,8 +336,13 @@ fn resolve_gen_palette(ctx: &Ctx, args: &GenArgs, base: &Path) -> CmdResult<(Str
     }
     if let Some(spec) = &args.spec {
         let text = util::read_text(spec)?;
-        let shapes: ShapesFile = pxl_format::parse_shapes(&text)?;
-        if let Some(p) = shapes.palette {
+        let palette_ref = if args.generator == "parts" {
+            pxl_format::parse_parts(&text)?.palette
+        } else {
+            let shapes: ShapesFile = pxl_format::parse_shapes(&text)?;
+            shapes.palette
+        };
+        if let Some(p) = palette_ref {
             let spec_base = Path::new(spec).parent().unwrap_or(base);
             let pal = util::load_palette(&p, spec_base)?;
             return Ok((p, pal));
@@ -367,8 +398,17 @@ fn doc_from_frames(
             gen_version: Some(GEN_VERSION),
             asset: None,
             kind: Some(kind.into()),
+            parts: None,
         },
     })
+}
+
+fn spec_file_name(spec: &str) -> String {
+    Path::new(spec)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or(spec)
+        .to_string()
 }
 
 fn op_cmd(ctx: &Ctx, args: OpArgs) -> CmdResult<()> {
@@ -384,7 +424,16 @@ fn op_cmd(ctx: &Ctx, args: OpArgs) -> CmdResult<()> {
     let ops = collect_ops(args.ops.as_deref(), &args.op)?;
     let dest_name = args.as_frame.unwrap_or_else(|| source_name.clone());
     let seed = ctx.seed.or(doc.meta.seed).unwrap_or(1);
-    let frame = apply_with(&source, &ops, &palette, seed, &dest_name, &base)?;
+    let parts = load_parts(&doc, &base)?;
+    let frame = apply_with(
+        &source,
+        &ops,
+        &palette,
+        seed,
+        &dest_name,
+        &base,
+        parts.as_ref(),
+    )?;
     doc.insert_frame(&dest_name, &frame)?;
     let hash = util::save_doc(&doc, &args.out, ctx.overwrite, ctx.json)?;
     let mut body = util::ok_base("op");
@@ -421,6 +470,7 @@ fn apply_with(
     seed: u64,
     frame_name: &str,
     base: &Path,
+    parts: Option<&pxl_format::PartsFile>,
 ) -> CmdResult<IndexFrame> {
     let loader = |name: &str| util::load_mask(name, base);
     let cx = ApplyCx {
@@ -428,8 +478,26 @@ fn apply_with(
         seed,
         frame_name,
         load_template: Some(&loader),
+        parts,
+        pose: RefCell::new(BTreeMap::new()),
     };
     Ok(apply_ops(frame, ops, &cx)?)
+}
+
+fn load_parts(doc: &PxlDoc, base: &Path) -> CmdResult<Option<pxl_format::PartsFile>> {
+    let Some(name) = &doc.meta.parts else {
+        return Ok(None);
+    };
+    let path = if Path::new(name).is_absolute() {
+        PathBuf::from(name)
+    } else {
+        base.join(name)
+    };
+    let text = fs::read_to_string(&path).map_err(|e| {
+        PxlError::io(format!("cannot read parts {}: {e}", path.display()))
+            .with_hint("meta.parts is the rig file name next to the pxl document")
+    })?;
+    Ok(Some(pxl_format::parse_parts(&text)?))
 }
 
 fn anim_cmd(ctx: &Ctx, args: AnimArgs) -> CmdResult<()> {
@@ -441,6 +509,7 @@ fn anim_cmd(ctx: &Ctx, args: AnimArgs) -> CmdResult<()> {
         .unwrap_or_else(|| Path::new("."))
         .to_path_buf();
     let seed = ctx.seed.or(doc.meta.seed).unwrap_or(1);
+    let parts = load_parts(&doc, &base)?;
     let dirs: Vec<String> = args
         .dirs
         .as_deref()
@@ -469,7 +538,7 @@ fn anim_cmd(ctx: &Ctx, args: AnimArgs) -> CmdResult<()> {
             ))
         })?;
         let lists = if let Some(mac) = &args.macro_call {
-            expand_macro(mac, target.as_deref(), &source, &palette)?
+            expand_macro(mac, target.as_deref(), &source, &palette, parts.as_ref())?
         } else if let Some(path) = &args.frames {
             let text = util::read_text(path)?;
             let lists: Vec<Vec<Op>> = pxl_format::parse_json(&text, "anim frames")?;
@@ -493,7 +562,7 @@ fn anim_cmd(ctx: &Ctx, args: AnimArgs) -> CmdResult<()> {
                 Some(dir) => format!("{}_{dir}_{i}", args.name),
                 None => format!("{}_{i}", args.name),
             };
-            let frame = apply_with(&source, ops, &palette, seed, &name, &base)?;
+            let frame = apply_with(&source, ops, &palette, seed, &name, &base, parts.as_ref())?;
             doc.insert_frame(&name, &frame)?;
             names.push(name);
         }
@@ -650,7 +719,7 @@ fn apply_palette_op(
     let seed = ctx.seed.or(doc.meta.seed).unwrap_or(1);
     for name in names {
         let frame = doc.frame(&name)?;
-        let next = apply_with(&frame, &[op.clone()], &palette, seed, &name, &base)?;
+        let next = apply_with(&frame, &[op.clone()], &palette, seed, &name, &base, None)?;
         doc.insert_frame(&name, &next)?;
     }
     let hash = util::save_doc(&doc, out, ctx.overwrite, ctx.json)?;
@@ -682,6 +751,7 @@ fn tile_cmd(ctx: &Ctx, action: TileCmd) -> CmdResult<()> {
                 palette: Some(palette),
                 ramp,
                 mirror: None,
+                dir: None,
                 kind: Some(kind),
                 size: Some(size),
                 variants,
@@ -763,9 +833,25 @@ fn pack_loaded(
     let mut facings = Map::new();
     let mut tiles = Map::new();
     let mut dirs = Vec::new();
+    let mut used_tags = BTreeSet::new();
+    let mut seen_anims = BTreeSet::new();
     for doc in loaded {
         let frames = frame_map(&doc.doc)?;
-        let doc_rows = rows_for(&doc.id, &doc.doc, &frames)?;
+        let mut doc_rows = rows_for(&doc.id, &doc.doc, &frames)?;
+        for row in &mut doc_rows {
+            let Some(current) = row.first().and_then(|c| c.tag.clone()) else {
+                continue;
+            };
+            let tag = if used_tags.contains(&current) {
+                format!("{}_{current}", doc.id)
+            } else {
+                current
+            };
+            used_tags.insert(tag.clone());
+            for cell in row.iter_mut() {
+                cell.tag = Some(tag.clone());
+            }
+        }
         if doc.doc.anims.is_empty() {
             let names: Vec<String> = doc_rows.iter().flatten().map(|c| c.name.clone()).collect();
             if !names.is_empty() {
@@ -781,6 +867,9 @@ fn pack_loaded(
             }
         }
         for (name, anim) in &doc.doc.anims {
+            if !seen_anims.insert(name.clone()) {
+                continue;
+            }
             fps.insert(name.clone(), json!(anim.fps));
             let mut dir_map = Map::new();
             for row in &doc_rows {
@@ -802,18 +891,21 @@ fn pack_loaded(
             );
         }
         if dirs.is_empty() {
-            for d in ["N", "E", "S", "W"] {
-                if frames.contains_key(d) {
-                    dirs.push(d.to_string());
+            for d in FACING_NAMES {
+                if frames.contains_key(*d) {
+                    dirs.push((*d).to_string());
                 }
             }
         }
-        for d in ["N", "E", "S", "W"] {
+        for d in FACING_NAMES {
+            if facings.contains_key(*d) {
+                continue;
+            }
             let key = format!("idle_{d}_0");
             if frames.contains_key(&key) {
-                facings.insert(d.to_string(), json!(format!("{}_{}", doc.id, key)));
-            } else if frames.contains_key(d) {
-                facings.insert(d.to_string(), json!(format!("{}_{}", doc.id, d)));
+                facings.insert((*d).to_string(), json!(format!("{}_{}", doc.id, key)));
+            } else if frames.contains_key(*d) {
+                facings.insert((*d).to_string(), json!(format!("{}_{}", doc.id, *d)));
             }
         }
         rows.extend(doc_rows);
@@ -952,11 +1044,14 @@ fn cells_for(
     Ok(row)
 }
 
+const FACING_NAMES: &[&str] = &["N", "E", "S", "W", "down", "up", "left", "right"];
+
 fn anim_rank(name: &str) -> u8 {
     match name {
-        "move" => 0,
+        "move" | "walk" => 0,
         "idle" => 1,
-        _ => 2,
+        "hoe" => 2,
+        _ => 3,
     }
 }
 
@@ -1184,9 +1279,12 @@ fn doc_input(doc: &PxlDoc, palette: &Palette) -> CmdResult<ValidateInput> {
         }
     }
     let mut facings = BTreeMap::new();
-    for d in ["N", "E", "S", "W"] {
-        if doc.frames.contains_key(d) {
-            facings.insert(d.to_string(), doc.frame(d)?);
+    for d in FACING_NAMES {
+        let idle = format!("idle_{d}_0");
+        if doc.frames.contains_key(&idle) {
+            facings.insert((*d).to_string(), doc.frame(&idle)?);
+        } else if doc.frames.contains_key(*d) {
+            facings.insert((*d).to_string(), doc.frame(d)?);
         }
     }
     let tiles = if doc.meta.kind.as_deref() == Some("tiles") {
@@ -1401,7 +1499,12 @@ fn schema_cmd(ctx: &Ctx, kind: &str) -> CmdResult<()> {
 
 fn list_cmd(ctx: &Ctx, kind: &str) -> CmdResult<()> {
     let items = match kind {
-        "generators" => vec!["bollinger".into(), "shapes".into(), "noise-tile".into()],
+        "generators" => vec![
+            "bollinger".into(),
+            "shapes".into(),
+            "noise-tile".into(),
+            "parts".into(),
+        ],
         "ops" => pxl_format::OP_NAMES
             .iter()
             .map(|s| (*s).to_string())
@@ -1487,6 +1590,22 @@ fn build_cmd(ctx: &Ctx, args: BuildArgs) -> CmdResult<()> {
     let seed = ctx.seed.unwrap_or(recipe.seed);
     let mut loaded = Vec::new();
     let mut outputs = vec![stored_pal_name.clone()];
+    let mut copied_specs = BTreeSet::new();
+    for sprite in &recipe.sprites {
+        if sprite.base.gen == "parts" {
+            if let Some(spec) = &sprite.base.spec {
+                let name = spec_file_name(spec);
+                if copied_specs.insert(name.clone()) {
+                    let src = recipe_dir.join(spec);
+                    let bytes = fs::read(&src).map_err(|e| {
+                        PxlError::io(format!("cannot read parts {}: {e}", src.display()))
+                    })?;
+                    util::write_out(out_dir.join(&name).to_str().unwrap(), &bytes, true, false)?;
+                    outputs.push(name);
+                }
+            }
+        }
+    }
     for sprite in &recipe.sprites {
         let doc = build_sprite(
             sprite,
@@ -1660,7 +1779,7 @@ fn build_sprite(
     recipe_path: &Path,
 ) -> CmdResult<PxlDoc> {
     let base_seed = sprite.base.seed.unwrap_or(seed);
-    let frame = match sprite.base.gen.as_str() {
+    let (frame, rig) = match sprite.base.gen.as_str() {
         "shapes" => {
             let spec = sprite.base.spec.as_deref().ok_or_else(|| {
                 PxlError::schema("shapes base requires spec").with_path("/sprites/0/base/spec")
@@ -1669,7 +1788,7 @@ fn build_sprite(
             let text = fs::read_to_string(&path)
                 .map_err(|e| PxlError::io(format!("cannot read {}: {e}", path.display())))?;
             let shapes = pxl_format::parse_shapes(&text)?;
-            generate_shapes(&shapes, palette)?
+            (generate_shapes(&shapes, palette)?, None)
         }
         "bollinger" => {
             let template = sprite
@@ -1684,21 +1803,36 @@ fn build_sprite(
                 .map(Mirror::parse)
                 .transpose()?;
             let mask = load_mask_maybe_mirror(template, recipe_dir, mirror)?;
-            generate_bollinger(&mask, base_seed, palette, sprite.base.ramp.as_deref())?
+            (
+                generate_bollinger(&mask, base_seed, palette, sprite.base.ramp.as_deref())?,
+                None,
+            )
+        }
+        "parts" => {
+            let spec = sprite.base.spec.as_deref().ok_or_else(|| {
+                PxlError::schema("parts base requires spec").with_path("/sprites/0/base/spec")
+            })?;
+            let path = recipe_dir.join(spec);
+            let text = fs::read_to_string(&path)
+                .map_err(|e| PxlError::io(format!("cannot read {}: {e}", path.display())))?;
+            let rig = pxl_format::parse_parts(&text)?;
+            let frame = IndexFrame::new(rig.w, rig.h)?;
+            (frame, Some(rig))
         }
         other => {
             return Err(
                 PxlError::schema(format!("unknown base generator '{other}'"))
-                    .with_hint("base.gen is shapes or bollinger")
+                    .with_hint("base.gen is shapes, bollinger, or parts")
                     .into(),
             );
         }
     };
+    let parts_mode = rig.is_some();
     let mut doc = doc_from_frames(
         palette_ref,
         &[("base".into(), frame.clone())],
         seed,
-        "sprite",
+        if parts_mode { "parts" } else { "sprite" },
     )?;
     doc.meta.asset = Some(sprite.id.clone());
     doc.meta.recipe = Some(
@@ -1709,7 +1843,21 @@ fn build_sprite(
             .into(),
     );
     doc.meta.gen_version = Some(recipe.gen_version);
-    let base_frame = apply_with(&frame, &sprite.post, palette, seed, "base", recipe_dir)?;
+    if let Some(spec) = sprite.base.spec.as_ref().filter(|_| parts_mode) {
+        doc.meta.parts = Some(spec_file_name(spec));
+    }
+    // Parts redraw the canvas in `compose`, so outline and palette swaps run after
+    // that draw. Shape and mask sprites still post-process the base first.
+    let base_ops: &[Op] = if parts_mode { &[] } else { &sprite.post };
+    let base_frame = apply_with(
+        &frame,
+        base_ops,
+        palette,
+        seed,
+        "base",
+        recipe_dir,
+        rig.as_ref(),
+    )?;
     doc.insert_frame("base", &base_frame)?;
     let mut named: BTreeMap<String, IndexFrame> = BTreeMap::new();
     named.insert("base".into(), base_frame);
@@ -1721,7 +1869,11 @@ fn build_sprite(
             ))
             .with_hint("list directions so each `from` already exists")
         })?;
-        let out = apply_with(&src, &dir.ops, palette, seed, &dir.id, recipe_dir)?;
+        let mut ops = dir.ops.clone();
+        if parts_mode {
+            ops.extend(sprite.post.iter().cloned());
+        }
+        let out = apply_with(&src, &ops, palette, seed, &dir.id, recipe_dir, rig.as_ref())?;
         named.insert(dir.id.clone(), out.clone());
         doc.insert_frame(&dir.id, &out)?;
     }
@@ -1746,7 +1898,7 @@ fn build_sprite(
                     ))
                 })?;
             let lists = if let Some(mac) = anim.macro_name() {
-                expand_macro(mac, target.as_deref(), &source, palette)?
+                expand_macro(mac, target.as_deref(), &source, palette, rig.as_ref())?
             } else if !anim.frames.is_empty() {
                 anim.frames.clone()
             } else {
@@ -1762,7 +1914,19 @@ fn build_sprite(
                     Some(dir) => format!("{}_{dir}_{i}", anim.name),
                     None => format!("{}_{i}", anim.name),
                 };
-                let frame = apply_with(&source, ops, palette, seed, &name, recipe_dir)?;
+                let mut ops = ops.clone();
+                if parts_mode {
+                    ops.extend(sprite.post.iter().cloned());
+                }
+                let frame = apply_with(
+                    &source,
+                    &ops,
+                    palette,
+                    seed,
+                    &name,
+                    recipe_dir,
+                    rig.as_ref(),
+                )?;
                 doc.insert_frame(&name, &frame)?;
                 names.push(name);
             }
@@ -1786,6 +1950,5 @@ fn build_sprite(
             },
         );
     }
-    let _ = recipe;
     Ok(doc)
 }

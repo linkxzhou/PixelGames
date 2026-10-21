@@ -1,6 +1,7 @@
 //! Frozen hashes of frames and encoded images. Same recipe, seed, and version
 //! must keep these byte-identical.
 
+use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::PathBuf;
@@ -31,6 +32,8 @@ fn cx<'a>(pal: &'a Palette) -> ApplyCx<'a> {
         seed: 1,
         frame_name: "golden",
         load_template: Some(&load_builtin_mask),
+        parts: None,
+        pose: RefCell::new(BTreeMap::new()),
     }
 }
 
@@ -230,18 +233,93 @@ fn compute() -> BTreeMap<String, String> {
             Some(dir),
             &body,
             &pal,
+            None,
         )
         .unwrap();
         for (i, ops) in lists.iter().enumerate() {
             let frame = apply_ops(&body, ops, &context).unwrap();
             push(&format!("macro.tread.{dir}.{i}"), &frame);
         }
-        let idle = expand_macro("idle_rumble(steps=2, amp=1)", Some(dir), &body, &pal).unwrap();
+        let idle =
+            expand_macro("idle_rumble(steps=2, amp=1)", Some(dir), &body, &pal, None).unwrap();
         for (i, ops) in idle.iter().enumerate() {
             let frame = apply_ops(&body, ops, &context).unwrap();
             push(&format!("macro.idle.{dir}.{i}"), &frame);
         }
     }
+
+    let farmer_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/farmer");
+    let farmer_pal = pxl_format::parse_palette(
+        &fs::read_to_string(farmer_dir.join("farmer.palette.json")).unwrap(),
+        "farmer",
+    )
+    .unwrap();
+    let rig =
+        pxl_format::parse_parts(&fs::read_to_string(farmer_dir.join("farmer.parts.json")).unwrap())
+            .unwrap();
+    let blank = IndexFrame::new(rig.w, rig.h).unwrap();
+    let mut farmer_cx = cx(&farmer_pal);
+    farmer_cx.parts = Some(&rig);
+    let outline = Op::Outline {
+        color: pxl_format::ColorRef::Name("outline".into()),
+        mode: "outer".into(),
+        brush: "square".into(),
+        width: 1,
+    };
+    let down = apply_ops(
+        &blank,
+        &[
+            Op::Compose {
+                parts: vec![],
+                dir: Some("down".into()),
+            },
+            outline.clone(),
+        ],
+        &farmer_cx,
+    )
+    .unwrap();
+    push("farmer.down", &down);
+    let walk = expand_macro(
+        "doll(anim=walk)",
+        Some("down"),
+        &blank,
+        &farmer_pal,
+        Some(&rig),
+    )
+    .unwrap();
+    for (i, ops) in walk.iter().enumerate() {
+        let mut ops = ops.clone();
+        ops.push(outline.clone());
+        push(
+            &format!("farmer.walk.down.{i}"),
+            &apply_ops(&blank, &ops, &farmer_cx).unwrap(),
+        );
+    }
+    let hoe = expand_macro(
+        "doll(anim=hoe)",
+        Some("down"),
+        &blank,
+        &farmer_pal,
+        Some(&rig),
+    )
+    .unwrap();
+    let mut planted = hoe[2].clone();
+    planted.push(outline.clone());
+    push(
+        "farmer.hoe.down.2",
+        &apply_ops(&blank, &planted, &farmer_cx).unwrap(),
+    );
+    push(
+        "farmer.swap.blonde",
+        &apply(
+            &down,
+            Op::PaletteSwap {
+                map: "ramp:hair->blonde,ramp:shirt->red".into(),
+                region: None,
+            },
+            &farmer_pal,
+        ),
+    );
 
     let png = encode_indexed_png(&body, &pal, 2).unwrap();
     out.insert("png.tank_body".into(), sha256_hex(&png));

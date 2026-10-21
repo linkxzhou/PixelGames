@@ -6,6 +6,8 @@
 
 mod apply;
 mod macros;
+mod parts;
 
 pub use apply::{apply_op, apply_ops, ApplyCx};
 pub use macros::{expand_macro, parse_macro_call, MACRO_NAMES};
+pub use parts::{compose_rig, PartPose};

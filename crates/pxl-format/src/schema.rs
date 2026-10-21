@@ -4,6 +4,7 @@ use serde_json::Value;
 
 use crate::model::{PaletteFile, PxlDoc};
 use crate::ops::Op;
+use crate::parts::PartsFile;
 use crate::recipe::Recipe;
 
 pub fn schema_json(kind: &str) -> PxlResult<Value> {
@@ -13,10 +14,11 @@ pub fn schema_json(kind: &str) -> PxlResult<Value> {
         "pxl" => serde_json::to_value(schema_for!(PxlDoc)),
         "palette" => serde_json::to_value(schema_for!(PaletteFile)),
         "recipe" => recipe_schema(),
+        "parts" => serde_json::to_value(schema_for!(PartsFile)),
         "sheet" => Ok(sheet_schema()),
         other => {
             return Err(PxlError::usage(format!("unknown schema '{other}'"))
-                .with_hint("schema is one of: recipe, ops, pxl, palette, sheet"));
+                .with_hint("schema is one of: recipe, ops, op, pxl, palette, parts, sheet"));
         }
     };
     value.map_err(|e| PxlError::io(format!("schema encode failed: {e}")))

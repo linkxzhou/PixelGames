@@ -1,0 +1,109 @@
+{
+  "v": 1,
+  "asset": "farmer",
+  "gen_version": 1,
+  "seed": 1,
+  "palette": "farmer.palette.json",
+  "sprites": [
+    {
+      "id": "farmer",
+      "base": { "gen": "parts", "spec": "farmer.parts.json" },
+      "post": [
+        { "op": "outline", "color": "outline", "mode": "outer", "brush": "square", "width": 1 }
+      ],
+      "directions": [
+        { "id": "down", "from": "base", "ops": [{ "op": "compose", "dir": "down" }] },
+        { "id": "up", "from": "base", "ops": [{ "op": "compose", "dir": "up" }] },
+        { "id": "left", "from": "base", "ops": [{ "op": "compose", "dir": "left" }] },
+        { "id": "right", "from": "base", "ops": [{ "op": "compose", "dir": "right" }] }
+      ],
+      "anims": [
+        {
+          "name": "walk",
+          "fps": 8,
+          "loop": true,
+          "dirs": ["down", "up", "left", "right"],
+          "macro": "doll(anim=walk)"
+        },
+        {
+          "name": "idle",
+          "fps": 4,
+          "loop": true,
+          "dirs": ["down", "up", "left", "right"],
+          "macro": "doll(anim=idle)"
+        },
+        {
+          "name": "hoe",
+          "fps": 8,
+          "loop": false,
+          "dirs": ["down"],
+          "macro": "doll(anim=hoe)"
+        }
+      ]
+    },
+    {
+      "id": "farmer_blonde",
+      "base": { "gen": "parts", "spec": "farmer.parts.json" },
+      "post": [
+        { "op": "palette_swap", "map": "ramp:hair->blonde,ramp:shirt->red" },
+        { "op": "outline", "color": "outline", "mode": "outer", "brush": "square", "width": 1 }
+      ],
+      "directions": [
+        { "id": "down", "from": "base", "ops": [{ "op": "compose", "dir": "down" }] },
+        { "id": "up", "from": "base", "ops": [{ "op": "compose", "dir": "up" }] },
+        { "id": "left", "from": "base", "ops": [{ "op": "compose", "dir": "left" }] },
+        { "id": "right", "from": "base", "ops": [{ "op": "compose", "dir": "right" }] }
+      ],
+      "anims": [
+        {
+          "name": "walk",
+          "fps": 8,
+          "loop": true,
+          "dirs": ["down", "up", "left", "right"],
+          "macro": "doll(anim=walk)"
+        }
+      ]
+    },
+    {
+      "id": "farmer_raven",
+      "base": { "gen": "parts", "spec": "farmer.parts.json" },
+      "post": [
+        { "op": "palette_swap", "map": "ramp:hair->raven,ramp:shirt->green" },
+        { "op": "outline", "color": "outline", "mode": "outer", "brush": "square", "width": 1 }
+      ],
+      "directions": [
+        { "id": "down", "from": "base", "ops": [{ "op": "compose", "dir": "down" }] },
+        { "id": "up", "from": "base", "ops": [{ "op": "compose", "dir": "up" }] },
+        { "id": "left", "from": "base", "ops": [{ "op": "compose", "dir": "left" }] },
+        { "id": "right", "from": "base", "ops": [{ "op": "compose", "dir": "right" }] }
+      ],
+      "anims": [
+        {
+          "name": "walk",
+          "fps": 8,
+          "loop": true,
+          "dirs": ["down", "up", "left", "right"],
+          "macro": "doll(anim=walk)"
+        }
+      ]
+    }
+  ],
+  "sheet": {
+    "sources": ["farmer", "farmer_blonde", "farmer_raven"],
+    "layout": "rows-by-anim",
+    "pad": 1,
+    "file": "farmer.sheet.png"
+  },
+  "preview": [
+    { "sheet": true, "scale": 3, "grid": true, "file": "preview.png" },
+    { "source": "farmer", "anim": "walk", "dir": "down", "scale": 4, "file": "walk_down.png" },
+    { "source": "farmer", "anim": "walk", "dir": "up", "scale": 4, "file": "walk_up.png" },
+    { "source": "farmer", "anim": "walk", "dir": "left", "scale": 4, "file": "walk_left.png" },
+    { "source": "farmer", "anim": "walk", "dir": "right", "scale": 4, "file": "walk_right.png" },
+    { "source": "farmer", "anim": "idle", "dir": "down", "scale": 4, "file": "idle_down.png" },
+    { "source": "farmer", "anim": "hoe", "dir": "down", "scale": 4, "file": "hoe_down.png" },
+    { "source": "farmer_blonde", "anim": "walk", "dir": "down", "scale": 4, "file": "blonde_walk_down.png" },
+    { "source": "farmer_raven", "anim": "walk", "dir": "down", "scale": 4, "file": "raven_walk_down.png" }
+  ],
+  "validate": { "rules": "character" }
+}

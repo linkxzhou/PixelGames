@@ -1,5 +1,6 @@
 //! Programmatic checks. `default` covers a single sprite document.
 //! `tank` covers the 4-direction demo: bbox, tread motion, hull stability, tiles.
+//! `character` covers a paper-doll: facings, mirror, walk/idle diffs, stable feet.
 
 use std::collections::BTreeMap;
 
@@ -77,9 +78,16 @@ pub fn validate(input: &ValidateInput, rules: &str) -> PxlResult<Report> {
             checks.extend(tank_counts(input));
             checks.extend(tile_checks(input));
         }
+        "character" => {
+            checks.extend(palette_checks(&input.palette));
+            for (name, frame) in &input.frames {
+                checks.extend(frame_checks(&input.palette, name, frame, false));
+            }
+            checks.extend(character_checks(input));
+        }
         other => {
             return Err(PxlError::usage(format!("unknown ruleset '{other}'"))
-                .with_hint("rules are default or tank"));
+                .with_hint("rules are default, tank, or character"));
         }
     }
     Ok(Report {
@@ -422,6 +430,181 @@ fn fmt_pct(bps: u32) -> String {
     format!("{}.{:02}%", bps / 100, bps % 100)
 }
 
+fn character_checks(input: &ValidateInput) -> Vec<Check> {
+    let mut out = Vec::new();
+    let need = ["down", "up", "left", "right"];
+    for d in need {
+        out.push(Check {
+            id: format!("facing.{d}"),
+            pass: input.facings.contains_key(d),
+            value: if input.facings.contains_key(d) {
+                "present".into()
+            } else {
+                "missing".into()
+            },
+            limit: "down, up, left, right".into(),
+        });
+    }
+    if let (Some(left), Some(right)) = (input.facings.get("left"), input.facings.get("right")) {
+        let bl = bbox_wh(left);
+        let br = bbox_wh(right);
+        out.push(Check {
+            id: "facing.lr_bbox".into(),
+            pass: bl == br && bl.0 > 0,
+            value: format!("left {bl:?} right {br:?}"),
+            limit: "left and right bounding boxes match".into(),
+        });
+        let mirror = is_x_flip(left, right);
+        out.push(Check {
+            id: "facing.right_mirror".into(),
+            pass: mirror,
+            value: if mirror { "mirror" } else { "not a mirror" }.into(),
+            limit: "right pixels are the x-flip of left".into(),
+        });
+    }
+    if let (Some(down), Some(up)) = (input.facings.get("down"), input.facings.get("up")) {
+        let bd = bbox_wh(down);
+        let bu = bbox_wh(up);
+        let dw = (bd.0 - bu.0).abs();
+        let dh = (bd.1 - bu.1).abs();
+        out.push(Check {
+            id: "facing.du_bbox".into(),
+            pass: dw <= 2 && dh <= 2 && bd.0 > 0,
+            value: format!("down {bd:?} up {bu:?}"),
+            limit: "down and up width/height within 2px".into(),
+        });
+    }
+    for dir in need {
+        let walk = find_anim(input, "walk", dir);
+        let idle = find_anim(input, "idle", dir);
+        let walk_n = walk.map(|a| a.frames.len()).unwrap_or(0);
+        let idle_n = idle.map(|a| a.frames.len()).unwrap_or(0);
+        out.push(Check {
+            id: format!("count.walk_{dir}"),
+            pass: walk_n >= 4,
+            value: walk_n.to_string(),
+            limit: ">= 4".into(),
+        });
+        out.push(Check {
+            id: format!("count.idle_{dir}"),
+            pass: idle_n >= 2,
+            value: idle_n.to_string(),
+            limit: ">= 2".into(),
+        });
+        if let Some(walk) = walk {
+            out.extend(anim_diff(walk, 100, 3500, true));
+        }
+        if let Some(idle) = idle {
+            out.extend(anim_diff(idle, 50, 2500, true));
+        }
+        let mut feet = Vec::new();
+        for anim in [walk, idle].into_iter().flatten() {
+            for frame in &anim.frames {
+                feet.push(foot_line(frame));
+            }
+        }
+        if dir == "down" {
+            if let Some(hoe) = find_anim(input, "hoe", "down") {
+                for frame in &hoe.frames {
+                    feet.push(foot_line(frame));
+                }
+            }
+        }
+        let known: Vec<i32> = feet.into_iter().flatten().collect();
+        let stable = !known.is_empty() && known.iter().all(|y| *y == known[0]);
+        out.push(Check {
+            id: format!("feet.{dir}"),
+            pass: stable,
+            value: if known.is_empty() {
+                "missing".into()
+            } else {
+                format!("{known:?}")
+            },
+            limit: "one ground line across walk, idle, and hoe".into(),
+        });
+    }
+    out.extend(mirror_anim(input, "walk"));
+    out.extend(mirror_anim(input, "idle"));
+    match find_anim(input, "hoe", "down") {
+        Some(hoe) => {
+            out.push(Check {
+                id: "count.hoe_down".into(),
+                pass: hoe.frames.len() >= 4,
+                value: hoe.frames.len().to_string(),
+                limit: ">= 4".into(),
+            });
+            out.push(Check {
+                id: "hoe.loop".into(),
+                pass: !hoe.looped,
+                value: hoe.looped.to_string(),
+                limit: "false".into(),
+            });
+            out.extend(anim_diff(hoe, 100, 5000, false));
+        }
+        None => {
+            out.push(fail("count.hoe_down", "missing", ">= 4 frames on down"));
+            out.push(fail("hoe.loop", "missing", "false"));
+        }
+    }
+    out
+}
+
+fn find_anim<'a>(input: &'a ValidateInput, name: &str, dir: &str) -> Option<&'a AnimSeq> {
+    input
+        .anims
+        .iter()
+        .find(|a| a.name == name && a.dir.as_deref() == Some(dir))
+}
+
+fn mirror_anim(input: &ValidateInput, name: &str) -> Vec<Check> {
+    let Some(left) = find_anim(input, name, "left") else {
+        return Vec::new();
+    };
+    let Some(right) = find_anim(input, name, "right") else {
+        return Vec::new();
+    };
+    if left.frames.len() != right.frames.len() {
+        return vec![fail(
+            &format!("mirror.{name}"),
+            &format!("left {} right {}", left.frames.len(), right.frames.len()),
+            "same frame count",
+        )];
+    }
+    left.frames
+        .iter()
+        .zip(right.frames.iter())
+        .enumerate()
+        .map(|(i, (l, r))| {
+            let ok = is_x_flip(l, r);
+            Check {
+                id: format!("mirror.{name}.{i}"),
+                pass: ok,
+                value: if ok { "mirror" } else { "not a mirror" }.into(),
+                limit: "right frame is the x-flip of left".into(),
+            }
+        })
+        .collect()
+}
+
+fn is_x_flip(left: &IndexFrame, right: &IndexFrame) -> bool {
+    if left.w != right.w || left.h != right.h {
+        return false;
+    }
+    let w = left.w as i32;
+    for y in 0..left.h as i32 {
+        for x in 0..w {
+            if right.get(x, y) != left.get(w - 1 - x, y) {
+                return false;
+            }
+        }
+    }
+    true
+}
+
+fn foot_line(frame: &IndexFrame) -> Option<i32> {
+    frame.bbox().map(|b| b.y + b.h - 1)
+}
+
 fn fail(id: &str, value: &str, limit: &str) -> Check {
     Check {
         id: id.to_string(),
@@ -514,5 +697,100 @@ mod tests {
             .find(|c| c.id == "tile.ground_tile_0.seam")
             .unwrap();
         assert!(!seam.pass);
+    }
+
+    fn flip_x(src: &IndexFrame) -> IndexFrame {
+        let mut out = src.blank_like();
+        for y in 0..src.h as i32 {
+            for x in 0..src.w as i32 {
+                out.set(src.w as i32 - 1 - x, y, src.get(x, y));
+            }
+        }
+        out
+    }
+
+    fn pose(arm_x: i32, lift_left: bool, bob: bool) -> IndexFrame {
+        let mut frame = IndexFrame::new(8, 16).unwrap();
+        let head = if bob { 1 } else { 2 };
+        frame.set(3, head, 2);
+        frame.set(4, head, 3);
+        for y in 4..12 {
+            frame.set(3, y, 2);
+            frame.set(4, y, 2);
+        }
+        frame.set(arm_x, 8, 3);
+        frame.set(3, 14, 2);
+        frame.set(4, 14, 2);
+        if !lift_left {
+            frame.set(3, 15, 2);
+        }
+        frame.set(4, 15, 2);
+        frame
+    }
+
+    #[test]
+    fn character_rules_accept_a_mirrored_walk() {
+        let palette = pal();
+        let down = pose(2, false, false);
+        let up = pose(3, false, false);
+        let left = [
+            pose(2, true, false),
+            pose(2, false, true),
+            pose(5, true, false),
+            pose(4, false, true),
+        ];
+        let idle_l = [pose(3, false, false), pose(3, false, true)];
+        let mut frames = Vec::new();
+        let mut anims = Vec::new();
+        let mut push_anim = |name: &str, dir: &str, looped: bool, seq: Vec<IndexFrame>| {
+            for (i, frame) in seq.iter().enumerate() {
+                frames.push((format!("{name}_{dir}_{i}"), frame.clone()));
+            }
+            anims.push(AnimSeq {
+                name: name.into(),
+                dir: Some(dir.into()),
+                looped,
+                frames: seq,
+            });
+        };
+        for dir in ["down", "up", "left", "right"] {
+            let walk: Vec<IndexFrame> = if dir == "right" {
+                left.iter().map(flip_x).collect()
+            } else if dir == "left" {
+                left.to_vec()
+            } else {
+                left.to_vec()
+            };
+            let idle: Vec<IndexFrame> = if dir == "right" {
+                idle_l.iter().map(flip_x).collect()
+            } else {
+                idle_l.to_vec()
+            };
+            push_anim("walk", dir, true, walk);
+            push_anim("idle", dir, true, idle);
+        }
+        let hoe = vec![
+            pose(2, false, false),
+            pose(3, false, false),
+            pose(4, false, false),
+            pose(5, false, true),
+        ];
+        push_anim("hoe", "down", false, hoe);
+        let mut facings = BTreeMap::new();
+        facings.insert("down".into(), down);
+        facings.insert("up".into(), up);
+        facings.insert("left".into(), idle_l[0].clone());
+        facings.insert("right".into(), flip_x(&idle_l[0]));
+        let input = ValidateInput {
+            palette,
+            frames,
+            anims,
+            facings,
+            tiles: vec![],
+            tile_ramp: "ground".into(),
+        };
+        let report = validate(&input, "character").unwrap();
+        let failed: Vec<_> = report.checks.iter().filter(|c| !c.pass).collect();
+        assert!(failed.is_empty(), "{failed:?}");
     }
 }
