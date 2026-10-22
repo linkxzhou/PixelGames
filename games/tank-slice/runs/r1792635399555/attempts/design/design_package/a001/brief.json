@@ -1,0 +1,13 @@
+{
+  "game_id": "tank_slice",
+  "text": "一个俯视角坦克单屏切片游戏：玩家坦克在砖墙迷宫中移动（方向键/WASD），空格射击摧毁砖块并消灭敌方坦克，躲避水面障碍，到达出口过关。共 3 个逻辑关卡，难度递进：第一关只教移动和到达出口；第二关加入可破坏砖块和射击；第三关加入敌方坦克和水域。像素风格 16x16 tile，单调色板。",
+  "constraints": [
+    {
+      "key": "genre",
+      "value": "top_down_tank",
+      "source": "user"
+    }
+  ],
+  "assumptions": [],
+  "exclusions": []
+}

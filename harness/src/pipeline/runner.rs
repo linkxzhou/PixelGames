@@ -137,6 +137,26 @@ impl PipelineRunner {
             if self.state.stages[stage] == StageStatus::Succeeded {
                 continue;
             }
+            // When an approved design exists, `run --until assets` reuses it
+            // instead of regenerating; unapproved candidates are not reused.
+            if stage == "design" {
+                if let Some(rev) = self.artifacts.identity()?.design_revision.clone() {
+                    if self.artifacts.approval_valid("design", &rev)? {
+                        self.state.design_revision = Some(rev.clone());
+                        self.state.stages.insert(stage.clone(), StageStatus::Succeeded);
+                        self.run.save(&self.state)?;
+                        self.events.append(Event::StageStatus {
+                            stage: stage.clone(),
+                            status: "succeeded".into(),
+                        })?;
+                        continue;
+                    }
+                    return Err(HarnessError::blocked(
+                        "design revision exists but its approval is invalid",
+                    )
+                    .with_hint("pxl-harness approve --stage design --revision <rev>"));
+                }
+            }
             let status = match stage.as_str() {
                 "design" => self.run_design(provider)?,
                 "assets" => return Err(HarnessError::blocked(
@@ -193,10 +213,17 @@ impl PipelineRunner {
     }
 
     fn run_design(&mut self, provider: &mut dyn ModelProvider) -> Result<StageStatus> {
-        // Design requires an approved design revision only when one is
-        // already frozen; otherwise this run produces the candidate.
+        // Project-local templates override; the harness-bundled genre
+        // templates are the fallback for every project.
         let template_root = self.project.join("templates");
         std::fs::create_dir_all(&template_root)?;
+        let bundled_root =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("templates");
+        let roots: Vec<PathBuf> = vec![
+            template_root,
+            bundled_root,
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../templates"),
+        ];
         let status = crate::pipeline::design_stage::run_design_stage(
             provider,
             &self.cfg,
@@ -205,7 +232,7 @@ impl PipelineRunner {
             &mut self.state,
             &mut self.ledger,
             &mut self.events,
-            &template_root,
+            &roots,
         );
         self.ledger.save(self.run.dir())?;
         self.run.save(&self.state)?;
@@ -227,6 +254,10 @@ impl PipelineRunner {
         }
     }
 
+    pub fn cfg(&self) -> &Config {
+        &self.cfg
+    }
+
     pub fn state(&self) -> &RunState {
         &self.state
     }
@@ -240,7 +271,14 @@ impl PipelineRunner {
 /// the environment; the fake provider is fully offline.
 pub fn provider_from_config(cfg: &Config) -> Result<Box<dyn ModelProvider>> {
     match cfg.provider {
-        ProviderKind::Fake => Ok(Box::new(FakeProvider::new(Vec::new()))),
+        ProviderKind::Fake => {
+            if let Ok(script) = std::env::var("PXL_HARNESS_FAKE_TURNS") {
+                if !script.is_empty() {
+                    return Ok(Box::new(FakeProvider::from_scripted_json(&script)?));
+                }
+            }
+            Ok(Box::new(FakeProvider::new(Vec::new())))
+        }
         ProviderKind::Openai => Ok(Box::new(OpenAiProvider::from_dotenv(
             cfg,
             &PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.env"),

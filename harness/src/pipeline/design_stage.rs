@@ -2,7 +2,7 @@
 //! repairs with bounded attempts, and stops at `waiting_approval`.
 
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use serde_json::Value;
 
@@ -40,8 +40,28 @@ pub fn registry() -> ToolRegistry {
         parameters: serde_json::json!({"type": "object", "properties": {}}),
         needed: Permission::ReadProject,
         run: Box::new(|_args, ctx| {
-            let brief = fs::read_to_string(ctx.template_roots[0].join("brief.json"))
-                .map_err(|e| HarnessError::io(e.to_string()))?;
+            // The brief snapshot is copied into the attempt before the
+            // loop starts; prefer it, fall back to template roots.
+            let attempt_brief = ctx.attempt_dir.join("brief.json");
+            let brief = if attempt_brief.is_file() {
+                fs::read_to_string(&attempt_brief)
+            } else {
+                let mut text = None;
+                for root in &ctx.template_roots {
+                    let p = root.join("brief.json");
+                    if p.is_file() {
+                        text = Some(fs::read_to_string(&p));
+                        break;
+                    }
+                }
+                text.unwrap_or_else(|| {
+                    Err(std::io::Error::new(
+                        std::io::ErrorKind::NotFound,
+                        "brief.json not found",
+                    ))
+                })
+            }
+            .map_err(|e| HarnessError::io(e.to_string()))?;
             Ok(ToolOutcome::ok("brief loaded").with_data(serde_json::Value::String(brief)))
         }),
     });
@@ -55,10 +75,18 @@ pub fn registry() -> ToolRegistry {
             // genre name comes from project identity, never from the model.
             let mut found = None;
             for root in &ctx.template_roots {
+                // Preferred layout: <root>/templates/<genre>/template.json.
                 let dir = root.join("templates").join(&ctx.genre);
                 let path = dir.join("template.json");
                 if path.is_file() {
                     found = Some((path, dir));
+                    break;
+                }
+                // Harness-bundled layout: <root>/<genre>/template.json.
+                let bundled = root.join(&ctx.genre);
+                let bundled_path = bundled.join("template.json");
+                if bundled_path.is_file() {
+                    found = Some((bundled_path, bundled));
                     break;
                 }
                 // Also accept a template root that points straight at the
@@ -555,7 +583,7 @@ pub fn run_design_stage(
     state: &mut RunState,
     ledger: &mut BudgetLedger,
     events: &mut EventLog,
-    template_root: &Path,
+    template_roots: &[PathBuf],
 ) -> Result<StageStatus> {
     set_stage(state, "design", StageStatus::Running)?;
     run.save(state)?;
@@ -571,10 +599,7 @@ pub fn run_design_stage(
             .allow(Permission::WriteCandidate),
         role: role.permission_set(),
         attempt_dir: attempt_dir.clone(),
-        template_roots: vec![
-            artifacts.root().to_path_buf(),
-            template_root.to_path_buf(),
-        ],
+        template_roots: template_roots.to_vec(),
         genre: artifacts.identity()?.genre_template.clone(),
         design_dir: None,
         pxl: std::sync::Arc::new(crate::adapters::PxlAdapter::unavailable()),

@@ -1,3 +1,3 @@
 fn main() {
-    println!("pxl-harness");
+    std::process::exit(pxl_harness::cli::main());
 }

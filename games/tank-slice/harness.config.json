@@ -1,0 +1,8 @@
+{
+  "provider": "openai",
+  "model": "",
+  "base_url": "",
+  "api_key_env": "API_KEY",
+  "max_model_turns_per_task": 40,
+  "require_design_approval": true
+}

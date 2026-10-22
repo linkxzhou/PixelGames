@@ -11,6 +11,10 @@ pub struct ToolCall {
     pub name: String,
     /// Raw JSON arguments as returned by the model.
     pub arguments: String,
+    /// Provider-assigned call id linking the tool result back to this
+    /// request in the next turn.
+    #[serde(default)]
+    pub id: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -37,6 +41,11 @@ pub struct ChatMessage {
     /// Tool name (tool role only).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tool_name: Option<String>,
+    /// Stable tool_call_id linking a tool result back to the assistant
+    /// request (tool role only). OpenAI-compatible providers reject tool
+    /// results without it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tool_call_id: Option<String>,
 }
 
 impl ChatMessage {
@@ -46,6 +55,7 @@ impl ChatMessage {
             content: text.into(),
             tool_calls: None,
             tool_name: None,
+            tool_call_id: None,
         }
     }
     pub fn user(text: impl Into<String>) -> Self {
@@ -54,6 +64,7 @@ impl ChatMessage {
             content: text.into(),
             tool_calls: None,
             tool_name: None,
+            tool_call_id: None,
         }
     }
     pub fn assistant(text: impl Into<String>) -> Self {
@@ -62,6 +73,7 @@ impl ChatMessage {
             content: text.into(),
             tool_calls: None,
             tool_name: None,
+            tool_call_id: None,
         }
     }
     pub fn tool_result(name: &str, text: impl Into<String>) -> Self {
@@ -70,6 +82,7 @@ impl ChatMessage {
             content: text.into(),
             tool_calls: None,
             tool_name: Some(name.to_string()),
+            tool_call_id: Some(format!("call_{name}")),
         }
     }
 }
@@ -109,6 +122,32 @@ impl FakeProvider {
             cursor: 0,
         }
     }
+
+    /// Build turns from a JSON array where each element is an array of
+    /// `[tool_name, arguments_json]` pairs. Enables scripted end-to-end
+    /// runs without a real model.
+    pub fn from_scripted_json(text: &str) -> Result<Self> {
+        let value: serde_json::Value = serde_json::from_str(text).map_err(|e| {
+            crate::error::HarnessError::usage(format!("fake provider script is not JSON: {e}"))
+        })?;
+        let mut turns = Vec::new();
+        for entry in value.as_array().unwrap_or(&Vec::new()) {
+            let mut calls = Vec::new();
+            for call in entry.as_array().unwrap_or(&Vec::new()) {
+                let name = call[0].as_str().unwrap_or_default().to_string();
+                // Arguments may be given as a raw JSON string (already
+                // serialized) or as an embedded JSON value; both must reach
+                // the tool as a parseable arguments object.
+                let args = match &call[1] {
+                    serde_json::Value::String(s) => s.clone(),
+                    other => serde_json::to_string(other).unwrap_or_default(),
+                };
+                calls.push((name, args));
+            }
+            turns.push(FakeTurn::Calls(calls));
+        }
+        Ok(Self::new(turns))
+    }
 }
 
 impl ModelProvider for FakeProvider {
@@ -136,6 +175,7 @@ impl ModelProvider for FakeProvider {
                         .map(|(n, a)| ToolCall {
                             name: n.clone(),
                             arguments: a.clone(),
+                            id: String::new(),
                         })
                         .collect(),
                     prompt_tokens: 10,
@@ -278,6 +318,9 @@ fn build_request_body(
             if let Some(name) = &m.tool_name {
                 v["name"] = serde_json::Value::String(name.clone());
             }
+            if let Some(id) = &m.tool_call_id {
+                v["tool_call_id"] = serde_json::Value::String(id.clone());
+            }
             if let Some(tc) = &m.tool_calls {
                 v["tool_calls"] = tc.clone();
             }
@@ -330,8 +373,13 @@ fn parse_response(json: &serde_json::Value, model: &str) -> Result<ProviderRespo
                 .and_then(|a| a.as_str())
                 .unwrap_or("{}")
                 .to_string();
+            let id = tc
+                .get("id")
+                .and_then(|i| i.as_str())
+                .unwrap_or("")
+                .to_string();
             if !name.is_empty() {
-                tool_calls.push(ToolCall { name, arguments });
+                tool_calls.push(ToolCall { name, arguments, id });
             }
         }
     }
@@ -398,9 +446,21 @@ fn post_json(url: &str, key: &str, body: &serde_json::Value, timeout_secs: u64) 
         .wait_with_output()
         .map_err(|e| HarnessError::provider(format!("curl: {e}")))?;
     if !out.status.success() {
+        // Keep (a bounded prefix of) the error body so callers can see why
+        // the provider refused the request; never include credentials.
+        let body = String::from_utf8_lossy(&out.stdout);
+        let mut detail = body.trim().to_string();
+        if detail.len() > 400 {
+            detail.truncate(400);
+            detail.push_str("...");
+        }
+        let detail = if detail.is_empty() {
+            format!("exit {:?}", out.status.code())
+        } else {
+            format!("exit {:?}: {}", out.status.code(), detail)
+        };
         return Err(HarnessError::provider(format!(
-            "provider HTTP request failed (exit {:?})",
-            out.status.code()
+            "provider HTTP request failed ({detail})"
         )));
     }
     serde_json::from_slice(&out.stdout)
@@ -412,7 +472,7 @@ pub fn tool_calls_value(calls: &[ToolCall]) -> serde_json::Value {
     serde_json::json!(calls
         .iter()
         .map(|c| serde_json::json!({
-            "id": format!("call_{}", c.name),
+            "id": if c.id.is_empty() { format!("call_{}", c.name) } else { c.id.clone() },
             "type": "function",
             "function": {"name": c.name, "arguments": c.arguments}
         }))

@@ -94,6 +94,7 @@ impl<'a> AgentRunner<'a> {
                     &response.tool_calls,
                 )),
                 tool_name: None,
+                tool_call_id: None,
             });
             for call in &response.tool_calls {
                 self.events.append(Event::ToolStarted {
@@ -135,7 +136,17 @@ impl<'a> AgentRunner<'a> {
                             .unwrap_or_default()
                     ),
                 };
-                messages.push(ChatMessage::tool_result(&call.name, summary));
+                messages.push(ChatMessage {
+                    role: "tool".into(),
+                    content: summary,
+                    tool_calls: None,
+                    tool_name: Some(call.name.clone()),
+                    tool_call_id: Some(if call.id.is_empty() {
+                        format!("call_{}", call.name)
+                    } else {
+                        call.id.clone()
+                    }),
+                });
             }
         }
     }

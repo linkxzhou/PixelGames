@@ -1,0 +1,13 @@
+{
+  "run_id": "r1792635399555",
+  "harness_version": "0.1.0",
+  "created_ms": 1792635399556,
+  "brief_digest": "sha256:5c5499fc8d9cb799b3d262cd6492c587773d6e179f4398c9b9d4fdcf45915539",
+  "config_digest": "sha256:32243fcb82c9d16063994ea0abd07742f1273eb3ca5cb3585a0d6cc169827f8c",
+  "stages": {
+    "assets": "not_requested",
+    "design": "running"
+  },
+  "until": "design",
+  "status": "created"
+}
