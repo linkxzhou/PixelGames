@@ -14,6 +14,7 @@ pub fn transition(cur: StageStatus, next: StageStatus) -> Result<()> {
             | (Pending, Running)
             | (Running, Validating)
             | (Validating, WaitingApproval)
+            | (Validating, Running)
             | (Validating, Succeeded)
             | (WaitingApproval, Succeeded)
             | (Running, Failed)
@@ -69,6 +70,7 @@ mod tests {
             StageStatus::WaitingApproval
         )
         .is_ok());
+        assert!(transition(StageStatus::Validating, StageStatus::Running).is_ok());
         assert!(transition(StageStatus::Validating, StageStatus::Succeeded).is_ok());
         assert!(transition(StageStatus::Succeeded, StageStatus::Running).is_err());
         assert!(transition(StageStatus::Succeeded, StageStatus::Stale).is_ok());

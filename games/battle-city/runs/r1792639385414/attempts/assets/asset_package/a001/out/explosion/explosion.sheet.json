@@ -1,0 +1,195 @@
+{
+  "frames": {
+    "explosion_burst_N_0": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 62
+    },
+    "explosion_burst_N_1": {
+      "frame": {
+        "x": 17,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 62
+    },
+    "explosion_burst_N_2": {
+      "frame": {
+        "x": 34,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 62
+    },
+    "explosion_burst_N_3": {
+      "frame": {
+        "x": 51,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 62
+    }
+  },
+  "meta": {
+    "app": "pxl",
+    "version": "0.1.0",
+    "image": "explosion.sheet.png",
+    "format": "indexed8",
+    "size": {
+      "w": 67,
+      "h": 16
+    },
+    "scale": "1",
+    "frameTags": [
+      {
+        "name": "burst_N",
+        "from": 0,
+        "to": 3,
+        "direction": "forward"
+      }
+    ],
+    "pxl": {
+      "version": "0.1.0",
+      "gen_version": 1,
+      "palette": "palette.json",
+      "colors": [
+        "#00000000",
+        "#0a0f0d",
+        "#36433d",
+        "#7d8e80",
+        "#dce8d2"
+      ],
+      "ramps": {
+        "brick": [
+          1,
+          3
+        ],
+        "dust": [
+          1,
+          3
+        ],
+        "grass": [
+          2,
+          4
+        ],
+        "hazard": [
+          1,
+          4
+        ],
+        "ink": [
+          1,
+          4
+        ],
+        "steel": [
+          1,
+          4
+        ],
+        "tread": [
+          2,
+          3
+        ],
+        "water": [
+          2,
+          3
+        ]
+      },
+      "cycles": {
+        "tread": {
+          "indices": [
+            2,
+            3
+          ],
+          "period": 2
+        }
+      },
+      "special": {
+        "transparent": 0,
+        "outline": 1,
+        "flash": 4
+      },
+      "pivot": [
+        8,
+        8
+      ],
+      "dirs": [
+        "N"
+      ],
+      "fps": {
+        "burst": 16
+      },
+      "facings": {
+        "N": "explosion_N"
+      },
+      "anims": {
+        "burst": {
+          "fps": 16,
+          "loop": false,
+          "dirs": {
+            "N": [
+              "explosion_burst_N_0",
+              "explosion_burst_N_1",
+              "explosion_burst_N_2",
+              "explosion_burst_N_3"
+            ]
+          }
+        }
+      },
+      "tiles": {}
+    }
+  }
+}

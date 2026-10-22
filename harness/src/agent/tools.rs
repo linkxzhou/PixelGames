@@ -48,6 +48,14 @@ impl ToolOutcome {
         self.data = data;
         self
     }
+    pub fn with_artifact(mut self, path: impl Into<String>, digest: impl Into<String>, bytes: u64) -> Self {
+        self.artifact = Some(ArtifactRef {
+            path: path.into(),
+            digest: digest.into(),
+            bytes,
+        });
+        self
+    }
 }
 
 pub type ToolFn =

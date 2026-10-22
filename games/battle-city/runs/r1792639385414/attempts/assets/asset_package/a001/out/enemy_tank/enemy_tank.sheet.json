@@ -1,0 +1,743 @@
+{
+  "frames": {
+    "enemy_tank_move_N_0": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 125
+    },
+    "enemy_tank_move_N_1": {
+      "frame": {
+        "x": 17,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 125
+    },
+    "enemy_tank_move_E_0": {
+      "frame": {
+        "x": 0,
+        "y": 17,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 125
+    },
+    "enemy_tank_move_E_1": {
+      "frame": {
+        "x": 17,
+        "y": 17,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 125
+    },
+    "enemy_tank_move_S_0": {
+      "frame": {
+        "x": 0,
+        "y": 34,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 125
+    },
+    "enemy_tank_move_S_1": {
+      "frame": {
+        "x": 17,
+        "y": 34,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 125
+    },
+    "enemy_tank_move_W_0": {
+      "frame": {
+        "x": 0,
+        "y": 51,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 125
+    },
+    "enemy_tank_move_W_1": {
+      "frame": {
+        "x": 17,
+        "y": 51,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 125
+    },
+    "enemy_tank_idle_N_0": {
+      "frame": {
+        "x": 0,
+        "y": 68,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 500
+    },
+    "enemy_tank_idle_N_1": {
+      "frame": {
+        "x": 17,
+        "y": 68,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 500
+    },
+    "enemy_tank_idle_E_0": {
+      "frame": {
+        "x": 0,
+        "y": 85,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 500
+    },
+    "enemy_tank_idle_E_1": {
+      "frame": {
+        "x": 17,
+        "y": 85,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 500
+    },
+    "enemy_tank_idle_S_0": {
+      "frame": {
+        "x": 0,
+        "y": 102,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 500
+    },
+    "enemy_tank_idle_S_1": {
+      "frame": {
+        "x": 17,
+        "y": 102,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 500
+    },
+    "enemy_tank_idle_W_0": {
+      "frame": {
+        "x": 0,
+        "y": 119,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 500
+    },
+    "enemy_tank_idle_W_1": {
+      "frame": {
+        "x": 17,
+        "y": 119,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 500
+    },
+    "enemy_tank_fire_N_0": {
+      "frame": {
+        "x": 0,
+        "y": 136,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 83
+    },
+    "enemy_tank_fire_N_1": {
+      "frame": {
+        "x": 17,
+        "y": 136,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 83
+    },
+    "enemy_tank_fire_E_0": {
+      "frame": {
+        "x": 0,
+        "y": 153,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 83
+    },
+    "enemy_tank_fire_E_1": {
+      "frame": {
+        "x": 17,
+        "y": 153,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 83
+    },
+    "enemy_tank_fire_S_0": {
+      "frame": {
+        "x": 0,
+        "y": 170,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 83
+    },
+    "enemy_tank_fire_S_1": {
+      "frame": {
+        "x": 17,
+        "y": 170,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 83
+    },
+    "enemy_tank_fire_W_0": {
+      "frame": {
+        "x": 0,
+        "y": 187,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 83
+    },
+    "enemy_tank_fire_W_1": {
+      "frame": {
+        "x": 17,
+        "y": 187,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 83
+    }
+  },
+  "meta": {
+    "app": "pxl",
+    "version": "0.1.0",
+    "image": "enemy_tank.sheet.png",
+    "format": "indexed8",
+    "size": {
+      "w": 33,
+      "h": 203
+    },
+    "scale": "1",
+    "frameTags": [
+      {
+        "name": "move_N",
+        "from": 0,
+        "to": 1,
+        "direction": "forward"
+      },
+      {
+        "name": "move_E",
+        "from": 2,
+        "to": 3,
+        "direction": "forward"
+      },
+      {
+        "name": "move_S",
+        "from": 4,
+        "to": 5,
+        "direction": "forward"
+      },
+      {
+        "name": "move_W",
+        "from": 6,
+        "to": 7,
+        "direction": "forward"
+      },
+      {
+        "name": "idle_N",
+        "from": 8,
+        "to": 9,
+        "direction": "forward"
+      },
+      {
+        "name": "idle_E",
+        "from": 10,
+        "to": 11,
+        "direction": "forward"
+      },
+      {
+        "name": "idle_S",
+        "from": 12,
+        "to": 13,
+        "direction": "forward"
+      },
+      {
+        "name": "idle_W",
+        "from": 14,
+        "to": 15,
+        "direction": "forward"
+      },
+      {
+        "name": "fire_N",
+        "from": 16,
+        "to": 17,
+        "direction": "forward"
+      },
+      {
+        "name": "fire_E",
+        "from": 18,
+        "to": 19,
+        "direction": "forward"
+      },
+      {
+        "name": "fire_S",
+        "from": 20,
+        "to": 21,
+        "direction": "forward"
+      },
+      {
+        "name": "fire_W",
+        "from": 22,
+        "to": 23,
+        "direction": "forward"
+      }
+    ],
+    "pxl": {
+      "version": "0.1.0",
+      "gen_version": 1,
+      "palette": "palette.json",
+      "colors": [
+        "#00000000",
+        "#0a0f0d",
+        "#36433d",
+        "#7d8e80",
+        "#dce8d2"
+      ],
+      "ramps": {
+        "brick": [
+          1,
+          3
+        ],
+        "dust": [
+          1,
+          3
+        ],
+        "grass": [
+          2,
+          4
+        ],
+        "hazard": [
+          1,
+          4
+        ],
+        "ink": [
+          1,
+          4
+        ],
+        "steel": [
+          1,
+          4
+        ],
+        "tread": [
+          2,
+          3
+        ],
+        "water": [
+          2,
+          3
+        ]
+      },
+      "cycles": {
+        "tread": {
+          "indices": [
+            2,
+            3
+          ],
+          "period": 2
+        }
+      },
+      "special": {
+        "transparent": 0,
+        "outline": 1,
+        "flash": 4
+      },
+      "pivot": [
+        8,
+        8
+      ],
+      "dirs": [
+        "N",
+        "E",
+        "S",
+        "W"
+      ],
+      "fps": {
+        "fire": 12,
+        "idle": 2,
+        "move": 8
+      },
+      "facings": {
+        "N": "enemy_tank_idle_N_0",
+        "E": "enemy_tank_idle_E_0",
+        "S": "enemy_tank_idle_S_0",
+        "W": "enemy_tank_idle_W_0"
+      },
+      "anims": {
+        "fire": {
+          "fps": 12,
+          "loop": false,
+          "dirs": {
+            "N": [
+              "enemy_tank_fire_N_0",
+              "enemy_tank_fire_N_1"
+            ],
+            "E": [
+              "enemy_tank_fire_E_0",
+              "enemy_tank_fire_E_1"
+            ],
+            "S": [
+              "enemy_tank_fire_S_0",
+              "enemy_tank_fire_S_1"
+            ],
+            "W": [
+              "enemy_tank_fire_W_0",
+              "enemy_tank_fire_W_1"
+            ]
+          }
+        },
+        "idle": {
+          "fps": 2,
+          "loop": true,
+          "dirs": {
+            "N": [
+              "enemy_tank_idle_N_0",
+              "enemy_tank_idle_N_1"
+            ],
+            "E": [
+              "enemy_tank_idle_E_0",
+              "enemy_tank_idle_E_1"
+            ],
+            "S": [
+              "enemy_tank_idle_S_0",
+              "enemy_tank_idle_S_1"
+            ],
+            "W": [
+              "enemy_tank_idle_W_0",
+              "enemy_tank_idle_W_1"
+            ]
+          }
+        },
+        "move": {
+          "fps": 8,
+          "loop": true,
+          "dirs": {
+            "N": [
+              "enemy_tank_move_N_0",
+              "enemy_tank_move_N_1"
+            ],
+            "E": [
+              "enemy_tank_move_E_0",
+              "enemy_tank_move_E_1"
+            ],
+            "S": [
+              "enemy_tank_move_S_0",
+              "enemy_tank_move_S_1"
+            ],
+            "W": [
+              "enemy_tank_move_W_0",
+              "enemy_tank_move_W_1"
+            ]
+          }
+        }
+      },
+      "tiles": {}
+    }
+  }
+}

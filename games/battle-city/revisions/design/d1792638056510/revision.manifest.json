@@ -1,0 +1,51 @@
+{
+  "kind": "design",
+  "revision": "d1792638056510",
+  "digest": "sha256:56dd2dd6b45b1b42c3c21b78614cc3d94fbc69c5fe3d5cb15b664d8cafb91605",
+  "files": [
+    [
+      "acceptance-plan.json",
+      "sha256:c434306082b5ca3874c713a7e55e7544afc2f90ac6dfea2ebad78fe78be00c5b"
+    ],
+    [
+      "asset-requirements.json",
+      "sha256:81133aefeac3b9b99a9c5a0d50cf0c42813d87f5679bcf4305c2d9512189e279"
+    ],
+    [
+      "brief.json",
+      "sha256:6c7e2f914e6e496e274d4963955949915a3627afeea9bc1691c863d308aaa1d3"
+    ],
+    [
+      "design-notes.md",
+      "sha256:05d5e04ddb545b47f0a0b6899d9c62d6446985b6fef10dca8fc08af121326482"
+    ],
+    [
+      "design-review.json",
+      "sha256:5a43d08e5921f35a2354490e121b27ec0650a2f21b4997a769ae5efdd19b5b82"
+    ],
+    [
+      "design-review.md",
+      "sha256:fa78f4e29fdc6393bbe81baed2d9a4c816ea4eccde8e33ab0ffda1b255d2f6c7"
+    ],
+    [
+      "game-design.json",
+      "sha256:4989729d6d17bccde115e9029293f5378745282cd16f9561e4cec77ea705c539"
+    ],
+    [
+      "levels/level_1.json",
+      "sha256:7feab81cd444a2a4be6c856dd859d87977633765abaf8a1b84d2bf914e54285b"
+    ],
+    [
+      "levels/level_2.json",
+      "sha256:a2144ade1ea6524cc5133167f17f39b36b0b9ac40a7597840813f82ced982749"
+    ],
+    [
+      "levels/level_3.json",
+      "sha256:5913254b731193e34884b6a9efaf660422e84d35385206cd6a428da01d61f6ea"
+    ],
+    [
+      "style-guide.json",
+      "sha256:347b5bd54ce5d974e1f7a0e483b92bced0a3fb5a960feb179bd6a90823c8031a"
+    ]
+  ]
+}

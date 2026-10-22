@@ -1,0 +1,15 @@
+{
+  "game_id": "battle_city",
+  "harness_version": "0.1.0",
+  "created_ms": 0,
+  "genre_template": "top_down_tank",
+  "design_revision": "d1792638056510",
+  "approvals": [
+    {
+      "stage": "design",
+      "revision": "d1792638056510",
+      "digest": "sha256:56dd2dd6b45b1b42c3c21b78614cc3d94fbc69c5fe3d5cb15b664d8cafb91605",
+      "approved_ms": 1792639047577
+    }
+  ]
+}

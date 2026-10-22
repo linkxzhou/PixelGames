@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "logical_resolution": [320, 240],
+  "tile_size_px": 16,
+  "sprite_size_px": 16,
+  "palette": "palette.json",
+  "transparent_index": 0,
+  "outline": "always",
+  "directions": ["N", "E", "S", "W"],
+  "anim_fps_min": 2,
+  "anim_fps_max": 16,
+  "nearest_filtering": true,
+  "palette_mode": "monochrome",
+  "description": "Chunky 16x16 monochrome pixel art with a 1px dark outline on every sprite, nearest-neighbour scaling from the 320x240 logical buffer, max four colours plus transparency."
+}

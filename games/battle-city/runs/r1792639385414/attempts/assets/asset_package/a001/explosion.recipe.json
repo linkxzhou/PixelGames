@@ -1,0 +1,6 @@
+{"v":1,"asset":"explosion","gen_version":1,"seed":6421,"palette":"palette.json","sprites":[{"id":"explosion","base":{"gen":"shapes","spec":"explosion.shapes.json","seed":6421},"directions":[{"id":"N","from":"base","ops":[{"op":"noop"}]}],"anims":[{"name":"burst","fps":16,"loop":false,"dirs":["N"],"frames":[
+[{"op":"noop"}],
+[{"op":"squash","sx":2,"sy":2,"anchor":"center"},{"op":"outline","color":1,"mode":"outer","brush":"square","width":1}],
+[{"op":"squash","sx":3,"sy":3,"anchor":"center"},{"op":"outline","color":1,"mode":"outer","brush":"square","width":1}],
+[{"op":"squash","sx":-2,"sy":-2,"anchor":"center"},{"op":"outline","color":1,"mode":"outer","brush":"square","width":1}]
+]}]}],"sheet":{"sources":["explosion"],"layout":"rows-by-anim","pad":1,"file":"explosion.sheet.png"},"validate":{"rules":"default"}}

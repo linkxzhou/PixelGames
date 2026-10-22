@@ -159,10 +159,7 @@ impl PipelineRunner {
             }
             let status = match stage.as_str() {
                 "design" => self.run_design(provider)?,
-                "assets" => return Err(HarnessError::blocked(
-                    "assets stage is not implemented yet (lands in H2)",
-                )
-                .with_hint("use --until design for now")),
+                "assets" => self.run_assets(provider)?,
                 other => {
                     return Err(HarnessError::semantic(format!(
                         "unknown stage '{other}'"
@@ -233,6 +230,32 @@ impl PipelineRunner {
             &mut self.ledger,
             &mut self.events,
             &roots,
+        );
+        self.ledger.save(self.run.dir())?;
+        self.run.save(&self.state)?;
+        status
+    }
+
+    fn run_assets(&mut self, provider: &mut dyn ModelProvider) -> Result<StageStatus> {
+        let template_root = self.project.join("templates");
+        std::fs::create_dir_all(&template_root)?;
+        let bundled_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("templates");
+        let roots = vec![
+            template_root,
+            bundled_root,
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../templates"),
+        ];
+        let pxl = std::sync::Arc::new(crate::adapters::PxlAdapter::discover(&self.cfg)?);
+        let status = crate::pipeline::assets_stage::run_assets_stage(
+            provider,
+            &self.cfg,
+            &self.artifacts,
+            &self.run,
+            &mut self.state,
+            &mut self.ledger,
+            &mut self.events,
+            &roots,
+            pxl,
         );
         self.ledger.save(self.run.dir())?;
         self.run.save(&self.state)?;

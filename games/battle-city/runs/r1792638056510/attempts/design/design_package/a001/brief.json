@@ -1,0 +1,38 @@
+{
+  "game_id": "battle_city",
+  "text": "做一个俯视角像素「坦克大战」(Battle City) 单屏切片。玩家用方向键或 WASD 驾驶坦克，空格射击。地图是 16x16 tile，单调色板，最近邻缩放，逻辑分辨率 320x240。元素：玩家坦克、敌方坦克、子弹、爆炸、基地（鹰/HQ）、可破坏砖墙、不可破坏钢墙、水面（不可通行）、草地（可通行装饰）。共 3 个逻辑关卡，难度递进，遵循 top_down_tank 品类模板：第一关只教移动并到达出口，地图里有基地但没有敌人；第二关加入可破坏砖块和射击，出口在砖墙后面；第三关加入敌方坦克、水域和钢墙，需要保护基地并到达出口。每一关的出口必须能从出生点沿非阻挡格子走过去；出生点不能落在阻挡格上。胜负：玩家到达出口过关；被子弹击中、站在危险格上、或基地被毁则失败。像素风格，复用品类模板里已有的坦克/砖/水/钢/子弹/爆炸/基地形状。",
+  "constraints": [
+    {
+      "key": "genre",
+      "value": "top_down_tank",
+      "source": "user"
+    },
+    {
+      "key": "reference",
+      "value": "battle_city",
+      "source": "user"
+    },
+    {
+      "key": "levels",
+      "value": "3",
+      "source": "user"
+    },
+    {
+      "key": "tile_size_px",
+      "value": "16",
+      "source": "user"
+    },
+    {
+      "key": "input",
+      "value": "keyboard",
+      "source": "user"
+    }
+  ],
+  "assumptions": [],
+  "exclusions": [
+    "powerups",
+    "ice tiles",
+    "two player",
+    "audio"
+  ]
+}

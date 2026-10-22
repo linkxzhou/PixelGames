@@ -1,0 +1,95 @@
+{
+  "report_version": 1,
+  "gate_version": 1,
+  "stage": "design",
+  "gate_id": "design.gates",
+  "status": "passed",
+  "input_digest": "sha256:85be3f00596d07e8a78c388d1df36cda688173da0c77b80925e79f7eb34c9e68",
+  "checks": [
+    {
+      "id": "files.game_design",
+      "passed": true,
+      "value": "parsed",
+      "limit": "game-design.json parses"
+    },
+    {
+      "id": "files.style_guide",
+      "passed": true,
+      "value": "parsed",
+      "limit": "style-guide.json parses"
+    },
+    {
+      "id": "files.asset_requirements",
+      "passed": true,
+      "value": "parsed",
+      "limit": "asset-requirements.json parses"
+    },
+    {
+      "id": "files.acceptance_plan",
+      "passed": true,
+      "value": "parsed",
+      "limit": "acceptance-plan.json parses"
+    },
+    {
+      "id": "ids.references",
+      "passed": true,
+      "value": "closed",
+      "limit": "rule/entity/action references close"
+    },
+    {
+      "id": "levels.count",
+      "passed": true,
+      "value": "3",
+      "limit": ">= 1 level"
+    },
+    {
+      "id": "levels.level_1.static",
+      "passed": true,
+      "value": "ok",
+      "limit": "grid/tiles/spawn/exit/placements valid; exit reachable"
+    },
+    {
+      "id": "levels.level_2.static",
+      "passed": true,
+      "value": "ok",
+      "limit": "grid/tiles/spawn/exit/placements valid; exit reachable"
+    },
+    {
+      "id": "levels.level_3.static",
+      "passed": true,
+      "value": "ok",
+      "limit": "grid/tiles/spawn/exit/placements valid; exit reachable"
+    },
+    {
+      "id": "coverage.assets",
+      "passed": true,
+      "value": "covered",
+      "limit": "visible entities and semantic tiles map to requirements"
+    },
+    {
+      "id": "style.expressible",
+      "passed": true,
+      "value": "ok",
+      "limit": "requirements expressible with current pxl capabilities"
+    },
+    {
+      "id": "coverage.acceptance",
+      "passed": true,
+      "value": "covered",
+      "limit": "required requirements have acceptance items"
+    },
+    {
+      "id": "design.semantic",
+      "passed": true,
+      "value": "0 problems",
+      "limit": "all design files and semantic constraints valid"
+    }
+  ],
+  "metrics": {
+    "levels": 3
+  },
+  "tool_versions": {
+    "harness": "0.1.0"
+  },
+  "executed_ms": 0
+}

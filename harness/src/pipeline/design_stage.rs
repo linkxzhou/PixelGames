@@ -239,57 +239,91 @@ pub fn gates(ctx: &ToolContext) -> Result<GateReport> {
     let dir = &ctx.attempt_dir;
     let mut checks: Vec<GateCheck> = Vec::new();
 
-    let parse = |name: &str| -> Option<Value> {
-        let p = dir.join(name);
-        if !p.is_file() {
-            return None;
+    // A file that exists but does not match the contract must report the
+    // serde error. Treating that as "missing" leaves the designer with
+    // nothing to repair.
+    enum Loaded<T> {
+        Missing,
+        Invalid(String),
+        Ready(T),
+    }
+    fn load_contract<T: serde::de::DeserializeOwned>(dir: &std::path::Path, name: &str) -> Loaded<T> {
+        let path = dir.join(name);
+        if !path.is_file() {
+            return Loaded::Missing;
         }
-        fs::read_to_string(&p)
-            .ok()
-            .and_then(|t| serde_json::from_str(&t).ok())
-    };
+        match fs::read_to_string(&path) {
+            Ok(text) => match serde_json::from_str::<T>(&text) {
+                Ok(value) => Loaded::Ready(value),
+                Err(e) => Loaded::Invalid(format!("{name}: {e}")),
+            },
+            Err(e) => Loaded::Invalid(format!("{name}: {e}")),
+        }
+    }
+    fn push_file_check<T>(checks: &mut Vec<GateCheck>, id: &str, limit: &str, loaded: &Loaded<T>) {
+        match loaded {
+            Loaded::Ready(_) => checks.push(GateCheck {
+                id: id.into(),
+                passed: true,
+                value: "parsed".into(),
+                limit: limit.into(),
+                failures: vec![],
+            }),
+            Loaded::Missing => checks.push(GateCheck {
+                id: id.into(),
+                passed: false,
+                value: "missing".into(),
+                limit: limit.into(),
+                failures: vec![],
+            }),
+            Loaded::Invalid(err) => checks.push(GateCheck {
+                id: id.into(),
+                passed: false,
+                value: "invalid".into(),
+                limit: limit.into(),
+                failures: vec![err.clone()],
+            }),
+        }
+    }
 
     // 1. Required files parse.
-    let game: Option<GameDesign> = parse("game-design.json")
-        .and_then(|v| serde_json::from_value(v).ok());
-    let style: Option<StyleGuide> = parse("style-guide.json")
-        .and_then(|v| serde_json::from_value(v).ok());
-    let reqs: Option<AssetRequirements> = parse("asset-requirements.json")
-        .and_then(|v| serde_json::from_value(v).ok());
-    let accept: Option<AcceptancePlan> = parse("acceptance-plan.json")
-        .and_then(|v| serde_json::from_value(v).ok());
-
-    checks.push(GateCheck {
-        id: "files.game_design".into(),
-        passed: game.is_some(),
-        value: if game.is_some() { "parsed".into() } else { "missing".into() },
-        limit: "game-design.json parses".into(),
-        failures: vec![],
-    });
-    checks.push(GateCheck {
-        id: "files.style_guide".into(),
-        passed: style.is_some(),
-        value: if style.is_some() { "parsed".into() } else { "missing".into() },
-        limit: "style-guide.json parses".into(),
-        failures: vec![],
-    });
-    checks.push(GateCheck {
-        id: "files.asset_requirements".into(),
-        passed: reqs.is_some(),
-        value: if reqs.is_some() { "parsed".into() } else { "missing".into() },
-        limit: "asset-requirements.json parses".into(),
-        failures: vec![],
-    });
-    checks.push(GateCheck {
-        id: "files.acceptance_plan".into(),
-        passed: accept.is_some(),
-        value: if accept.is_some() { "parsed".into() } else { "missing".into() },
-        limit: "acceptance-plan.json parses".into(),
-        failures: vec![],
-    });
+    let game = load_contract::<GameDesign>(dir, "game-design.json");
+    let style = load_contract::<StyleGuide>(dir, "style-guide.json");
+    let reqs = load_contract::<AssetRequirements>(dir, "asset-requirements.json");
+    let accept = load_contract::<AcceptancePlan>(dir, "acceptance-plan.json");
+    push_file_check(&mut checks, "files.game_design", "game-design.json parses", &game);
+    push_file_check(&mut checks, "files.style_guide", "style-guide.json parses", &style);
+    push_file_check(
+        &mut checks,
+        "files.asset_requirements",
+        "asset-requirements.json parses",
+        &reqs,
+    );
+    push_file_check(
+        &mut checks,
+        "files.acceptance_plan",
+        "acceptance-plan.json parses",
+        &accept,
+    );
 
     let mut failures = Vec::new();
     let mut levels: Vec<LevelDef> = Vec::new();
+    let game = match game {
+        Loaded::Ready(g) => Some(g),
+        _ => None,
+    };
+    let style = match style {
+        Loaded::Ready(s) => Some(s),
+        _ => None,
+    };
+    let reqs = match reqs {
+        Loaded::Ready(r) => Some(r),
+        _ => None,
+    };
+    let accept = match accept {
+        Loaded::Ready(a) => Some(a),
+        _ => None,
+    };
     if let Some(g) = &game {
         match crate::contracts::design::validate_ids(g) {
             Ok(()) => checks.push(GateCheck {
@@ -608,65 +642,93 @@ pub fn run_design_stage(
     let brief_text = fs::read_to_string(artifacts.brief_path())?;
     fs::write(attempt_dir.join("brief.json"), &brief_text)?;
     let specs = registry.specs(&ctx.role);
-    let user_prompt = format!(
-        "Produce the design package for game '{}'. Genre template: {}. Brief:\n{}",
+    let base_prompt = format!(
+        "Produce the design package for game '{}'. Genre template: {}. Follow the JSON contracts in your role prompt exactly (schema_version 1, single-character tile ids). Write one file per tool call, call design.validate, fix every failing check, then call design.request_review. Brief:\n{}",
         artifacts.identity()?.game_id,
         artifacts.identity()?.genre_template,
         brief_text
     );
-    let task = AgentTask {
-        stage: "design".into(),
-        task_id: "design_package".into(),
-        attempt: 1,
-        max_turns: cfg.max_model_turns_per_task,
-        max_fixes: cfg.max_fixes_per_task,
-    };
-    let outcome = {
-        let mut runner = AgentRunner {
-            provider,
-            registry: &registry,
-            ctx: &ctx,
-            ledger,
-            events,
+    // The role prompt promises bounded repair. One agent loop often stops
+    // before the gates pass; feed the gate report back up to max_fixes.
+    let mut repair_note = String::new();
+    let mut report = gates(&ctx)?;
+    let mut passed_with_review = false;
+    for round in 0..=cfg.max_fixes_per_task {
+        let user_prompt = if round == 0 {
+            base_prompt.clone()
+        } else {
+            format!(
+                "The design package is not acceptable yet. Repair the candidate files already in the attempt directory, then call design.validate and design.request_review.\n{repair_note}"
+            )
         };
-        runner.run(&task, &role.prompt, &user_prompt, &specs)
-    }?;
-    // Run gates independently of the agent's own claims.
-    set_stage(state, "design", StageStatus::Validating)?;
-    run.save(state)?;
-    let report = gates(&ctx)?;
-    let report_path = run.reports_dir()?.join("design.gates.json");
-    fs::write(&report_path, serde_json::to_string_pretty(&report)?)?;
-    events.append(Event::GateFinished {
-        stage: "design".into(),
-        task_id: "design_package".into(),
-        passed: report.passed(),
-        failures: report.failed_checks().len() as u32,
-        report_digest: report.digest()?,
-    })?;
-    if !report.passed() {
-        set_stage(state, "design", StageStatus::Failed)?;
+        let task = AgentTask {
+            stage: "design".into(),
+            task_id: "design_package".into(),
+            attempt: round + 1,
+            max_turns: cfg.max_model_turns_per_task,
+            max_fixes: cfg.max_fixes_per_task,
+        };
+        let outcome = {
+            let mut runner = AgentRunner {
+                provider,
+                registry: &registry,
+                ctx: &ctx,
+                ledger,
+                events,
+            };
+            runner.run(&task, &role.prompt, &user_prompt, &specs)
+        }?;
+        set_stage(state, "design", StageStatus::Validating)?;
         state
             .task_mut("design", "design_package")
             .stopped_reason = Some(outcome.stop_reason.clone());
+        run.save(state)?;
+        report = gates(&ctx)?;
+        let report_path = run.reports_dir()?.join("design.gates.json");
+        fs::write(&report_path, serde_json::to_string_pretty(&report)?)?;
+        events.append(Event::GateFinished {
+            stage: "design".into(),
+            task_id: "design_package".into(),
+            passed: report.passed(),
+            failures: report.failed_checks().len() as u32,
+            report_digest: report.digest()?,
+        })?;
+        let review_ready = attempt_dir.join("design-review.json").is_file();
+        if report.passed() && review_ready {
+            passed_with_review = true;
+            break;
+        }
+        let issues = crate::qa::issues_from_report(&report);
+        let mut lines: Vec<String> = issues
+            .iter()
+            .map(|i| format!("- {}: {}", i.check_id, i.message))
+            .collect();
+        if report.passed() && !review_ready {
+            lines.push(
+                "- review: gates passed but design-review.json is missing; call design.request_review"
+                    .into(),
+            );
+        }
+        if lines.is_empty() {
+            lines.push("- unknown failure; call design.validate and read the report".into());
+        }
+        repair_note = lines.join("\n");
+        set_stage(state, "design", StageStatus::Running)?;
+        run.save(state)?;
+    }
+    if !report.passed() {
+        set_stage(state, "design", StageStatus::Failed)?;
         run.save(state)?;
         return Ok(StageStatus::Failed);
     }
     // The review request must exist before the package can wait for
     // approval; the Markdown view is generated from the JSON contracts.
-    if !attempt_dir.join("design-review.json").is_file() {
+    if !passed_with_review || !attempt_dir.join("design-review.json").is_file() {
         set_stage(state, "design", StageStatus::Failed)?;
         state
             .task_mut("design", "design_package")
             .stopped_reason = Some("review_not_requested".into());
         run.save(state)?;
-        events.append(Event::GateFinished {
-            stage: "design".into(),
-            task_id: "design_package".into(),
-            passed: false,
-            failures: 1,
-            report_digest: report.digest()?,
-        })?;
         return Ok(StageStatus::Failed);
     }
     let review_path = crate::pipeline::review_view::render_review(&attempt_dir, &state.run_id)?;
@@ -679,29 +741,27 @@ pub fn run_design_stage(
         task_id: "design_package".into(),
         digest: review_digest,
     })?;
-    if cfg.require_design_approval {
-        set_stage(state, "design", StageStatus::WaitingApproval)?;
-        run.save(state)?;
-        return Ok(StageStatus::WaitingApproval);
-    }
-    // Commit without approval when policy allows.
-    let revision = format!(
-        "d{}",
-        chrono_like_id(state.created_ms)
-    );
-    let (dir, digest) = artifacts.commit_revision("design", &revision, &attempt_dir)?;
+    // Commit the candidate before waiting. `approve` binds this digest;
+    // without a revision the approval command has nothing to record and a
+    // later assets run cannot reuse the package.
+    let revision = format!("d{}", chrono_like_id(state.created_ms));
+    let (_dir, digest) = artifacts.commit_revision("design", &revision, &attempt_dir)?;
     let mut identity = artifacts.identity()?;
     identity.design_revision = Some(revision.clone());
     artifacts.save_identity(&identity)?;
     state.design_revision = Some(revision.clone());
-    set_stage(state, "design", StageStatus::Succeeded)?;
-    run.save(state)?;
     events.append(Event::RevisionCommitted {
         kind: "design".into(),
         revision: revision.clone(),
         digest: digest.clone(),
     })?;
-    let _ = dir;
+    if cfg.require_design_approval {
+        set_stage(state, "design", StageStatus::WaitingApproval)?;
+        run.save(state)?;
+        return Ok(StageStatus::WaitingApproval);
+    }
+    set_stage(state, "design", StageStatus::Succeeded)?;
+    run.save(state)?;
     Ok(StageStatus::Succeeded)
 }
 
@@ -712,6 +772,8 @@ fn chrono_like_id(ms: u64) -> String {
 
 #[cfg(test)]
 mod tests {
+    use std::path::Path;
+
     use super::*;
 
     fn ctx_with(dir: &Path) -> ToolContext {
@@ -891,6 +953,32 @@ mod tests {
             .failed_checks()
             .iter()
             .any(|c| c.failures.iter().any(|f| f.contains("reachable"))));
+    }
+
+    #[test]
+    fn invalid_contract_reports_serde_error_not_missing() {
+        let dir = std::env::temp_dir().join(format!("pxl_h_design_bad_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("game-design.json"), r#"{"schema_version":1,"game_id":"x"}"#).unwrap();
+        let report = gates(&ctx_with(&dir)).unwrap();
+        let check = report
+            .checks
+            .iter()
+            .find(|c| c.id == "files.game_design")
+            .unwrap();
+        assert!(!check.passed);
+        assert_eq!(check.value, "invalid");
+        assert!(
+            check.failures.iter().any(|f| f.contains("game-design.json")),
+            "{:?}",
+            check.failures
+        );
+        assert!(
+            !check.failures.iter().any(|f| f == "missing"),
+            "{:?}",
+            check.failures
+        );
     }
 
     #[test]

@@ -1,0 +1,23 @@
+{
+  "run_id": "r1792639385414",
+  "harness_version": "0.1.0",
+  "created_ms": 1792639385414,
+  "brief_digest": "sha256:6c7e2f914e6e496e274d4963955949915a3627afeea9bc1691c863d308aaa1d3",
+  "config_digest": "sha256:1b23ed1c0bb066789b2cdf1cdf0f6e15858ff77bcc0e1a47f2a6824b68d1d335",
+  "stages": {
+    "assets": "running",
+    "design": "succeeded"
+  },
+  "tasks": {
+    "assets/asset_package": {
+      "id": "asset_package",
+      "stage": "assets",
+      "status": "pending",
+      "attempts": 0,
+      "stopped_reason": "max_turns"
+    }
+  },
+  "until": "assets",
+  "design_revision": "d1792638056510",
+  "status": "created"
+}

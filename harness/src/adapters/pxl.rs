@@ -102,6 +102,10 @@ impl PxlAdapter {
         }
     }
 
+    pub fn is_available(&self) -> bool {
+        self.bin.is_file()
+    }
+
     pub fn binary_digest(&self) -> &str {
         self.binary_digest.as_deref().unwrap_or("unknown")
     }
@@ -127,16 +131,18 @@ impl PxlAdapter {
     }
 
     /// `pxl --json schema <kind>` — returns the bare schema document.
+    /// Success is exit 0 plus a JSON document. Unlike other commands, `schema`
+    /// does not wrap the document in `{ok: true}`.
     pub fn schema(&self, kind: &str) -> Result<Value> {
         let res = self.exec(&json_args(vec!["schema".into(), kind.into()]), None)?;
-        if !res.ok {
-            return Err(HarnessError::tool(format!(
-                "pxl schema {kind} failed: {} {}",
-                res.error_code, res.message
-            )));
+        if res.exit_code == Some(0) {
+            return serde_json::from_str(&res.stdout)
+                .map_err(|e| HarnessError::tool(format!("schema output is not JSON: {e}")));
         }
-        serde_json::from_str(&res.stdout)
-            .map_err(|e| HarnessError::tool(format!("schema output is not JSON: {e}")))
+        Err(HarnessError::tool(format!(
+            "pxl schema {kind} failed: {} {}",
+            res.error_code, res.message
+        )))
     }
 
     /// `pxl --json build <recipe> -o <dir>` with a version lock.
@@ -242,9 +248,18 @@ fn json_args(mut args: Vec<String>) -> Vec<String> {
 
 fn which_pxl() -> Result<PathBuf> {
     // Prefer the workspace build next to the harness, then PATH lookup.
-    let local = PathBuf::from("target/debug/pxl");
-    if local.is_file() {
-        return Ok(canonical(&local));
+    // `cargo test` runs with the crate directory as cwd, so a relative
+    // `target/debug/pxl` is not enough.
+    let manifest_target = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../target");
+    for candidate in [
+        manifest_target.join("debug/pxl"),
+        manifest_target.join("release/pxl"),
+        PathBuf::from("target/debug/pxl"),
+        PathBuf::from("target/release/pxl"),
+    ] {
+        if candidate.is_file() {
+            return Ok(canonical(&candidate));
+        }
     }
     let path = std::env::var("PATH").unwrap_or_default();
     for dir in path.split(':') {

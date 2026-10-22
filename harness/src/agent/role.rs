@@ -50,6 +50,7 @@ pub fn artist() -> RoleProfile {
         tools: vec![
             "design.read_frozen".into(),
             "assets.read_requirements".into(),
+            "assets.read_candidate".into(),
             "assets.write_candidate".into(),
             "assets.build_candidate".into(),
             "assets.validate_candidate".into(),
