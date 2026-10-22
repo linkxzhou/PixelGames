@@ -6,7 +6,7 @@
 |---|---|---|---|---|
 | v1 | `v1-pr1/` | `6868c64` | [PR #1](https://github.com/linkxzhou/PixelGames/pull/1) | 参考原图 / pxl 生成 |
 | v2 | `v2-pr2/` | `e6d38a7`（用户优化版） | [PR #2](https://github.com/linkxzhou/PixelGames/pull/2) | 参考原图 / v1 / v2 |
-| v3 | `v3-pr3/` | `36216ea` | （本轮 PR） | 参考原图 / v2（仅旧 10 张） / v3 |
+| v3 | `v3-pr3/` | `36216ea` | [PR #3](https://github.com/linkxzhou/PixelGames/pull/3) | 参考原图 / v2（仅旧 10 张） / v3 |
 
 ## 评分记录（风格 / 辨识度，1–10）
 
