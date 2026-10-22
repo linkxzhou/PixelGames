@@ -170,6 +170,7 @@ pub struct OpenAiProvider {
     pub api_key_env: String,
     pub timeout_secs: u64,
     retries: u32,
+    api_key: Option<String>,
 }
 
 impl OpenAiProvider {
@@ -180,7 +181,56 @@ impl OpenAiProvider {
             api_key_env: cfg.api_key_env.clone(),
             timeout_secs: cfg.request_timeout_secs,
             retries: cfg.max_provider_retries,
+            api_key: None,
         }
+    }
+
+    pub fn from_dotenv(cfg: &crate::config::Config, path: &std::path::Path) -> Result<Self> {
+        let text = std::fs::read_to_string(path)
+            .map_err(|_| HarnessError::provider("cannot read .env provider configuration"))?;
+        Self::from_env_text(cfg, &text)
+    }
+
+    fn from_env_text(cfg: &crate::config::Config, text: &str) -> Result<Self> {
+        let mut values = std::collections::BTreeMap::new();
+        for (index, line) in text.lines().enumerate() {
+            let line = line.trim();
+            if line.is_empty() || line.starts_with('#') { continue; }
+            let line = line.strip_prefix("export ").unwrap_or(line);
+            let (name, value) = line.split_once('=').ok_or_else(||
+                HarnessError::provider(format!("invalid .env assignment on line {}", index + 1)))?;
+            let value = value.trim();
+            let value = if value.starts_with(['\'', '"']) {
+                let quote = value.chars().next().unwrap();
+                if value.len() < 2 || !value.ends_with(quote) {
+                    return Err(HarnessError::provider(format!("invalid .env quoting on line {}", index + 1)));
+                }
+                &value[1..value.len() - 1]
+            } else {
+                value.split(" #").next().unwrap_or(value).trim_end()
+            };
+            values.insert(name.trim().to_string(), value.to_string());
+        }
+        let required = |name: &str| -> Result<String> {
+            values.get(name).filter(|v| !v.is_empty()).cloned()
+                .ok_or_else(|| HarnessError::provider(format!("configure {name} in .env")))
+        };
+        let mut provider = Self::from_config(cfg);
+        provider.base_url = required("API_BASE_URL")?;
+        if !provider.base_url.starts_with("https://") && !provider.base_url.starts_with("http://") {
+            return Err(HarnessError::provider("API_BASE_URL must use http:// or https://"));
+        }
+        provider.api_key = Some(required("API_KEY")?);
+        provider.api_key_env = "API_KEY".into();
+        provider.model = required("API_MODEL")?;
+        if let Some(value) = values.get("API_TIMEOUT_SECS").filter(|v| !v.is_empty()) {
+            provider.timeout_secs = value.parse().map_err(|_| HarnessError::provider("invalid API_TIMEOUT_SECS"))?;
+            if provider.timeout_secs == 0 { return Err(HarnessError::provider("API_TIMEOUT_SECS must be positive")); }
+        }
+        if let Some(value) = values.get("API_MAX_RETRIES").filter(|v| !v.is_empty()) {
+            provider.retries = value.parse().map_err(|_| HarnessError::provider("invalid API_MAX_RETRIES"))?;
+        }
+        Ok(provider)
     }
 }
 
@@ -190,7 +240,7 @@ impl ModelProvider for OpenAiProvider {
     }
 
     fn complete(&mut self, messages: &[ChatMessage], tools: &[ToolSpec]) -> Result<ProviderResponse> {
-        let key = std::env::var(&self.api_key_env).map_err(|_| {
+        let key = self.api_key.clone().map(Ok).unwrap_or_else(|| std::env::var(&self.api_key_env)).map_err(|_| {
             HarnessError::provider(format!(
                 "environment variable {} is not set",
                 self.api_key_env
@@ -313,15 +363,25 @@ fn post_json(url: &str, key: &str, body: &serde_json::Value, timeout_secs: u64) 
     use std::io::Write;
     use std::process::{Command, Stdio};
     let payload = serde_json::to_string(body)?;
+    if key.contains(['\r', '\n']) {
+        return Err(HarnessError::provider("invalid credential header"));
+    }
     let header = format!("Authorization: Bearer {key}");
+    let escaped_header = header.replace('\\', "\\\\").replace('"', "\\\"");
+    let config = format!(
+        "header = \"{escaped_header}\"\ndata = \"{}\"\n",
+        payload.replace('\\', "\\\\").replace('"', "\\\"")
+            .replace('\n', "\\n").replace('\r', "\\r")
+    );
     let mut child = Command::new("curl")
+        .arg("-q")
         .arg("-sS")
         .arg("--fail-with-body")
         .arg("--max-time")
         .arg(timeout_secs.to_string())
         .args(["-H", "Content-Type: application/json"])
-        .args(["-H", &header])
-        .args(["--data-binary", "@-"])
+        .args(["--config", "-"])
+        .arg("--url")
         .arg(url)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -332,15 +392,15 @@ fn post_json(url: &str, key: &str, body: &serde_json::Value, timeout_secs: u64) 
         .stdin
         .take()
         .ok_or_else(|| HarnessError::provider("curl stdin unavailable"))?
-        .write_all(payload.as_bytes())
+        .write_all(config.as_bytes())
         .map_err(|e| HarnessError::provider(format!("curl stdin: {e}")))?;
     let out = child
         .wait_with_output()
         .map_err(|e| HarnessError::provider(format!("curl: {e}")))?;
     if !out.status.success() {
         return Err(HarnessError::provider(format!(
-            "provider HTTP error: {}",
-            String::from_utf8_lossy(&out.stdout)
+            "provider HTTP request failed (exit {:?})",
+            out.status.code()
         )));
     }
     serde_json::from_slice(&out.stdout)
@@ -362,6 +422,21 @@ pub fn tool_calls_value(calls: &[ToolCall]) -> serde_json::Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn dotenv_config_validates_and_keeps_credentials_private() {
+        let cfg = crate::config::Config::default();
+        let text = "API_BASE_URL=https://example.test/v1\nAPI_KEY='test-only'\nAPI_MODEL=test-model\nAPI_TIMEOUT_SECS=45\nAPI_MAX_RETRIES=1\n";
+        let provider = OpenAiProvider::from_env_text(&cfg, text).unwrap();
+        assert_eq!(provider.base_url, "https://example.test/v1");
+        assert_eq!(provider.model, "test-model");
+        assert_eq!(provider.timeout_secs, 45);
+        assert_eq!(provider.retries, 1);
+        assert_eq!(provider.api_key.as_deref(), Some("test-only"));
+        assert!(OpenAiProvider::from_env_text(&cfg, "API_KEY=").is_err());
+        assert!(OpenAiProvider::from_env_text(&cfg, &text.replace("45", "0")).is_err());
+        assert!(OpenAiProvider::from_env_text(&cfg, "API_KEY='unclosed").is_err());
+    }
 
     #[test]
     fn fake_provider_replays_scripted_turns() {

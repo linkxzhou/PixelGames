@@ -382,6 +382,13 @@ pub fn gates(ctx: &ToolContext) -> Result<GateReport> {
         });
     }
 
+    checks.push(GateCheck {
+        id: "design.semantic".into(),
+        passed: failures.is_empty(),
+        value: format!("{} problems", failures.len()),
+        limit: "all design files and semantic constraints valid".into(),
+        failures,
+    });
     let passed = checks.iter().all(|c| c.passed);
     Ok(GateReport {
         report_version: GATE_REPORT_VERSION,
@@ -480,8 +487,7 @@ pub fn run_design_stage(
     };
     // Copy the brief into the attempt so the designer can read it.
     let brief_text = fs::read_to_string(artifacts.brief_path())?;
-    fs::create_dir_all(template_root.join("brief.json").parent().unwrap())?;
-    fs::write(template_root.join("brief.json"), &brief_text)?;
+    fs::write(attempt_dir.join("brief.json"), &brief_text)?;
     let specs = registry.specs(&ctx.role);
     let user_prompt = format!(
         "Produce the design package for game '{}'. Genre template: {}. Brief:\n{}",
@@ -538,6 +544,9 @@ pub fn run_design_stage(
         chrono_like_id(state.created_ms)
     );
     let (dir, digest) = artifacts.commit_revision("design", &revision, &attempt_dir)?;
+    let mut identity = artifacts.identity()?;
+    identity.design_revision = Some(revision.clone());
+    artifacts.save_identity(&identity)?;
     state.design_revision = Some(revision.clone());
     set_stage(state, "design", StageStatus::Succeeded)?;
     run.save(state)?;
@@ -680,6 +689,18 @@ mod tests {
         let ctx = ctx_with(&dir);
         let report = gates(&ctx).unwrap();
         assert!(report.passed(), "{:?}", report.failed_checks());
+
+        // Missing victory conditions and malformed levels must fail closed.
+        let game_path = dir.join("game-design.json");
+        let original = fs::read_to_string(&game_path).unwrap();
+        let mut game: Value = serde_json::from_str(&original).unwrap();
+        game["win_condition"] = Value::Null;
+        fs::write(&game_path, serde_json::to_string(&game).unwrap()).unwrap();
+        assert!(!gates(&ctx).unwrap().passed());
+        fs::write(&game_path, original).unwrap();
+        fs::write(dir.join("levels/broken.json"), "{broken").unwrap();
+        assert!(!gates(&ctx).unwrap().passed());
+        fs::remove_file(dir.join("levels/broken.json")).unwrap();
 
         // Break: spawn outside the grid.
         let bad = dir.join("levels/level_2.json");

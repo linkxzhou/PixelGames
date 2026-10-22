@@ -106,7 +106,7 @@ impl EventLog {
         fs_create_dir_all(run_dir)?;
         let path = run_dir.join(EVENTS_FILE);
         let next_seq = if path.is_file() {
-            count_lines(&path)? as u64
+            Self::read_all(run_dir)?.len() as u64
         } else {
             0
         };
@@ -128,13 +128,16 @@ impl EventLog {
             ts_ms: now_ms(),
             event,
         };
-        self.next_seq += 1;
-        let mut file = self.file.as_ref().expect("event log file");
+        let mut file = self.file.as_ref()
+            .ok_or_else(|| HarnessError::io("event log is closed"))?;
         let line = serde_json::to_string(&logged)?;
         writeln!(file, "{}", line)
             .map_err(|e| HarnessError::io(format!("{}: {e}", self.path.display())))?;
         file.flush()
             .map_err(|e| HarnessError::io(format!("{}: {e}", self.path.display())))?;
+        file.sync_all()
+            .map_err(|e| HarnessError::io(format!("{}: {e}", self.path.display())))?;
+        self.next_seq += 1;
         Ok(logged)
     }
 
@@ -161,9 +164,12 @@ impl EventLog {
             })?;
             out.push(ev);
         }
-        // Sequence numbers are derived from line position.
-        for (i, ev) in out.iter_mut().enumerate() {
-            ev.seq = i as u64;
+        for (i, ev) in out.iter().enumerate() {
+            if ev.seq != i as u64 {
+                return Err(HarnessError::integrity(format!(
+                    "event sequence mismatch: expected {i}, found {}", ev.seq
+                )));
+            }
         }
         Ok(out)
     }
@@ -171,14 +177,6 @@ impl EventLog {
     pub fn close(&mut self) {
         self.file = None;
     }
-}
-
-fn count_lines(path: &Path) -> Result<usize> {
-    let file = File::open(path)?;
-    let reader = BufReader::new(file);
-    Ok(std::io::BufRead::lines(reader)
-        .filter(|l| l.as_ref().map(|s| !s.trim().is_empty()).unwrap_or(true))
-        .count())
 }
 
 fn fs_create_dir_all(dir: &Path) -> Result<()> {
@@ -199,6 +197,24 @@ pub fn events_digest(events: &[LoggedEvent]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn rejects_corrupt_sequence_and_closed_log() {
+        let dir = std::env::temp_dir().join(format!("pxl_h_events_corrupt_{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let event = LoggedEvent {
+            seq: 9,
+            ts_ms: 0,
+            event: Event::RunStatus { status: "running".into() },
+        };
+        std::fs::write(dir.join(EVENTS_FILE), format!("{}\n", serde_json::to_string(&event).unwrap())).unwrap();
+        assert!(EventLog::read_all(&dir).is_err());
+        assert!(EventLog::open(&dir).is_err());
+        std::fs::write(dir.join(EVENTS_FILE), "").unwrap();
+        let mut log = EventLog::open(&dir).unwrap();
+        log.close();
+        assert!(log.append(Event::RunStatus { status: "failed".into() }).is_err());
+    }
 
     #[test]
     fn append_and_reload_preserves_order() {

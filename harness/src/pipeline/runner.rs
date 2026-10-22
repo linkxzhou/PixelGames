@@ -61,7 +61,7 @@ impl PipelineRunner {
     pub fn start(project: PathBuf, until: UntilStage) -> Result<Self> {
         let lock = ProjectLock::acquire(&project)?;
         let cfg = Config::load(&project)?;
-        let artifacts = ArtifactStore::open(project.join(".harness"))?;
+        let artifacts = ArtifactStore::open(project.clone())?;
         // The brief snapshot must already exist; a run never rewrites inputs.
         if !artifacts.brief_path().is_file() {
             return Err(HarnessError::not_found(
@@ -104,6 +104,34 @@ impl PipelineRunner {
 
     /// Execute pending stages in order until the requested end point.
     pub fn run(&mut self, provider: &mut dyn ModelProvider) -> Result<RunSummary> {
+        let result = self.run_stages(provider);
+        self.state.status = match &result {
+            Ok(summary) => summary.status.clone(),
+            Err(error) => match error.code {
+                crate::error::ErrorCode::Budget => "budget_exhausted".into(),
+                crate::error::ErrorCode::Blocked | crate::error::ErrorCode::Policy => "blocked".into(),
+                _ => "failed".into(),
+            },
+        };
+        if result.is_err() {
+            let status = match self.state.status.as_str() {
+                "budget_exhausted" => StageStatus::BudgetExhausted,
+                "blocked" => StageStatus::Blocked,
+                _ => StageStatus::Failed,
+            };
+            for stage in self.state.stages.values_mut() {
+                if matches!(*stage, StageStatus::Running | StageStatus::Validating) {
+                    *stage = status;
+                }
+            }
+        }
+        self.ledger.save(self.run.dir())?;
+        self.run.save(&self.state)?;
+        self.events.append(Event::RunStatus { status: self.state.status.clone() })?;
+        result
+    }
+
+    fn run_stages(&mut self, provider: &mut dyn ModelProvider) -> Result<RunSummary> {
         let stages = stages_up_to(self.until);
         for stage in &stages {
             if self.state.stages[stage] == StageStatus::Succeeded {
@@ -167,7 +195,7 @@ impl PipelineRunner {
     fn run_design(&mut self, provider: &mut dyn ModelProvider) -> Result<StageStatus> {
         // Design requires an approved design revision only when one is
         // already frozen; otherwise this run produces the candidate.
-        let template_root = self.project.join(".harness").join("templates");
+        let template_root = self.project.join("templates");
         std::fs::create_dir_all(&template_root)?;
         let status = crate::pipeline::design_stage::run_design_stage(
             provider,
@@ -186,8 +214,11 @@ impl PipelineRunner {
 
     pub fn summary(&self) -> RunSummary {
         let exit_code = match self.state.status.as_str() {
+            "succeeded" => exit::OK,
             "waiting_approval" => exit::WAITING_APPROVAL,
-            _ => exit::OK,
+            "budget_exhausted" => exit::BUDGET_EXHAUSTED,
+            "failed" => exit::FAILED,
+            _ => exit::BLOCKED,
         };
         RunSummary {
             run_id: self.state.run_id.clone(),
@@ -210,7 +241,10 @@ impl PipelineRunner {
 pub fn provider_from_config(cfg: &Config) -> Result<Box<dyn ModelProvider>> {
     match cfg.provider {
         ProviderKind::Fake => Ok(Box::new(FakeProvider::new(Vec::new()))),
-        ProviderKind::Openai => Ok(Box::new(OpenAiProvider::from_config(cfg))),
+        ProviderKind::Openai => Ok(Box::new(OpenAiProvider::from_dotenv(
+            cfg,
+            &PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.env"),
+        )?)),
     }
 }
 

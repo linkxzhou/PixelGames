@@ -283,7 +283,6 @@ pub fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
 /// Advisory project lock: `runs/` and revisions are only mutated while held.
 pub struct ProjectLock {
     file: Option<fs::File>,
-    path: PathBuf,
 }
 
 impl ProjectLock {
@@ -313,7 +312,6 @@ impl ProjectLock {
         }
         Ok(Self {
             file: Some(file),
-            path,
         })
     }
 
@@ -324,8 +322,8 @@ impl ProjectLock {
 
 impl Drop for ProjectLock {
     fn drop(&mut self) {
+        // Closing releases flock; never unlink an inode another waiter uses.
         self.file = None;
-        let _ = fs::remove_file(&self.path);
     }
 }
 
@@ -369,6 +367,19 @@ mod tests {
         let loaded = store.load().unwrap();
         assert_eq!(loaded.run_id, "r1");
         assert!(store.attempt_dir("assets", "t1", 1).unwrap().is_dir());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn project_lock_keeps_stable_inode() {
+        let dir = tmp("lock");
+        let lock = ProjectLock::acquire(&dir).unwrap();
+        assert!(ProjectLock::acquire(&dir).is_err());
+        drop(lock);
+        assert!(dir.join(".harness.lock").is_file());
+        let lock = ProjectLock::acquire(&dir).unwrap();
+        assert!(ProjectLock::acquire(&dir).is_err());
+        drop(lock);
     }
 
     #[test]
