@@ -153,15 +153,10 @@ impl AssetQueue {
             return;
         };
         let (state, fingerprint, missing, recipe) = probe_inputs(attempt_dir, asset_id);
+        let changed = entry.input_fingerprint != fingerprint;
         entry.recipe = recipe;
         // A changed fingerprint invalidates any earlier success.
-        if entry.input_fingerprint != fingerprint {
-            if entry.state == AssetState::Built
-                || entry.state == AssetState::Validated
-                || entry.state == AssetState::BuildFailed
-            {
-                entry.state = AssetState::PendingBuild;
-            }
+        if changed {
             entry.build_attempts = 0;
         }
         match state {
@@ -170,7 +165,25 @@ impl AssetQueue {
                 entry.state = AssetState::PendingDependencies;
                 entry.missing = missing;
             }
-            _ => entry.state = AssetState::PendingBuild,
+            _ => {
+                // Same bytes must not demote Built/BuildFailed back to
+                // PendingBuild. auto_build then skips (fingerprint already
+                // recorded) and the gate reports "never built".
+                let keep = !changed
+                    && matches!(
+                        entry.state,
+                        AssetState::Built
+                            | AssetState::Validated
+                            | AssetState::BuildFailed
+                            | AssetState::Blocked
+                    );
+                if keep {
+                    entry.missing.clear();
+                } else {
+                    entry.state = AssetState::PendingBuild;
+                    entry.missing.clear();
+                }
+            }
         }
         entry.input_fingerprint = fingerprint;
     }
@@ -239,7 +252,18 @@ impl AssetQueue {
             }
             let fingerprint = entry.input_fingerprint.clone();
             // Same-fingerprint dedup: never rebuild what already built.
+            // If a later write of identical bytes demoted the state, put the
+            // recorded result back so the gate does not say "never built".
             if entry.built_fingerprints.iter().any(|f| f == &fingerprint) {
+                if let Some(e) = self.entry_mut(&id) {
+                    if e.state == AssetState::PendingBuild {
+                        e.state = if e.last_error_code.is_some() {
+                            AssetState::BuildFailed
+                        } else {
+                            AssetState::Built
+                        };
+                    }
+                }
                 continue;
             }
             let recipe = entry.recipe.clone();
@@ -650,6 +674,20 @@ mod tests {
         // Palette rewrite cascades dirt to every asset.
         q.mark_all_dirty(&d);
         assert_eq!(q.entry("explosion").unwrap().state, AssetState::MissingSpecs);
+        assert_eq!(q.entry("w").unwrap().state, AssetState::PendingBuild);
+        // A successful build must survive a re-probe of the same bytes.
+        q.record_success("w");
+        assert_eq!(q.entry("w").unwrap().state, AssetState::Built);
+        let fp = q.entry("w").unwrap().input_fingerprint.clone();
+        q.entry_mut("w").unwrap().built_fingerprints.push(fp);
+        q.mark_dirty("w", &d);
+        assert_eq!(
+            q.entry("w").unwrap().state,
+            AssetState::Built,
+            "unchanged inputs must not demote a successful build"
+        );
+        fs::write(d.join("w.recipe.json"), r#"{"v":1,"asset":"w","seed":2}"#).unwrap();
+        q.mark_dirty("w", &d);
         assert_eq!(q.entry("w").unwrap().state, AssetState::PendingBuild);
     }
 
