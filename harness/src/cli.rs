@@ -141,7 +141,17 @@ fn dispatch(cli: Cli) -> Result<i32> {
             }
             // Approve binds the manifest digest; an explicit mismatch is a
             // hard error, an empty digest means "trust the manifest".
-            let recorded = store.revision_digest(&stage, &revision)?;
+            // A design run that reached waiting_approval before revisions
+            // were committed can still be approved by its deterministic id
+            // `d{created_ms}`: the passed attempt is frozen at that moment.
+            let recorded = match store.revision_digest(&stage, &revision) {
+                Ok(digest) => digest,
+                Err(err) if stage == "design" => {
+                    commit_waiting_design(&store, &revision).map_err(|_| err)?;
+                    store.revision_digest(&stage, &revision)?
+                }
+                Err(err) => return Err(err),
+            };
             if !digest.is_empty() && digest != recorded {
                 return Err(HarnessError::integrity(format!(
                     "digest mismatch: given {digest}, revision manifest says {recorded}"
@@ -214,6 +224,56 @@ fn dispatch(cli: Cli) -> Result<i32> {
             Ok(exit::OK)
         }
     }
+}
+
+/// Freeze a design attempt that already passed gates but was recorded
+/// before the runner committed revisions. The revision id is `d{created_ms}`.
+fn commit_waiting_design(store: &ArtifactStore, revision: &str) -> Result<()> {
+    let runs_dir = store.runs_dir();
+    if !runs_dir.is_dir() {
+        return Err(HarnessError::not_found(format!(
+            "revision {revision} has no manifest"
+        )));
+    }
+    let mut runs: Vec<String> = std::fs::read_dir(&runs_dir)?
+        .flatten()
+        .map(|e| e.file_name().to_string_lossy().to_string())
+        .collect();
+    runs.sort();
+    for run_id in runs.iter().rev() {
+        let dir = runs_dir.join(run_id);
+        let Ok(state) = crate::storage::RunStore::open(dir.clone()).and_then(|s| s.load()) else {
+            continue;
+        };
+        if format!("d{}", state.created_ms) != revision {
+            continue;
+        }
+        if state.status != "waiting_approval" {
+            return Err(HarnessError::blocked(format!(
+                "run {} is {}, not waiting_approval",
+                run_id, state.status
+            )));
+        }
+        let report_path = dir.join("reports/design.gates.json");
+        let report: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&report_path)?)?;
+        if report.get("status").and_then(|s| s.as_str()) != Some("passed") {
+            return Err(HarnessError::blocked(
+                "design gates did not pass; refusing to freeze the attempt",
+            ));
+        }
+        let attempt = dir.join("attempts/design/design_package/a001");
+        if !attempt.is_dir() {
+            return Err(HarnessError::not_found(format!(
+                "design attempt {} is missing",
+                attempt.display()
+            )));
+        }
+        store.commit_revision("design", revision, &attempt)?;
+        return Ok(());
+    }
+    Err(HarnessError::not_found(format!(
+        "revision {revision} has no manifest"
+    )))
 }
 
 fn print_json(v: &serde_json::Value) -> Result<()> {

@@ -97,12 +97,18 @@ impl<'a> AgentRunner<'a> {
                 tool_call_id: None,
             });
             for call in &response.tool_calls {
+                let call_id = if call.id.is_empty() {
+                    format!("call_{}_{}", call.name, turns_used)
+                } else {
+                    call.id.clone()
+                };
                 self.events.append(Event::ToolStarted {
                     stage: task.stage.clone(),
                     task_id: task.task_id.clone(),
                     attempt: task.attempt,
                     tool: call.name.clone(),
                     arguments_digest: crate::digest::digest_bytes(call.arguments.as_bytes()),
+                    call_id: call_id.clone(),
                 })?;
                 let outcome = self.execute_call(call, tools);
                 let (ok, artifact_digests, error_code) = match &outcome {
@@ -123,7 +129,26 @@ impl<'a> AgentRunner<'a> {
                     exit_code: None,
                     artifact_digests,
                     error_code,
+                    call_id: call_id.clone(),
                 })?;
+                if let Ok(o) = outcome.as_ref() {
+                    if o.ok {
+                        if let Some(art) = &o.artifact {
+                            self.events.append(Event::CandidateWritten {
+                                stage: task.stage.clone(),
+                                task_id: task.task_id.clone(),
+                                attempt: task.attempt,
+                                tool: call.name.clone(),
+                                call_id: call_id.clone(),
+                                turn: turns_used.saturating_sub(1),
+                                path: art.path.clone(),
+                                digest: art.digest.clone(),
+                                prompt_tokens: response.prompt_tokens,
+                                completion_tokens: response.completion_tokens,
+                            })?;
+                        }
+                    }
+                }
                 let summary = match outcome {
                     Ok(o) => render_outcome(&o),
                     Err(e) => format!(
@@ -141,11 +166,7 @@ impl<'a> AgentRunner<'a> {
                     content: summary,
                     tool_calls: None,
                     tool_name: Some(call.name.clone()),
-                    tool_call_id: Some(if call.id.is_empty() {
-                        format!("call_{}", call.name)
-                    } else {
-                        call.id.clone()
-                    }),
+                    tool_call_id: Some(call_id),
                 });
             }
         }

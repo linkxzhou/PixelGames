@@ -1,0 +1,22 @@
+{
+  "run_id": "r1792638056510",
+  "harness_version": "0.1.0",
+  "created_ms": 1792638056510,
+  "brief_digest": "sha256:6c7e2f914e6e496e274d4963955949915a3627afeea9bc1691c863d308aaa1d3",
+  "config_digest": "sha256:7657fc02eb7319b1746099cde82e8f39e6d16d8a24d12fe4d88de1f671b771ca",
+  "stages": {
+    "assets": "not_requested",
+    "design": "waiting_approval"
+  },
+  "tasks": {
+    "design/design_package": {
+      "id": "design_package",
+      "stage": "design",
+      "status": "pending",
+      "attempts": 0,
+      "stopped_reason": "stop"
+    }
+  },
+  "until": "design",
+  "status": "waiting_approval"
+}

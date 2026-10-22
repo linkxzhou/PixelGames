@@ -1,0 +1,8 @@
+{"seq":0,"ts_ms":1792637429869,"event":"run_created","harness_version":"0.1.0","config_digest":"sha256:3bd108ca3d76f445e37eab0a54aac2134ed8662461e77560684b845077d93ad6"}
+{"seq":1,"ts_ms":1792637429871,"event":"model_turn_started","stage":"design","task_id":"design_package","turn":0}
+{"seq":2,"ts_ms":1792637431794,"event":"model_turn_finished","stage":"design","task_id":"design_package","turn":0,"stop_reason":"tool_calls","prompt_tokens":1231,"completion_tokens":47}
+{"seq":3,"ts_ms":1792637431796,"event":"tool_started","stage":"design","task_id":"design_package","attempt":1,"tool":"design.read_brief","arguments_digest":"sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"}
+{"seq":4,"ts_ms":1792637431797,"event":"tool_finished","stage":"design","task_id":"design_package","attempt":1,"tool":"design.read_brief","ok":true,"exit_code":null,"artifact_digests":[],"error_code":null}
+{"seq":5,"ts_ms":1792637431798,"event":"tool_started","stage":"design","task_id":"design_package","attempt":1,"tool":"design.read_template","arguments_digest":"sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"}
+{"seq":6,"ts_ms":1792637431799,"event":"tool_finished","stage":"design","task_id":"design_package","attempt":1,"tool":"design.read_template","ok":true,"exit_code":null,"artifact_digests":[],"error_code":null}
+{"seq":7,"ts_ms":1792637431799,"event":"model_turn_started","stage":"design","task_id":"design_package","turn":1}

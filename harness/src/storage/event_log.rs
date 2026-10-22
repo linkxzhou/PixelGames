@@ -43,6 +43,9 @@ pub enum Event {
         attempt: u32,
         tool: String,
         arguments_digest: String,
+        /// Provider tool-call id for this invocation.
+        #[serde(default)]
+        call_id: String,
     },
     ToolFinished {
         stage: String,
@@ -53,6 +56,21 @@ pub enum Event {
         exit_code: Option<i32>,
         artifact_digests: Vec<(String, String)>,
         error_code: Option<String>,
+        #[serde(default)]
+        call_id: String,
+    },
+    /// A candidate file written by the model, with the call that produced it.
+    CandidateWritten {
+        stage: String,
+        task_id: String,
+        attempt: u32,
+        tool: String,
+        call_id: String,
+        turn: u32,
+        path: String,
+        digest: String,
+        prompt_tokens: u64,
+        completion_tokens: u64,
     },
     GateFinished {
         stage: String,

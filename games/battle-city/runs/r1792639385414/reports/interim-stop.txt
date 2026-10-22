@@ -1,0 +1,4 @@
+Stopped for interim review while assets repair round 2 was in progress.
+Round 1 ended at max_turns with assets.gates status failed.
+The process was frozen so this tree matches the exported sheets.
+Specs under attempts/assets/asset_package/a001 are model-authored; none match the bundled template JSON.

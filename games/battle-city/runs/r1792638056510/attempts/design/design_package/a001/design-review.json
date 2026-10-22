@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "requested_by": "designer",
+  "summary": "Battle City top-down tank slice designed as a complete package: game-design.json (2 actions, 7 entities, 11 rules, win/lose conditions closed over existing ids), style-guide.json (320x240 logical, 16px tiles/sprites, monochrome palette, N/E/S/W, 2-16 fps, nearest filtering), three 12x12 levels, asset-requirements.json (13 requirements covering every entity plus all non-floor/non-decor tiles: b, x, w, h, g, t), and acceptance-plan.json (22 items spanning design/assets/engine/playtest/human). Difficulty ramps per the template: level_1 \"Training Yard\" teaches movement only to an exit at (9,10) with no enemies; level_2 \"Brick Breakthrough\" puts the exit at (6,0) behind a brick lattice so shooting carves a shortcut; level_3 \"River Siege\" adds 3 enemy tanks, water corridors, steel cover, 2 hazard tiles and base defense. Every stage exit was hand-verified walkable from spawn on non-blocking tiles, and no spawn sits on a blocking tile.",
+  "risks": [
+    "explosion is authored as entity kind 'prop' because the contract's kind enum lacks 'effect' (the genre template uses it); it maps to an 'effect' asset requirement. If the schema gains 'effect', this should be migrated.",
+    "game-design.json scope must be numeric-only: the validator rejects booleans (expected u32), so all scope values are integers (levels, grid_w/h, tile_size_px, sprite_size_px, logical_width/height, max_players, screens_per_stage) rather than flags.",
+    "hq_base sits on a non-blocking floor tile, so it must be rendered as a prop overlay rather than an occupancy tile; enemy bullet collision with the base needs a dedicated hitbox in engine.",
+    "level_3 enemies (9,5), (4,9), (10,3) all stand on floor but (10,3) is directly above hazard (11,3) — engine patrol logic must not push a tank onto a hazard-adjacent lane carelessly, or the stage may feel unfair.",
+    "Stage 2 and 3 exits are reachable without firing by design; if designers prefer shooting to be mandatory, the open bypass lane should be closed."
+  ],
+  "open_questions": [
+    "Should the HQ base destruction be survivable on level_3 (respawn/lives) or an instant stage loss as specified?",
+    "Is a hazard tile ('h') wanted at all on level_3, given the brief lists water but not hazards as an element?",
+    "Should grass ('t') render above tanks for the classic occlusive look, or below them for clarity?"
+  ]
+}

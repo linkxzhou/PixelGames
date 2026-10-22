@@ -2,6 +2,7 @@
 //! commit revisions. Expanded per milestone (design/assets runners land in
 //! the stage modules).
 
+pub mod assets_stage;
 pub mod design_stage;
 pub mod review_view;
 pub mod runner;

@@ -1,0 +1,14 @@
+{
+  "provider": "openai",
+  "model": "",
+  "base_url": "",
+  "api_key_env": "API_KEY",
+  "max_model_turns_per_task": 60,
+  "max_fixes_per_task": 3,
+  "require_design_approval": true,
+  "request_timeout_secs": 600,
+  "max_provider_retries": 1,
+  "task_wall_clock_secs": 1800,
+  "token_budget": 0,
+  "request_budget": 0
+}
