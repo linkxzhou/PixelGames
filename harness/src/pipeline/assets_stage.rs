@@ -151,10 +151,7 @@ pub fn registry() -> ToolRegistry {
         needed: Permission::Pxl,
         run: Box::new(|args, ctx| {
             let recipe = args["recipe"].as_str().unwrap_or_default();
-            let stem = Path::new(recipe)
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or("build");
+            let stem = recipe_asset_id(recipe);
             let out_rel = args["out_dir"]
                 .as_str()
                 .filter(|s| !s.is_empty())
@@ -428,6 +425,18 @@ fn authored_spec_files(attempt: &Path) -> Vec<PathBuf> {
     files
 }
 
+/// Asset id from a recipe path. `player_tank.recipe.json` → `player_tank`.
+/// `Path::file_stem` stops at `.json` and would return `player_tank.recipe`.
+fn recipe_asset_id(recipe: &str) -> &str {
+    let name = Path::new(recipe)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or(recipe);
+    name.strip_suffix(".recipe.json")
+        .or_else(|| name.strip_suffix(".json"))
+        .unwrap_or(name)
+}
+
 fn build_candidate(ctx: &ToolContext, recipe: &str, out_rel: &str) -> Result<ToolOutcome> {
     let root = crate::policy::path::WriteRoot::new(&ctx.attempt_dir);
     let recipe_path = root.resolve_write(recipe)?;
@@ -491,10 +500,10 @@ fn queue_record_build(
                 .collect()
         })
         .unwrap_or_default();
-    let stem = Path::new(recipe)
-        .file_stem()
-        .and_then(|s| s.to_str())
-        .unwrap_or("");
+    // `Path::file_stem` only strips the last extension, so
+    // `player_tank.recipe.json` becomes `player_tank.recipe` and never
+    // matches a required id. Explicit builds then never update the queue.
+    let stem = recipe_asset_id(recipe);
     let Some(asset_id) = required.iter().find(|r| r.as_str() == stem) else {
         return;
     };
@@ -1263,6 +1272,10 @@ Requirements:\n{req_text}"
         state
             .task_mut("assets", "asset_package")
             .stopped_reason = Some(outcome.stop_reason.clone());
+        // Design does this before gates. Staying in `running` makes the next
+        // repair round's `set_stage(Running)` illegal (`running -> running`)
+        // and also makes a passing package unable to reach `succeeded`.
+        set_stage(state, "assets", StageStatus::Validating)?;
         run.save(state)?;
         // Harness auto-check pass: build every complete dirty recipe the model
         // never built (the `w` hole). Independent events + resource metering.
@@ -1530,6 +1543,18 @@ mod tests {
             design_dir: Some(design.to_path_buf()),
             pxl: Arc::new(crate::adapters::PxlAdapter::unavailable()),
         }
+    }
+
+    #[test]
+    fn recipe_asset_id_keeps_dotted_ids() {
+        assert_eq!(recipe_asset_id("player_tank.recipe.json"), "player_tank");
+        assert_eq!(recipe_asset_id("w.recipe.json"), "w");
+        assert_eq!(recipe_asset_id("out/hq_base.recipe.json"), "hq_base");
+        // file_stem would have returned "player_tank.recipe", which matches no required id.
+        assert_ne!(
+            Path::new("player_tank.recipe.json").file_stem().unwrap(),
+            recipe_asset_id("player_tank.recipe.json")
+        );
     }
 
     fn write_reqs(dir: &Path, ids: &[&str]) {

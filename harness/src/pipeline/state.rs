@@ -71,6 +71,10 @@ mod tests {
         )
         .is_ok());
         assert!(transition(StageStatus::Validating, StageStatus::Running).is_ok());
+        // Assets repair rounds must pass through validating. `running -> running`
+        // aborted the battle-city assets stage before round 2.
+        assert!(transition(StageStatus::Running, StageStatus::Running).is_err());
+        assert!(transition(StageStatus::Running, StageStatus::Succeeded).is_err());
         assert!(transition(StageStatus::Validating, StageStatus::Succeeded).is_ok());
         assert!(transition(StageStatus::Succeeded, StageStatus::Running).is_err());
         assert!(transition(StageStatus::Succeeded, StageStatus::Stale).is_ok());
