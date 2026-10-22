@@ -1,0 +1,2 @@
+[ok] wrote hud_life_icon.recipe.json
+{"path":"hud_life_icon.recipe.json","digest":"sha256:c377f65c7318c5ff80b57130f881272a22af771a09ecd3d4d7b52d2ad1f35c49"}

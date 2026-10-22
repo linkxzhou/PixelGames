@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "recipe": "enemy_tank.recipe.json",
+  "input_fingerprint": "sha256:c70a7aa08f5350e5d7481567b717ed06ec7f3b35d357c049377d9c87f7583334|sha256:d20f9050ae468c8757d581652088e7b0af2c8537824281942b234de20b4e2f8f|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|",
+  "ok": false,
+  "exit_code": 1,
+  "error_code": "E_IO",
+  "message": "cannot read games/battle-city/runs/r1792660166849/attempts/assets/asset_package/a001/enemy_tank.recipe.json: No such file or directory (os error 2)",
+  "hint": "check the path, or pass - to read stdin",
+  "error_path": null,
+  "elapsed_ms": 20,
+  "checks": [],
+  "output_digests": [],
+  "out_dir": "out/enemy_tank.3cb78dc61dbd"
+}

@@ -1,0 +1,2 @@
+[ok] built probe_explosion.recipe.json -> out/probe
+{"ok":true,"out_dir":"out/probe","outputs":["palette.json","explosion.pxl.json","explosion.sheet.png","explosion.sheet.json"],"message":"","error_code":"","hint":null,"failed_checks":[]}

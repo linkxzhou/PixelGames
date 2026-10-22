@@ -1,0 +1,2 @@
+[ok] wrote player_tank.shapes.json
+{"path":"player_tank.shapes.json","digest":"sha256:e5d11fe65cbb05051a860b1f8f5bbe198c1526b6eab5f22c85dc5cf55b66bcb1"}

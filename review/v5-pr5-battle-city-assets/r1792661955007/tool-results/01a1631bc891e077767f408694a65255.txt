@@ -1,0 +1,2 @@
+[ok] listed generators
+{"stdout":"{\"ok\":true,\"cmd\":\"list\",\"warnings\":[],\"kind\":\"generators\",\"items\":[\"bollinger\",\"shapes\",\"noise-tile\",\"parts\"]}\n"}

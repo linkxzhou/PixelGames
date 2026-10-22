@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "recipe": "explosion.recipe.json",
+  "input_fingerprint": "sha256:5cfe56e1de82c1bc3b8dc9c4583d2089ccc1109b00b3a6f2d0c1a1970fbba698|sha256:0394aa3abe7912f342b08e96c0e1623238a1b12d47a299975a1ab91e068b3434|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|",
+  "ok": false,
+  "exit_code": 1,
+  "error_code": "E_IO",
+  "message": "cannot read games/battle-city/runs/r1792660166849/attempts/assets/asset_package/a001/explosion.recipe.json: No such file or directory (os error 2)",
+  "hint": "check the path, or pass - to read stdin",
+  "error_path": null,
+  "elapsed_ms": 20,
+  "checks": [],
+  "output_digests": [],
+  "out_dir": "out/explosion.e2f0bb7c67cf"
+}

@@ -1,0 +1,2 @@
+[failed] pxl build failed for hq_base.recipe.json (E_SCHEMA) bad matrix char '#' -- hint: use '.' or 0-9a-z for palette indices
+{"ok":false,"out_dir":"out/hq_base","outputs":[],"message":"bad matrix char '#'","error_code":"E_SCHEMA","hint":"use '.' or 0-9a-z for palette indices","failed_checks":[]}

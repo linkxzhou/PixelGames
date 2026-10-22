@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "recipe": "bullet.recipe.json",
+  "input_fingerprint": "sha256:2b0d2c3e83d6ffc32562a0664c22df4d35ccd51723417dafa97adf674a6e7b26|sha256:2203eedf94f365fad0438555797127279fd1b4301f270af344c416bf8abb3459|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|",
+  "ok": false,
+  "exit_code": 1,
+  "error_code": "E_IO",
+  "message": "cannot read games/battle-city/runs/r1792660166849/attempts/assets/asset_package/a001/bullet.recipe.json: No such file or directory (os error 2)",
+  "hint": "check the path, or pass - to read stdin",
+  "error_path": null,
+  "elapsed_ms": 20,
+  "checks": [],
+  "output_digests": [],
+  "out_dir": "out/bullet.583012e139af"
+}

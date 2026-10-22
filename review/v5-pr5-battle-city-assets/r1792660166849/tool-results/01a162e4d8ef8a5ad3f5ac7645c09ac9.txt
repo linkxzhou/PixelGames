@@ -1,0 +1,2 @@
+[ok] built enemy_tank.recipe.json -> out/enemy_tank
+{"ok":true,"out_dir":"out/enemy_tank","outputs":["palette.json","enemy_tank.pxl.json","enemy_tank.sheet.png","enemy_tank.sheet.json"],"message":"","error_code":"","hint":null,"failed_checks":[]}

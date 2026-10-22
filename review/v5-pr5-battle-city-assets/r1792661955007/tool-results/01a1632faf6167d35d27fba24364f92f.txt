@@ -1,0 +1,2 @@
+[ok] read hq_base.shapes.json (416 bytes)
+{"path":"hq_base.shapes.json","content":"{\n  \"w\": 16,\n  \"h\": 16,\n  \"draw\": [\n    {\"rect\": [2, 12, 12, 2], \"c\": 12},\n    {\"rect\": [3, 11, 10, 1], \"c\": 13},\n    {\"rect\": [6, 5, 4, 7], \"c\": 12},\n    {\"rect\": [4, 7, 8, 2], \"c\": 12},\n    {\"rect\": [7, 3, 2, 2], \"c\": 12},\n    {\"rect\": [7, 8, 2, 1], \"c\": 2},\n    {\"rect\": [4, 7, 1, 2], \"c\": 13},\n    {\"rect\": [11, 7, 1, 2], \"c\": 13},\n    {\"outline\": {\"c\": 1, \"mode\": \"outer\", \"brush\": \"square\", \"width\": 1}}\n  ]\n}\n"}

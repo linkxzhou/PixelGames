@@ -1,0 +1,2 @@
+[ok] listed palettes
+{"stdout":"{\"ok\":true,\"cmd\":\"list\",\"warnings\":[],\"kind\":\"palettes\",\"items\":[\"p16\",\"tank\"]}\n"}

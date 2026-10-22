@@ -1,0 +1,2 @@
+[failed] pxl build failed for enemy_tank.recipe.json (E_SCHEMA) unknown shade dir 'up' -- hint: dir is top_left, top, left, bottom, right, or a diagonal
+{"ok":false,"out_dir":"out/enemy_tank","outputs":[],"message":"unknown shade dir 'up'","error_code":"E_SCHEMA","hint":"dir is top_left, top, left, bottom, right, or a diagonal","failed_checks":[]}

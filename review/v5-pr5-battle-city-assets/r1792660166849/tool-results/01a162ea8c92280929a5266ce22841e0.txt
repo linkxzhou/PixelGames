@@ -1,0 +1,2 @@
+[ok] built hq_base.recipe.json -> out/hq_base
+{"ok":true,"out_dir":"out/hq_base","outputs":["palette.json","hq_base.pxl.json","hq_base.sheet.png","hq_base.sheet.json"],"message":"","error_code":"","hint":null,"failed_checks":[]}

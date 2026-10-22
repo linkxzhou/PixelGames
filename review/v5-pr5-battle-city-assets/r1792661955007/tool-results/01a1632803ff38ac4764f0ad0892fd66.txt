@@ -1,0 +1,2 @@
+[ok] built x.recipe.json -> out/x
+{"ok":true,"out_dir":"out/x","outputs":["palette.json","x.pxl.json","x.sheet.png","x.sheet.json"],"message":"","error_code":"","hint":null,"failed_checks":[]}
