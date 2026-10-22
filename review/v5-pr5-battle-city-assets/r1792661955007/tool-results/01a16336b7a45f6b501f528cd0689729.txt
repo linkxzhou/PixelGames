@@ -1,0 +1,2 @@
+[ok] validated out/x/x.sheet.json (default)
+{"ok":true,"error_code":"","message":"","hint":null,"failed_checks":[]}

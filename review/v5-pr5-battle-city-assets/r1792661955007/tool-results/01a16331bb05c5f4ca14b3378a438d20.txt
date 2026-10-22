@@ -1,0 +1,2 @@
+[ok] wrote explosion.recipe.json
+{"path":"explosion.recipe.json","digest":"sha256:298fed14f50e097b14f631f1b1c79687b72b1d9082cca9b34547c87d767f5b80"}

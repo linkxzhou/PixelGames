@@ -1,0 +1,2 @@
+[failed] pxl build failed for explosion.recipe.json (E_QA) build wrote outputs but 2 QA check(s) failed -- hint: read checks and adjust the recipe
+{"ok":false,"out_dir":"out/explosion","outputs":[],"message":"build wrote outputs but 2 QA check(s) failed","error_code":"E_QA","hint":"read checks and adjust the recipe","failed_checks":["frame.explosion_burst_N_2.outline: value=2, limit=0 non-outline pixels touching transparency","frame.explosion_burst_N_3.outline: value=28, limit=0 non-outline pixels touching transparency"]}

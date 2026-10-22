@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "recipe": "hud_life_icon.recipe.json",
+  "input_fingerprint": "sha256:4e4dab8b4e91c0f7871e0ac4fc49d4f760ec1d2cf67846a001d2c3266ee89602|sha256:e90e78151ba77ba5438e82b15626b3d22712308c9d6ca78d1e6174a718867840|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|",
+  "ok": false,
+  "exit_code": 1,
+  "error_code": "E_IO",
+  "message": "cannot read games/battle-city/runs/r1792660166849/attempts/assets/asset_package/a001/hud_life_icon.recipe.json: No such file or directory (os error 2)",
+  "hint": "check the path, or pass - to read stdin",
+  "error_path": null,
+  "elapsed_ms": 20,
+  "checks": [],
+  "output_digests": [],
+  "out_dir": "out/hud_life_icon.558554f1b51b"
+}

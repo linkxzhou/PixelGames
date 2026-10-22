@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "recipe": "b.recipe.json",
+  "input_fingerprint": "sha256:bd334d8d3d0df40a5e1aef6fabe19fbd7e058f0778a16e1da6db5040ee49205f|sha256:a0dabf6764efa3b215bd570420412c484ce6c6096d126e66cd8afc4c38de6b18|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+  "ok": false,
+  "exit_code": 5,
+  "error_code": "E_QA",
+  "message": "build wrote outputs but 3 QA check(s) failed",
+  "hint": "read checks and adjust the recipe",
+  "error_path": null,
+  "elapsed_ms": 20,
+  "checks": [
+    {
+      "id": "palette.alpha",
+      "pass": true,
+      "value": "opaque-or-clear",
+      "limit": "alpha 0 or 255, index 0 clear"
+    },
+    {
+      "id": "frame.b_idle_N_0.palette",
+      "pass": true,
+      "value": "0",
+      "limit": "0 out-of-palette pixels"
+    },
+    {
+      "id": "frame.b_idle_N_0.bbox",
+      "pass": false,
+      "value": "100.00%",
+      "limit": "20%..95% of the canvas"
+    },
+    {
+      "id": "frame.b_idle_N_0.components",
+      "pass": true,
+      "value": "1",
+      "limit": "<= 8 connected components"
+    },
+    {
+      "id": "frame.b_idle_N_0.isolated",
+      "pass": true,
+      "value": "0",
+      "limit": "<= 4 isolated pixels"
+    },
+    {
+      "id": "frame.b_break_N_0.palette",
+      "pass": true,
+      "value": "0",
+      "limit": "0 out-of-palette pixels"
+    },
+    {
+      "id": "frame.b_break_N_0.bbox",
+      "pass": false,
+      "value": "100.00%",
+      "limit": "20%..95% of the canvas"
+    },
+    {
+      "id": "frame.b_break_N_0.components",
+      "pass": true,
+      "value": "1",
+      "limit": "<= 8 connected components"
+    },
+    {
+      "id": "frame.b_break_N_0.isolated",
+      "pass": true,
+      "value": "0",
+      "limit": "<= 4 isolated pixels"
+    },
+    {
+      "id": "frame.b_break_N_0.outline",
+      "pass": true,
+      "value": "0",
+      "limit": "0 non-outline pixels touching transparency"
+    },
+    {
+      "id": "frame.b_break_N_1.palette",
+      "pass": true,
+      "value": "0",
+      "limit": "0 out-of-palette pixels"
+    },
+    {
+      "id": "frame.b_break_N_1.bbox",
+      "pass": false,
+      "value": "100.00%",
+      "limit": "20%..95% of the canvas"
+    },
+    {
+      "id": "frame.b_break_N_1.components",
+      "pass": true,
+      "value": "1",
+      "limit": "<= 8 connected components"
+    },
+    {
+      "id": "frame.b_break_N_1.isolated",
+      "pass": true,
+      "value": "0",
+      "limit": "<= 4 isolated pixels"
+    },
+    {
+      "id": "frame.b_break_N_1.outline",
+      "pass": true,
+      "value": "0",
+      "limit": "0 non-outline pixels touching transparency"
+    },
+    {
+      "id": "anim.break.N.diff_0_1",
+      "pass": true,
+      "value": "3.51%",
+      "limit": "at least 1.00%, and at most 35.00% unless a 1px shift explains it"
+    },
+    {
+      "id": "anim.idle.N.static_single_frame",
+      "pass": true,
+      "value": "1",
+      "limit": "declared static: exactly 1 frame"
+    }
+  ],
+  "output_digests": [],
+  "out_dir": "out/b.848f7a3cbbc5"
+}

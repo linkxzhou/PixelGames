@@ -1,0 +1,2 @@
+[ok] built hud_stage_label.recipe.json -> out/hud_stage_label
+{"ok":true,"out_dir":"out/hud_stage_label","outputs":["palette.json","hud_stage_label.pxl.json","hud_stage_label.sheet.png","hud_stage_label.sheet.json"],"message":"","error_code":"","hint":null,"failed_checks":[]}

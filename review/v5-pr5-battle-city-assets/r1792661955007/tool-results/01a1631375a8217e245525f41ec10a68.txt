@@ -1,0 +1,2 @@
+[ok] wrote hq_base.recipe.json
+{"path":"hq_base.recipe.json","digest":"sha256:2a318ca6716f03bffe9263be4c83653cff789e694299e1d70b7a296e174a3b04"}

@@ -1,0 +1,235 @@
+{
+  "entries": [
+    {
+      "asset_id": "player_tank",
+      "state": "pending_build",
+      "input_fingerprint": "sha256:9bb697c128cf61b38830bc18774be631500bab23a61b5965a3dcdd14e9eeb705|sha256:36501f8d8a7c61fd94b394aaa7494e8da11833af74d89bb5dfed51df7b2dfb6d|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+      "missing": [],
+      "last_error_code": null,
+      "last_failure": null,
+      "last_report": null,
+      "build_attempts": 2,
+      "repair_attempts": 3,
+      "recipe": "player_tank.recipe.json",
+      "out_dir": "out/player_tank",
+      "built_fingerprints": [
+        "sha256:4e41f8d4aee739af13b64506fcc70886dc4664b68cf06cb0d16bd0896122f4d5|sha256:338930e6b461edd367393313fc651c9bbf6f33106ea77cb5d1296c26bebc6d8a|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:54041b36d78656ff08c6da1c4303f1fc78bb3b73c6187fa5bec17a08b7599eea|sha256:338930e6b461edd367393313fc651c9bbf6f33106ea77cb5d1296c26bebc6d8a|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:a9396daa51fa7c2654ef0e80cb6765b9a900404280a97db04454ebd3792e9f54|sha256:338930e6b461edd367393313fc651c9bbf6f33106ea77cb5d1296c26bebc6d8a|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:9bb697c128cf61b38830bc18774be631500bab23a61b5965a3dcdd14e9eeb705|sha256:36501f8d8a7c61fd94b394aaa7494e8da11833af74d89bb5dfed51df7b2dfb6d|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|"
+      ]
+    },
+    {
+      "asset_id": "enemy_tank",
+      "state": "pending_build",
+      "input_fingerprint": "sha256:e8e3bba664ac5b50fa74f52a468ad216f92c461a4b89cdb385f87535c30a4a33|sha256:a659fbe43c393d7a6deaddcdf14ab05b4245dfbd00ac28dcd5c234709a2a47d3|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+      "missing": [],
+      "last_error_code": null,
+      "last_failure": null,
+      "last_report": null,
+      "build_attempts": 1,
+      "repair_attempts": 4,
+      "recipe": "enemy_tank.recipe.json",
+      "out_dir": "out/enemy_tank",
+      "built_fingerprints": [
+        "sha256:df46d2e64f9ff19addf109641d031241511dc5d30de7abaf2d25fc941cd19a08|sha256:146df5b44c2ded1257209fda9fc3e7075dbf5742fedfd75278a84f1f95d09236|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:f4fabf3ae04e805e5711dc77a55d3398e2db86d18c45be7bfbca2f8d057835bb|sha256:146df5b44c2ded1257209fda9fc3e7075dbf5742fedfd75278a84f1f95d09236|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:5697fb7c3665928b263451c6b36cd7450cf695508b5fec25aa5502a6e1f42f12|sha256:146df5b44c2ded1257209fda9fc3e7075dbf5742fedfd75278a84f1f95d09236|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:8f80567468f8e43af0b7b15ed9d548d3805fc41bd1930cf70b48115b120c1de1|sha256:a659fbe43c393d7a6deaddcdf14ab05b4245dfbd00ac28dcd5c234709a2a47d3|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:073b8ebb61b7bb92975504478c14a30aae024e69f67e4b10539f7ee67e2185ea|sha256:a659fbe43c393d7a6deaddcdf14ab05b4245dfbd00ac28dcd5c234709a2a47d3|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:e8e3bba664ac5b50fa74f52a468ad216f92c461a4b89cdb385f87535c30a4a33|sha256:a659fbe43c393d7a6deaddcdf14ab05b4245dfbd00ac28dcd5c234709a2a47d3|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|"
+      ]
+    },
+    {
+      "asset_id": "bullet",
+      "state": "pending_build",
+      "input_fingerprint": "sha256:2d09764dfa90cf1c147e15fe44e1445a0d6ee788f77e55e87bb240726f2804c0|sha256:ea3a4a0708bef217b757ead46d726a11ceabf65a05bf164cf9f5591a9d6f1b65|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+      "missing": [],
+      "last_error_code": null,
+      "last_failure": null,
+      "last_report": null,
+      "build_attempts": 2,
+      "repair_attempts": 1,
+      "recipe": "bullet.recipe.json",
+      "out_dir": "out/bullet",
+      "built_fingerprints": [
+        "sha256:78df2fbfc6a5c2f4ea19b8fc10c28b9651bac9b9ec1c96be5a191efdb31585cd|sha256:ea3a4a0708bef217b757ead46d726a11ceabf65a05bf164cf9f5591a9d6f1b65|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:2d09764dfa90cf1c147e15fe44e1445a0d6ee788f77e55e87bb240726f2804c0|sha256:ea3a4a0708bef217b757ead46d726a11ceabf65a05bf164cf9f5591a9d6f1b65|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|"
+      ]
+    },
+    {
+      "asset_id": "explosion",
+      "state": "pending_build",
+      "input_fingerprint": "sha256:d5ba97136f1d747b81cd1598a504ec2a6190a508e38b305b2dabdc214cfda317|sha256:815f01d7793690fd6eebc4c0acf2b155f79803f794ea12c9669707b8701d61ac|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+      "missing": [],
+      "last_error_code": null,
+      "last_failure": null,
+      "last_report": null,
+      "build_attempts": 1,
+      "repair_attempts": 4,
+      "recipe": "explosion.recipe.json",
+      "out_dir": "out/explosion",
+      "built_fingerprints": [
+        "sha256:2e54ce1e79e593e4e868061cdd70a681eceb05d1b0166d359201be496677607c|sha256:eb487f147bc75e6d41ce214a9437c265270d3bb9428eae1af49bfc88c8f6ee68|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:2db37fee0819386e0003f629bb26b50f6c992ac45976c186f20b46aa5b53f120|sha256:b52a32c85940528b53f17ed3d03032edd766142ad946b3c977cf62fa47d40d36|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:16c66cd1960f3f9f129cf14068261e257cf041a5fff62d4627fa793f80ea0273|sha256:b52a32c85940528b53f17ed3d03032edd766142ad946b3c977cf62fa47d40d36|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:7aeea4f09e8fa93cbd1898780135dbabd9b411e8cc328f95ee26f7df2a5376b6|sha256:ad28157362a53973d89da7bce1b06b9d23e87f454815fc9d57673348c61581c1|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:298fed14f50e097b14f631f1b1c79687b72b1d9082cca9b34547c87d767f5b80|sha256:d44b22ef5c9b454f5229a28ec1622406728f257ee5ee9de66fc0061b93c50082|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:5c65a3ded718a757825921b76463a263c4bdb9dba52a7099f4d770203b435ed4|sha256:815f01d7793690fd6eebc4c0acf2b155f79803f794ea12c9669707b8701d61ac|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:d5ba97136f1d747b81cd1598a504ec2a6190a508e38b305b2dabdc214cfda317|sha256:815f01d7793690fd6eebc4c0acf2b155f79803f794ea12c9669707b8701d61ac|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|"
+      ]
+    },
+    {
+      "asset_id": "hq_base",
+      "state": "pending_build",
+      "input_fingerprint": "sha256:7d7376673718884b1420562500dfb263b99c9d746f4add6125bf33542221521e|sha256:7b49392e6208aabeb71391f2fed2a4b0d1eb7f2496baaa9295424086b15d8b68|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+      "missing": [],
+      "last_error_code": null,
+      "last_failure": null,
+      "last_report": null,
+      "build_attempts": 1,
+      "repair_attempts": 3,
+      "recipe": "hq_base.recipe.json",
+      "out_dir": "out/hq_base",
+      "built_fingerprints": [
+        "sha256:2a318ca6716f03bffe9263be4c83653cff789e694299e1d70b7a296e174a3b04|sha256:e87763f5d112b1e87eb76cd5b2e29489311592c4158ee6889472d53f683d44d7|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:e979a89250a5040c8604d0bb8f48b6501093164ff8813eac011e662d0d1901f2|sha256:c09a68ebc7aafe0e560a007a020cefa9b9f4137642f4c1cdfa4ff20ac26d5a29|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:ef33108022d43c49042b1dce9848d2c905b0e9c398ee3c4c27b15dccdd5c7c3d|sha256:cba778875b6eb34f4b16330892f3a89eed348323d9b688ff3c58f11299a1c7a9|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:1127aa1783a50f3063bb2639093154adac30961d107f1e390e704d1075bfa553|sha256:7b49392e6208aabeb71391f2fed2a4b0d1eb7f2496baaa9295424086b15d8b68|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:7d7376673718884b1420562500dfb263b99c9d746f4add6125bf33542221521e|sha256:7b49392e6208aabeb71391f2fed2a4b0d1eb7f2496baaa9295424086b15d8b68|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|"
+      ]
+    },
+    {
+      "asset_id": "hud_life_icon",
+      "state": "pending_build",
+      "input_fingerprint": "sha256:c377f65c7318c5ff80b57130f881272a22af771a09ecd3d4d7b52d2ad1f35c49|sha256:1db78b5ae2671e03709e16bf72683a0b76cece62330117fb349c4c1468009dc7|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+      "missing": [],
+      "last_error_code": null,
+      "last_failure": null,
+      "last_report": null,
+      "build_attempts": 2,
+      "repair_attempts": 0,
+      "recipe": "hud_life_icon.recipe.json",
+      "out_dir": "out/hud_life_icon",
+      "built_fingerprints": [
+        "sha256:c377f65c7318c5ff80b57130f881272a22af771a09ecd3d4d7b52d2ad1f35c49|sha256:1db78b5ae2671e03709e16bf72683a0b76cece62330117fb349c4c1468009dc7|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|"
+      ]
+    },
+    {
+      "asset_id": "hud_stage_label",
+      "state": "pending_build",
+      "input_fingerprint": "sha256:d936e9fe65d3f5f4d7a53502c0a408b6d6ce41bd10db016a9df7aadeb02db2bf|sha256:f1d127531e50294ee81384d0a24fec931ce906b02d019923b068d66dfef957a1|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+      "missing": [],
+      "last_error_code": null,
+      "last_failure": null,
+      "last_report": null,
+      "build_attempts": 1,
+      "repair_attempts": 1,
+      "recipe": "hud_stage_label.recipe.json",
+      "out_dir": "out/hud_stage_label",
+      "built_fingerprints": [
+        "sha256:5d4361558dc1f6a97a2988e7975c331a6738aadb8bc3de2dd3914153988b8f5d|sha256:d67fbd8c8d4357b04205f61d9155c3886dd29812246b7a6cb3049c978b131b3d|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:d936e9fe65d3f5f4d7a53502c0a408b6d6ce41bd10db016a9df7aadeb02db2bf|sha256:f1d127531e50294ee81384d0a24fec931ce906b02d019923b068d66dfef957a1|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|"
+      ]
+    },
+    {
+      "asset_id": "b",
+      "state": "pending_build",
+      "input_fingerprint": "sha256:fc4bc786ee17e0cd7c994afba8c0e364d86544619e4d9bc6684f1fb0fa3d928e|sha256:4691e3b05fe910083ac0e0b98809888f13d8258b654df1e77efb83b661077c8f|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+      "missing": [],
+      "last_error_code": null,
+      "last_failure": null,
+      "last_report": null,
+      "build_attempts": 1,
+      "repair_attempts": 2,
+      "recipe": "b.recipe.json",
+      "out_dir": "out/b",
+      "built_fingerprints": [
+        "sha256:bd334d8d3d0df40a5e1aef6fabe19fbd7e058f0778a16e1da6db5040ee49205f|sha256:a0dabf6764efa3b215bd570420412c484ce6c6096d126e66cd8afc4c38de6b18|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:de6f93ff23a44fc81373e547a2dea0c90d8d9d5b13b4addc998d518a2ccc490e|sha256:4691e3b05fe910083ac0e0b98809888f13d8258b654df1e77efb83b661077c8f|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:fc4bc786ee17e0cd7c994afba8c0e364d86544619e4d9bc6684f1fb0fa3d928e|sha256:4691e3b05fe910083ac0e0b98809888f13d8258b654df1e77efb83b661077c8f|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|"
+      ]
+    },
+    {
+      "asset_id": "x",
+      "state": "pending_build",
+      "input_fingerprint": "sha256:9993963a7929eaee4b6590eba8c4e00a28e42ed55d1ba19a92cc10dd0fb11988|sha256:d8423b3f526b5205eea1cd7143819f177ede02dee29673c2aa3150ef2258c101|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+      "missing": [],
+      "last_error_code": null,
+      "last_failure": null,
+      "last_report": null,
+      "build_attempts": 1,
+      "repair_attempts": 1,
+      "recipe": "x.recipe.json",
+      "out_dir": "out/x",
+      "built_fingerprints": [
+        "sha256:4c53538601bb5b9152c24afbb0791563c4c5d81623682fd33652a78b8de584cf|sha256:64f0e4881ff25baf7d4337180ef572b692a5118b390b5dc22ab61020679b999c|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+        "sha256:9993963a7929eaee4b6590eba8c4e00a28e42ed55d1ba19a92cc10dd0fb11988|sha256:d8423b3f526b5205eea1cd7143819f177ede02dee29673c2aa3150ef2258c101|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|"
+      ]
+    },
+    {
+      "asset_id": "w",
+      "state": "pending_build",
+      "input_fingerprint": "sha256:8017cadc2e879cded67165e79113847a06c47468d54e09360ffc098f983d0d4b|sha256:7df7b81519b2e46425e3fed72e35a4bcb0f20168744b5c58a394d73a41334283|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+      "missing": [],
+      "last_error_code": null,
+      "last_failure": null,
+      "last_report": null,
+      "build_attempts": 1,
+      "repair_attempts": 0,
+      "recipe": "w.recipe.json",
+      "out_dir": "out/w",
+      "built_fingerprints": [
+        "sha256:8017cadc2e879cded67165e79113847a06c47468d54e09360ffc098f983d0d4b|sha256:7df7b81519b2e46425e3fed72e35a4bcb0f20168744b5c58a394d73a41334283|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|"
+      ]
+    },
+    {
+      "asset_id": "h",
+      "state": "pending_build",
+      "input_fingerprint": "sha256:9b3e795641435fae7af4f628d86fe2a972048165faf494e499e9db4685bdfef6|sha256:f23679438c0ab0f1d69491137677f5f80235959533cc2323be1c4f5ca484c49d|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+      "missing": [],
+      "last_error_code": null,
+      "last_failure": null,
+      "last_report": null,
+      "build_attempts": 1,
+      "repair_attempts": 0,
+      "recipe": "h.recipe.json",
+      "out_dir": "out/h",
+      "built_fingerprints": [
+        "sha256:9b3e795641435fae7af4f628d86fe2a972048165faf494e499e9db4685bdfef6|sha256:f23679438c0ab0f1d69491137677f5f80235959533cc2323be1c4f5ca484c49d|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|"
+      ]
+    },
+    {
+      "asset_id": "g",
+      "state": "pending_build",
+      "input_fingerprint": "sha256:a8d570bda6319046755faf4ede9bdf0f8cfe7f07301443ed9e2262051d60a81b|sha256:e709430598d18b515ed2212bd71373c8537f50087b1c36d152a9a5a8822f57c2|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+      "missing": [],
+      "last_error_code": null,
+      "last_failure": null,
+      "last_report": null,
+      "build_attempts": 1,
+      "repair_attempts": 0,
+      "recipe": "g.recipe.json",
+      "out_dir": "out/g",
+      "built_fingerprints": [
+        "sha256:a8d570bda6319046755faf4ede9bdf0f8cfe7f07301443ed9e2262051d60a81b|sha256:e709430598d18b515ed2212bd71373c8537f50087b1c36d152a9a5a8822f57c2|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|"
+      ]
+    },
+    {
+      "asset_id": "t",
+      "state": "pending_build",
+      "input_fingerprint": "sha256:72e033aecc5c71518e25efcdc0f7e3a19babe404b665a0305666b4c71e844a8b|sha256:29258e0ff73005a28bdd3a00b69cc677911563815645cc3f410c557340a3f625|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|",
+      "missing": [],
+      "last_error_code": null,
+      "last_failure": null,
+      "last_report": null,
+      "build_attempts": 1,
+      "repair_attempts": 0,
+      "recipe": "t.recipe.json",
+      "out_dir": "out/t",
+      "built_fingerprints": [
+        "sha256:72e033aecc5c71518e25efcdc0f7e3a19babe404b665a0305666b4c71e844a8b|sha256:29258e0ff73005a28bdd3a00b69cc677911563815645cc3f410c557340a3f625|sha256:ad9217acaa4686232a4eb6e48c6255a8119a87dd38ff6247da8b276dd6b60a7e|"
+      ]
+    }
+  ]
+}

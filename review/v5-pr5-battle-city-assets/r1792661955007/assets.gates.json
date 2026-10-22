@@ -1,0 +1,91 @@
+{
+  "report_version": 1,
+  "gate_version": 1,
+  "stage": "assets",
+  "gate_id": "assets.gates",
+  "status": "failed",
+  "input_digest": "sha256:de7867e5a0ea8134fb48f63ed3c333aeccc943fc686121434b5d14d93b8fabba",
+  "checks": [
+    {
+      "id": "files.requirements",
+      "passed": true,
+      "value": "13",
+      "limit": "frozen requirements list at least one required asset"
+    },
+    {
+      "id": "files.manifest",
+      "passed": true,
+      "value": "parsed",
+      "limit": "asset-manifest.json parses"
+    },
+    {
+      "id": "coverage.frames",
+      "passed": true,
+      "value": "covered",
+      "limit": "every required asset_id has a `{id}_*` frame on a sheet"
+    },
+    {
+      "id": "coverage.png",
+      "passed": true,
+      "value": "png",
+      "limit": "every sheet png that exists is a non-empty PNG"
+    },
+    {
+      "id": "coverage.queue",
+      "passed": false,
+      "value": "13 gaps",
+      "limit": "every required asset has a successful build for its current inputs",
+      "failures": [
+        "player_tank: pending_build (never built)",
+        "enemy_tank: pending_build (never built)",
+        "bullet: pending_build (never built)",
+        "explosion: pending_build (never built)",
+        "hq_base: pending_build (never built)",
+        "hud_life_icon: pending_build (never built)",
+        "hud_stage_label: pending_build (never built)",
+        "b: pending_build (never built)",
+        "x: pending_build (never built)",
+        "w: pending_build (never built)",
+        "h: pending_build (never built)",
+        "g: pending_build (never built)",
+        "t: pending_build (never built)"
+      ]
+    },
+    {
+      "id": "coverage.manifest",
+      "passed": true,
+      "value": "0 gaps",
+      "limit": "manifest lists every required asset as delivered with outputs"
+    },
+    {
+      "id": "provenance.authored_specs",
+      "passed": true,
+      "value": "authored",
+      "limit": "palette.json plus {asset_id}.shapes.json and {asset_id}.recipe.json for every required asset"
+    },
+    {
+      "id": "provenance.not_template",
+      "passed": true,
+      "value": "original",
+      "limit": "no authored spec is the same JSON document as a bundled template file"
+    },
+    {
+      "id": "pxl.validate",
+      "passed": false,
+      "value": "failed",
+      "limit": "pxl validate passes using the rules declared in the recipe",
+      "failures": [
+        "b.sheet.json --rules default: E_QA 3 check(s) failed {\"ok\":false,\"error\":{\"code\":\"E_QA\",\"message\":\"3 check(s) failed\",\"hint\":\"read the checks array and adjust the recipe\"},\"cmd\":\"validate\",\"rules\":\"default\",\"checks\":[{\"id\":\"palette.alpha\",\"pass\":true,\"value\":\"opaque-or-clear\",\"limit\":\"alpha 0 or 255, index 0 clear\"},{\"id\":\"frame.b_idle_N_0.palette\",\"pass\":true,\"value\":\"0\",\"limit\":\"0 out-of-palette pixels\"},{\"id\":\"frame.b_idle_N_0.bbox\",\"pass\":false,\"value\":\"100.00%\",\"limit\":\"20%..95% of the canvas\"},{\"id\":\"frame.b_idle_N_0.components\",\"pass\":true,\"value\":\"1\",\"limit\":\"<= 8 connected components\"},{\"id\":\"frame.b_idle_N_0.isolated\",\"pass\":true,\"value\":\"0\",\"limit\":\"<= 4 isolated pixels\"},{\"id\":\"frame.b_break_N_0.palette\",\"pass\":true,\"value\":\"0\",\"limit\":\"0 out-of-palette pixels\"},{\"id\":\"frame.b_break_N_0.bbox\",\"pass\":false,\"value\":\"100.00%\",\"limit…",
+        "hud_stage_label.sheet.json --rules default: E_QA 1 check(s) failed {\"ok\":false,\"error\":{\"code\":\"E_QA\",\"message\":\"1 check(s) failed\",\"hint\":\"read the checks array and adjust the recipe\"},\"cmd\":\"validate\",\"rules\":\"default\",\"checks\":[{\"id\":\"palette.alpha\",\"pass\":true,\"value\":\"opaque-or-clear\",\"limit\":\"alpha 0 or 255, index 0 clear\"},{\"id\":\"frame.hud_stage_label_idle_N_0.palette\",\"pass\":true,\"value\":\"0\",\"limit\":\"0 out-of-palette pixels\"},{\"id\":\"frame.hud_stage_label_idle_N_0.bbox\",\"pass\":false,\"value\":\"0.00%\",\"limit\":\"20%..95% of the canvas\"},{\"id\":\"frame.hud_stage_label_idle_N_0.components\",\"pass\":true,\"value\":\"0\",\"limit\":\"<= 8 connected components\"},{\"id\":\"frame.hud_stage_label_idle_N_0.isolated\",\"pass\":true,\"value\":\"0\",\"limit\":\"<= 4 isolated pixels\"},{\"id\":\"anim.idle.N.static_single_frame\",\"pass\":true,\"value\":\"1\",\"limit\":\"declared static: exactly 1 frame\"}…"
+      ]
+    }
+  ],
+  "metrics": {
+    "required": 13
+  },
+  "tool_versions": {
+    "harness": "0.1.0",
+    "pxl": "0.1.0"
+  },
+  "executed_ms": 0
+}

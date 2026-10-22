@@ -1,0 +1,2 @@
+[ok] built hud_life_icon.recipe.json -> out/hud_life_icon
+{"ok":true,"out_dir":"out/hud_life_icon","outputs":["palette.json","hud_life_icon.pxl.json","hud_life_icon.sheet.png","hud_life_icon.sheet.json"],"message":"","error_code":"","hint":null,"failed_checks":[]}

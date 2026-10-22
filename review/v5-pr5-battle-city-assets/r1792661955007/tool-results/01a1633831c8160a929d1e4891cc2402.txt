@@ -1,0 +1,2 @@
+[ok] read hud_stage_label.shapes.json (78 bytes)
+{"path":"hud_stage_label.shapes.json","content":"{\n  \"w\": 64,\n  \"h\": 8,\n  \"draw\": [\n    {\"rect\": [1, 7, 58, 1], \"c\": 13}\n  ]\n}\n"}

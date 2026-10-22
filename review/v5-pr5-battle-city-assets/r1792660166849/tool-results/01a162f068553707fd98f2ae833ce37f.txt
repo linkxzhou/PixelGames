@@ -1,0 +1,2 @@
+[failed] pxl build failed for w.recipe.json (E_QA) build wrote outputs but 2 QA check(s) failed -- hint: read checks and adjust the recipe
+{"ok":false,"out_dir":"out/w","outputs":[],"message":"build wrote outputs but 2 QA check(s) failed","error_code":"E_QA","hint":"read checks and adjust the recipe","failed_checks":["frame.w_idle_N_0.bbox: value=100.00%, limit=20%..95% of the canvas","frame.w_idle_N_1.bbox: value=100.00%, limit=20%..95% of the canvas"]}

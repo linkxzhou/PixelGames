@@ -1,0 +1,2 @@
+[ok] wrote bullet.shapes.json
+{"path":"bullet.shapes.json","digest":"sha256:2203eedf94f365fad0438555797127279fd1b4301f270af344c416bf8abb3459"}

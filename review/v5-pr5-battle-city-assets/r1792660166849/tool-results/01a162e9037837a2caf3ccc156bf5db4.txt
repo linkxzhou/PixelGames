@@ -1,0 +1,2 @@
+[ok] read hud_life_icon.shapes.json (154 bytes)
+{"path":"hud_life_icon.shapes.json","content":"{\"w\":8,\"h\":8,\"draw\":[\n{\"rect\":[0,1,2,6],\"c\":2},\n{\"rect\":[6,1,2,6],\"c\":2},\n{\"rect\":[2,2,4,5],\"c\":3},\n{\"rect\":[3,1,2,3],\"c\":4},\n{\"rect\":[2,6,4,1],\"c\":2}\n]}\n"}

@@ -1,0 +1,2 @@
+[ok] listed ops
+{"stdout":"{\"ok\":true,\"cmd\":\"list\",\"warnings\":[],\"kind\":\"ops\",\"items\":[\"shift\",\"row_shift\",\"shear\",\"squash\",\"flip\",\"rotate90\",\"rotate\",\"palette_swap\",\"palette_cycle\",\"shade\",\"outline\",\"dissolve\",\"mask_erase\",\"mask_fill\",\"patch_pixels\",\"texture\",\"noop\",\"part_transform\",\"compose\"]}\n"}

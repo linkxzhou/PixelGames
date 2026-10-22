@@ -1,0 +1,2 @@
+[ok] wrote bullet.recipe.json
+{"path":"bullet.recipe.json","digest":"sha256:2b0d2c3e83d6ffc32562a0664c22df4d35ccd51723417dafa97adf674a6e7b26"}

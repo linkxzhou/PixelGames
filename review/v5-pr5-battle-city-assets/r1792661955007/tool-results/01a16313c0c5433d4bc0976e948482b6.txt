@@ -1,0 +1,2 @@
+[failed] pxl build failed for hq_base.recipe.json (E_QA) build wrote outputs but 2 QA check(s) failed -- hint: read checks and adjust the recipe
+{"ok":false,"out_dir":"out/hq_base","outputs":[],"message":"build wrote outputs but 2 QA check(s) failed","error_code":"E_QA","hint":"read checks and adjust the recipe","failed_checks":["frame.hq_base_destroyed_N_0.outline: value=10, limit=0 non-outline pixels touching transparency","anim.destroyed.N.diff_0_1: value=35.15%, limit=at least 1.00%, and at most 35.00% unless a 1px shift explains it"]}

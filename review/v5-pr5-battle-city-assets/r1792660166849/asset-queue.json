@@ -1,0 +1,210 @@
+{
+  "entries": [
+    {
+      "asset_id": "player_tank",
+      "state": "build_failed",
+      "input_fingerprint": "sha256:8b11ef3ad0c381a9e2c5389a2a65d6925331f05e27d6bd90072c992e23493af1|sha256:e5d11fe65cbb05051a860b1f8f5bbe198c1526b6eab5f22c85dc5cf55b66bcb1|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|",
+      "missing": [],
+      "last_error_code": "E_IO",
+      "last_failure": "E_IO cannot read games/battle-city/runs/r1792660166849/attempts/assets/asset_package/a001/player_tank.recipe.json: No such file or directory (os error 2); hint: check the path, or pass - to read stdin",
+      "last_report": "build-reports/player_tank_recipe_json.f96a19d5dd7c.json",
+      "build_attempts": 1,
+      "repair_attempts": 0,
+      "recipe": "player_tank.recipe.json",
+      "out_dir": "",
+      "built_fingerprints": [
+        "sha256:8b11ef3ad0c381a9e2c5389a2a65d6925331f05e27d6bd90072c992e23493af1|sha256:e5d11fe65cbb05051a860b1f8f5bbe198c1526b6eab5f22c85dc5cf55b66bcb1|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|"
+      ]
+    },
+    {
+      "asset_id": "enemy_tank",
+      "state": "build_failed",
+      "input_fingerprint": "sha256:c70a7aa08f5350e5d7481567b717ed06ec7f3b35d357c049377d9c87f7583334|sha256:d20f9050ae468c8757d581652088e7b0af2c8537824281942b234de20b4e2f8f|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|",
+      "missing": [],
+      "last_error_code": "E_IO",
+      "last_failure": "E_IO cannot read games/battle-city/runs/r1792660166849/attempts/assets/asset_package/a001/enemy_tank.recipe.json: No such file or directory (os error 2); hint: check the path, or pass - to read stdin",
+      "last_report": "build-reports/enemy_tank_recipe_json.3cb78dc61dbd.json",
+      "build_attempts": 1,
+      "repair_attempts": 0,
+      "recipe": "enemy_tank.recipe.json",
+      "out_dir": "",
+      "built_fingerprints": [
+        "sha256:c70a7aa08f5350e5d7481567b717ed06ec7f3b35d357c049377d9c87f7583334|sha256:d20f9050ae468c8757d581652088e7b0af2c8537824281942b234de20b4e2f8f|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|"
+      ]
+    },
+    {
+      "asset_id": "bullet",
+      "state": "build_failed",
+      "input_fingerprint": "sha256:2b0d2c3e83d6ffc32562a0664c22df4d35ccd51723417dafa97adf674a6e7b26|sha256:2203eedf94f365fad0438555797127279fd1b4301f270af344c416bf8abb3459|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|",
+      "missing": [],
+      "last_error_code": "E_IO",
+      "last_failure": "E_IO cannot read games/battle-city/runs/r1792660166849/attempts/assets/asset_package/a001/bullet.recipe.json: No such file or directory (os error 2); hint: check the path, or pass - to read stdin",
+      "last_report": "build-reports/bullet_recipe_json.583012e139af.json",
+      "build_attempts": 1,
+      "repair_attempts": 0,
+      "recipe": "bullet.recipe.json",
+      "out_dir": "",
+      "built_fingerprints": [
+        "sha256:2b0d2c3e83d6ffc32562a0664c22df4d35ccd51723417dafa97adf674a6e7b26|sha256:2203eedf94f365fad0438555797127279fd1b4301f270af344c416bf8abb3459|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|"
+      ]
+    },
+    {
+      "asset_id": "explosion",
+      "state": "build_failed",
+      "input_fingerprint": "sha256:5cfe56e1de82c1bc3b8dc9c4583d2089ccc1109b00b3a6f2d0c1a1970fbba698|sha256:0394aa3abe7912f342b08e96c0e1623238a1b12d47a299975a1ab91e068b3434|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|",
+      "missing": [],
+      "last_error_code": "E_IO",
+      "last_failure": "E_IO cannot read games/battle-city/runs/r1792660166849/attempts/assets/asset_package/a001/explosion.recipe.json: No such file or directory (os error 2); hint: check the path, or pass - to read stdin",
+      "last_report": "build-reports/explosion_recipe_json.e2f0bb7c67cf.json",
+      "build_attempts": 1,
+      "repair_attempts": 0,
+      "recipe": "explosion.recipe.json",
+      "out_dir": "",
+      "built_fingerprints": [
+        "sha256:5cfe56e1de82c1bc3b8dc9c4583d2089ccc1109b00b3a6f2d0c1a1970fbba698|sha256:0394aa3abe7912f342b08e96c0e1623238a1b12d47a299975a1ab91e068b3434|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|"
+      ]
+    },
+    {
+      "asset_id": "hq_base",
+      "state": "build_failed",
+      "input_fingerprint": "sha256:763d12a650da5b8bbd730101511655ebec10dc666acb83a439c6ee27cf7b9d7b|sha256:65a4890707acc93232d3b6db597cf8714056bbe4e1d821c3b8c208a3481751e1|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|",
+      "missing": [],
+      "last_error_code": "E_IO",
+      "last_failure": "E_IO cannot read games/battle-city/runs/r1792660166849/attempts/assets/asset_package/a001/hq_base.recipe.json: No such file or directory (os error 2); hint: check the path, or pass - to read stdin",
+      "last_report": "build-reports/hq_base_recipe_json.adb4efd691b7.json",
+      "build_attempts": 1,
+      "repair_attempts": 0,
+      "recipe": "hq_base.recipe.json",
+      "out_dir": "",
+      "built_fingerprints": [
+        "sha256:763d12a650da5b8bbd730101511655ebec10dc666acb83a439c6ee27cf7b9d7b|sha256:65a4890707acc93232d3b6db597cf8714056bbe4e1d821c3b8c208a3481751e1|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|"
+      ]
+    },
+    {
+      "asset_id": "hud_life_icon",
+      "state": "build_failed",
+      "input_fingerprint": "sha256:4e4dab8b4e91c0f7871e0ac4fc49d4f760ec1d2cf67846a001d2c3266ee89602|sha256:e90e78151ba77ba5438e82b15626b3d22712308c9d6ca78d1e6174a718867840|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|",
+      "missing": [],
+      "last_error_code": "E_IO",
+      "last_failure": "E_IO cannot read games/battle-city/runs/r1792660166849/attempts/assets/asset_package/a001/hud_life_icon.recipe.json: No such file or directory (os error 2); hint: check the path, or pass - to read stdin",
+      "last_report": "build-reports/hud_life_icon_recipe_json.558554f1b51b.json",
+      "build_attempts": 1,
+      "repair_attempts": 0,
+      "recipe": "hud_life_icon.recipe.json",
+      "out_dir": "",
+      "built_fingerprints": [
+        "sha256:4e4dab8b4e91c0f7871e0ac4fc49d4f760ec1d2cf67846a001d2c3266ee89602|sha256:e90e78151ba77ba5438e82b15626b3d22712308c9d6ca78d1e6174a718867840|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|"
+      ]
+    },
+    {
+      "asset_id": "hud_stage_label",
+      "state": "missing_specs",
+      "input_fingerprint": "",
+      "missing": [],
+      "last_error_code": null,
+      "last_failure": null,
+      "last_report": null,
+      "build_attempts": 0,
+      "repair_attempts": 0,
+      "recipe": "",
+      "out_dir": "",
+      "built_fingerprints": []
+    },
+    {
+      "asset_id": "b",
+      "state": "build_failed",
+      "input_fingerprint": "sha256:7a0585cd4c2de98dbdf60503621d52bb1e6673bfa585cb5293088fb7c4727226|sha256:7b2b77cc8be831feaf3ca1f05d91aeb1c341d7fb75540d7bffd8655041268a46|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|",
+      "missing": [],
+      "last_error_code": "E_IO",
+      "last_failure": "E_IO cannot read games/battle-city/runs/r1792660166849/attempts/assets/asset_package/a001/b.recipe.json: No such file or directory (os error 2); hint: check the path, or pass - to read stdin",
+      "last_report": "build-reports/b_recipe_json.bc07672aeffa.json",
+      "build_attempts": 1,
+      "repair_attempts": 0,
+      "recipe": "b.recipe.json",
+      "out_dir": "",
+      "built_fingerprints": [
+        "sha256:7a0585cd4c2de98dbdf60503621d52bb1e6673bfa585cb5293088fb7c4727226|sha256:7b2b77cc8be831feaf3ca1f05d91aeb1c341d7fb75540d7bffd8655041268a46|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|"
+      ]
+    },
+    {
+      "asset_id": "x",
+      "state": "build_failed",
+      "input_fingerprint": "sha256:09b8e535e3fa1dea13fa258bb011c2bcc35a6a65b67523cd24642b66f1094cc4|sha256:94be1b42173b7489d8f3a37f32cbca918d7599cd2790603f32ae9f4ea15da16e|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|",
+      "missing": [],
+      "last_error_code": "E_IO",
+      "last_failure": "E_IO cannot read games/battle-city/runs/r1792660166849/attempts/assets/asset_package/a001/x.recipe.json: No such file or directory (os error 2); hint: check the path, or pass - to read stdin",
+      "last_report": "build-reports/x_recipe_json.284028f20db1.json",
+      "build_attempts": 1,
+      "repair_attempts": 0,
+      "recipe": "x.recipe.json",
+      "out_dir": "",
+      "built_fingerprints": [
+        "sha256:09b8e535e3fa1dea13fa258bb011c2bcc35a6a65b67523cd24642b66f1094cc4|sha256:94be1b42173b7489d8f3a37f32cbca918d7599cd2790603f32ae9f4ea15da16e|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|"
+      ]
+    },
+    {
+      "asset_id": "w",
+      "state": "build_failed",
+      "input_fingerprint": "sha256:6fbedfe0dd3715940fb723e832f727274a7f7e117442843cbf167be9f58a4e10|sha256:1ad1f780a4b49d392b370871957372eead603e161d4dcdf67cfe5260620e7fa4|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|",
+      "missing": [],
+      "last_error_code": "E_IO",
+      "last_failure": "E_IO cannot read games/battle-city/runs/r1792660166849/attempts/assets/asset_package/a001/w.recipe.json: No such file or directory (os error 2); hint: check the path, or pass - to read stdin",
+      "last_report": "build-reports/w_recipe_json.82ebdf5b45d8.json",
+      "build_attempts": 1,
+      "repair_attempts": 0,
+      "recipe": "w.recipe.json",
+      "out_dir": "",
+      "built_fingerprints": [
+        "sha256:6fbedfe0dd3715940fb723e832f727274a7f7e117442843cbf167be9f58a4e10|sha256:1ad1f780a4b49d392b370871957372eead603e161d4dcdf67cfe5260620e7fa4|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|"
+      ]
+    },
+    {
+      "asset_id": "h",
+      "state": "build_failed",
+      "input_fingerprint": "sha256:03e2db1b5545bd12a1c8abf4c7a10339e3c96b4f0ede08da238be6ddb59b884c|sha256:7d345e60e51646f04c17bc5b6dc4424dc4f091a482e59a464c0e4a237623a9b3|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|",
+      "missing": [],
+      "last_error_code": "E_IO",
+      "last_failure": "E_IO cannot read games/battle-city/runs/r1792660166849/attempts/assets/asset_package/a001/h.recipe.json: No such file or directory (os error 2); hint: check the path, or pass - to read stdin",
+      "last_report": "build-reports/h_recipe_json.ea1e2ab77fe1.json",
+      "build_attempts": 1,
+      "repair_attempts": 0,
+      "recipe": "h.recipe.json",
+      "out_dir": "",
+      "built_fingerprints": [
+        "sha256:03e2db1b5545bd12a1c8abf4c7a10339e3c96b4f0ede08da238be6ddb59b884c|sha256:7d345e60e51646f04c17bc5b6dc4424dc4f091a482e59a464c0e4a237623a9b3|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|"
+      ]
+    },
+    {
+      "asset_id": "g",
+      "state": "build_failed",
+      "input_fingerprint": "sha256:bdafceaded0509e52971c9471ac7f97da71a8c09420c938afd707682f162a77c|sha256:c3da53b0d47ec2192213e4aee24a9b368f1d466e3b4ed7222c6e8ebd94ae12a6|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|",
+      "missing": [],
+      "last_error_code": "E_IO",
+      "last_failure": "E_IO cannot read games/battle-city/runs/r1792660166849/attempts/assets/asset_package/a001/g.recipe.json: No such file or directory (os error 2); hint: check the path, or pass - to read stdin",
+      "last_report": "build-reports/g_recipe_json.5f149118572c.json",
+      "build_attempts": 1,
+      "repair_attempts": 0,
+      "recipe": "g.recipe.json",
+      "out_dir": "",
+      "built_fingerprints": [
+        "sha256:bdafceaded0509e52971c9471ac7f97da71a8c09420c938afd707682f162a77c|sha256:c3da53b0d47ec2192213e4aee24a9b368f1d466e3b4ed7222c6e8ebd94ae12a6|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|"
+      ]
+    },
+    {
+      "asset_id": "t",
+      "state": "build_failed",
+      "input_fingerprint": "sha256:b212e049db4e6fa67871fd9eb5fc0be5d146bff95312a79802ca74936a17c544|sha256:f11f1231055d6cea172f030545e8799306082e78b20f21f51deb8d5196e3ce3e|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|",
+      "missing": [],
+      "last_error_code": "E_IO",
+      "last_failure": "E_IO cannot read games/battle-city/runs/r1792660166849/attempts/assets/asset_package/a001/t.recipe.json: No such file or directory (os error 2); hint: check the path, or pass - to read stdin",
+      "last_report": "build-reports/t_recipe_json.15cac7dc90c9.json",
+      "build_attempts": 1,
+      "repair_attempts": 0,
+      "recipe": "t.recipe.json",
+      "out_dir": "",
+      "built_fingerprints": [
+        "sha256:b212e049db4e6fa67871fd9eb5fc0be5d146bff95312a79802ca74936a17c544|sha256:f11f1231055d6cea172f030545e8799306082e78b20f21f51deb8d5196e3ce3e|sha256:ec1e2ffa66fc81f6a65765d9342249e269329130e1c6cfdf3d57308a70241ebe|"
+      ]
+    }
+  ]
+}

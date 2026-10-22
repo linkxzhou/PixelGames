@@ -153,15 +153,10 @@ impl AssetQueue {
             return;
         };
         let (state, fingerprint, missing, recipe) = probe_inputs(attempt_dir, asset_id);
+        let changed = entry.input_fingerprint != fingerprint;
         entry.recipe = recipe;
         // A changed fingerprint invalidates any earlier success.
-        if entry.input_fingerprint != fingerprint {
-            if entry.state == AssetState::Built
-                || entry.state == AssetState::Validated
-                || entry.state == AssetState::BuildFailed
-            {
-                entry.state = AssetState::PendingBuild;
-            }
+        if changed {
             entry.build_attempts = 0;
         }
         match state {
@@ -170,7 +165,25 @@ impl AssetQueue {
                 entry.state = AssetState::PendingDependencies;
                 entry.missing = missing;
             }
-            _ => entry.state = AssetState::PendingBuild,
+            _ => {
+                // Same bytes must not demote Built/BuildFailed back to
+                // PendingBuild. auto_build then skips (fingerprint already
+                // recorded) and the gate reports "never built".
+                let keep = !changed
+                    && matches!(
+                        entry.state,
+                        AssetState::Built
+                            | AssetState::Validated
+                            | AssetState::BuildFailed
+                            | AssetState::Blocked
+                    );
+                if keep {
+                    entry.missing.clear();
+                } else {
+                    entry.state = AssetState::PendingBuild;
+                    entry.missing.clear();
+                }
+            }
         }
         entry.input_fingerprint = fingerprint;
     }
@@ -239,7 +252,18 @@ impl AssetQueue {
             }
             let fingerprint = entry.input_fingerprint.clone();
             // Same-fingerprint dedup: never rebuild what already built.
+            // If a later write of identical bytes demoted the state, put the
+            // recorded result back so the gate does not say "never built".
             if entry.built_fingerprints.iter().any(|f| f == &fingerprint) {
+                if let Some(e) = self.entry_mut(&id) {
+                    if e.state == AssetState::PendingBuild {
+                        e.state = if e.last_error_code.is_some() {
+                            AssetState::BuildFailed
+                        } else {
+                            AssetState::Built
+                        };
+                    }
+                }
                 continue;
             }
             let recipe = entry.recipe.clone();
@@ -265,8 +289,12 @@ impl AssetQueue {
             let outcome = build_one(attempt_dir, &recipe, &out_dir, fingerprint.clone(), pxl);
             let ok = outcome.ok;
             let report_rel = outcome.report_rel.clone();
+            let error_code = outcome.result.error_code.clone();
             self.entry_mut(&id).unwrap().built_fingerprints.push(fingerprint);
             self.record_result(&id, ok, &outcome.result, report_rel.as_deref());
+            if !ok {
+                count_repair_and_maybe_block(self, &id, &error_code);
+            }
             events(AutoCheckEvent {
                 asset_id: id.clone(),
                 recipe,
@@ -300,6 +328,18 @@ impl AssetQueue {
             lines.push(format!("{} [{}]{}", e.asset_id, state_name(e.state), note));
         }
         lines.join("\n")
+    }
+}
+
+/// Make `path` absolute against the process cwd. Relative project paths
+/// must not be handed to `pxl` when its cwd is the attempt directory.
+pub fn absolute_under_cwd(path: &Path) -> PathBuf {
+    if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        std::env::current_dir()
+            .map(|cwd| cwd.join(path))
+            .unwrap_or_else(|_| path.to_path_buf())
     }
 }
 
@@ -407,16 +447,21 @@ fn build_one(
     fingerprint: String,
     pxl: &PxlAdapter,
 ) -> AutoCheckOutcome {
-    let recipe_path = attempt_dir.join(recipe);
+    // The project path is often relative (`games/battle-city`). pxl is
+    // started with cwd = the attempt dir, so a workspace-relative recipe
+    // argument (`games/.../w.recipe.json`) is resolved inside the attempt
+    // dir and fails with E_IO even though the file exists.
+    let attempt_abs = absolute_under_cwd(attempt_dir);
+    let recipe_path = attempt_abs.join(recipe);
     // Isolate outputs per fingerprint: a stale success can never be reused.
     let fp_tag = digest_bytes(fingerprint.as_bytes())
         .trim_start_matches("sha256:")
         .chars()
         .take(12)
         .collect::<String>();
-    let out_dir = attempt_dir.join(format!("{}.{}", out_rel, fp_tag));
+    let out_dir = attempt_abs.join(format!("{}.{}", out_rel, fp_tag));
     let _ = fs::create_dir_all(&out_dir);
-    let built = match pxl.build(&recipe_path, &out_dir, None, Some(attempt_dir)) {
+    let built = match pxl.build(&recipe_path, &out_dir, None, Some(&attempt_abs)) {
         Ok(b) => b,
         Err(e) => {
             let result = PxlResult_ {
@@ -446,7 +491,7 @@ fn build_one(
         .map(|name| out_dir.join(name))
         .collect();
     let report_rel = write_build_report(
-        attempt_dir,
+        &attempt_abs,
         recipe,
         &fingerprint,
         &result,
@@ -630,6 +675,20 @@ mod tests {
         q.mark_all_dirty(&d);
         assert_eq!(q.entry("explosion").unwrap().state, AssetState::MissingSpecs);
         assert_eq!(q.entry("w").unwrap().state, AssetState::PendingBuild);
+        // A successful build must survive a re-probe of the same bytes.
+        q.record_success("w");
+        assert_eq!(q.entry("w").unwrap().state, AssetState::Built);
+        let fp = q.entry("w").unwrap().input_fingerprint.clone();
+        q.entry_mut("w").unwrap().built_fingerprints.push(fp);
+        q.mark_dirty("w", &d);
+        assert_eq!(
+            q.entry("w").unwrap().state,
+            AssetState::Built,
+            "unchanged inputs must not demote a successful build"
+        );
+        fs::write(d.join("w.recipe.json"), r#"{"v":1,"asset":"w","seed":2}"#).unwrap();
+        q.mark_dirty("w", &d);
+        assert_eq!(q.entry("w").unwrap().state, AssetState::PendingBuild);
     }
 
     #[test]
@@ -716,6 +775,17 @@ mod tests {
         assert!(text.contains("anim.exp.diff_0_1"), "{text}");
         assert!(text.contains("42.96%"), "{text}");
         assert!(text.contains("35%"), "{text}");
+    }
+
+    #[test]
+    fn relative_attempt_dir_becomes_absolute_for_pxl() {
+        let rel = Path::new("games/battle-city/runs/r1/attempts/assets/asset_package/a001");
+        let abs = absolute_under_cwd(rel);
+        assert!(abs.is_absolute(), "{}", abs.display());
+        assert!(abs.ends_with(rel), "{}", abs.display());
+        let recipe = abs.join("w.recipe.json");
+        assert!(recipe.is_absolute());
+        assert!(!recipe.starts_with(rel), "must not nest the workspace path under the attempt dir");
     }
 
     #[test]
