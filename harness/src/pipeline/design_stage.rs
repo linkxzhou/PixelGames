@@ -46,6 +46,99 @@ pub fn registry() -> ToolRegistry {
         }),
     });
     reg.register(ToolDef {
+        name: "design.read_template".into(),
+        description: "Read the genre template (defaults, entities, tiles, asset hints)".into(),
+        parameters: serde_json::json!({"type": "object", "properties": {}}),
+        needed: Permission::ReadProject,
+        run: Box::new(|_args, ctx| {
+            // Templates live under the approved template roots only; the
+            // genre name comes from project identity, never from the model.
+            let mut found = None;
+            for root in &ctx.template_roots {
+                let dir = root.join("templates").join(&ctx.genre);
+                let path = dir.join("template.json");
+                if path.is_file() {
+                    found = Some((path, dir));
+                    break;
+                }
+                // Also accept a template root that points straight at the
+                // genre directory (used by tests and custom layouts).
+                let direct = root.join("template.json");
+                if direct.is_file() {
+                    found = Some((direct, root.clone()));
+                    break;
+                }
+            }
+            let Some((path, dir)) = found else {
+                return Ok(ToolOutcome::fail(format!(
+                    "genre template '{}' was not found in the approved template roots",
+                    ctx.genre
+                ))
+                .with_data(serde_json::json!({"genre": ctx.genre})));
+            };
+            let text = fs::read_to_string(&path)
+                .map_err(|e| HarnessError::io(e.to_string()))?;
+            let mut listing: Vec<String> = Vec::new();
+            if let Ok(entries) = fs::read_dir(dir.join("assets")) {
+                for e in entries.flatten() {
+                    if let Some(n) = e.file_name().to_str() {
+                        listing.push(format!("assets/{n}"));
+                    }
+                }
+            }
+            listing.sort();
+            Ok(ToolOutcome::ok("template loaded")
+                .with_data(serde_json::json!({
+                    "template": serde_json::from_str::<Value>(&text).unwrap_or(Value::String(text.clone())),
+                    "available_assets": listing,
+                })))
+        }),
+    });
+    reg.register(ToolDef {
+        name: "design.request_review".into(),
+        description: "Submit the candidate package for human review with a short summary".into(),
+        parameters: serde_json::json!({
+            "type": "object",
+            "required": ["summary"],
+            "properties": {
+                "summary": {"type": "string"},
+                "risks": {"type": "array", "items": {"type": "string"}},
+                "open_questions": {"type": "array", "items": {"type": "string"}}
+            }
+        }),
+        needed: Permission::WriteCandidate,
+        run: Box::new(|args, ctx| {
+            // Record the request as a review request file inside the
+            // candidate; the harness turns it into the Markdown view and
+            // gates on its presence before waiting for approval.
+            let summary = args["summary"].as_str().unwrap_or_default();
+            if summary.trim().is_empty() {
+                return Ok(ToolOutcome::fail("summary must not be empty"));
+            }
+            let risks: Vec<String> = args["risks"]
+                .as_array()
+                .map(|a| a.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+                .unwrap_or_default();
+            let open_questions: Vec<String> = args["open_questions"]
+                .as_array()
+                .map(|a| a.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+                .unwrap_or_default();
+            let review = serde_json::json!({
+                "schema_version": crate::contracts::design::DESIGN_SCHEMA_VERSION,
+                "requested_by": "designer",
+                "summary": summary,
+                "risks": risks,
+                "open_questions": open_questions,
+            });
+            let text = serde_json::to_string_pretty(&review)?;
+            let path = ctx.attempt_dir.join("design-review.json");
+            fs::write(&path, &text).map_err(|e| HarnessError::io(e.to_string()))?;
+            let digest = crate::digest::digest_bytes(text.as_bytes());
+            Ok(ToolOutcome::ok("review requested")
+                .with_data(serde_json::json!({"path": "design-review.json", "digest": digest})))
+        }),
+    });
+    reg.register(ToolDef {
         name: "design.write_candidate".into(),
         description: "Write one candidate design file (game-design.json, levels/<id>.json, ...)".into(),
         parameters: serde_json::json!({
@@ -482,6 +575,7 @@ pub fn run_design_stage(
             artifacts.root().to_path_buf(),
             template_root.to_path_buf(),
         ],
+        genre: artifacts.identity()?.genre_template.clone(),
         design_dir: None,
         pxl: std::sync::Arc::new(crate::adapters::PxlAdapter::unavailable()),
     };
@@ -533,6 +627,33 @@ pub fn run_design_stage(
         run.save(state)?;
         return Ok(StageStatus::Failed);
     }
+    // The review request must exist before the package can wait for
+    // approval; the Markdown view is generated from the JSON contracts.
+    if !attempt_dir.join("design-review.json").is_file() {
+        set_stage(state, "design", StageStatus::Failed)?;
+        state
+            .task_mut("design", "design_package")
+            .stopped_reason = Some("review_not_requested".into());
+        run.save(state)?;
+        events.append(Event::GateFinished {
+            stage: "design".into(),
+            task_id: "design_package".into(),
+            passed: false,
+            failures: 1,
+            report_digest: report.digest()?,
+        })?;
+        return Ok(StageStatus::Failed);
+    }
+    let review_path = crate::pipeline::review_view::render_review(&attempt_dir, &state.run_id)?;
+    let review_digest = crate::digest::digest_bytes(
+        fs::read_to_string(&review_path)?.as_bytes(),
+    );
+    fs::copy(&review_path, run.reports_dir()?.join("design-review.md"))?;
+    events.append(Event::ReviewRequested {
+        stage: "design".into(),
+        task_id: "design_package".into(),
+        digest: review_digest,
+    })?;
     if cfg.require_design_approval {
         set_stage(state, "design", StageStatus::WaitingApproval)?;
         run.save(state)?;
@@ -581,6 +702,7 @@ mod tests {
                 .allow(Permission::WriteCandidate),
             attempt_dir: dir.to_path_buf(),
             template_roots: vec![dir.to_path_buf()],
+            genre: "top_down_tank".into(),
             design_dir: None,
             pxl: std::sync::Arc::new(crate::adapters::PxlAdapter::unavailable()),
         }
@@ -758,6 +880,78 @@ mod tests {
         assert!(write_candidate(&ctx, "levels/l1.json", "{}").is_ok());
         // Unknown file names are refused.
         let out = write_candidate(&ctx, "random.json", "{}").unwrap();
+        assert!(!out.ok);
+    }
+
+    #[test]
+    fn read_template_and_request_review_tools_work() {
+        let root = std::env::temp_dir()
+            .join(format!("pxl_h_design_tpl_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        // Layout mirrors harness/templates/: <root>/templates/<genre>/.
+        let genre_dir = root.join("templates").join("top_down_tank");
+        fs::create_dir_all(genre_dir.join("assets")).unwrap();
+        fs::write(genre_dir.join("template.json"), r#"{"genre":"top_down_tank","core_loop":"move, shoot"}"#).unwrap();
+        fs::write(genre_dir.join("assets/palette.json"), "{}").unwrap();
+        let attempt = root.join("attempt");
+        fs::create_dir_all(&attempt).unwrap();
+        let ctx = ToolContext {
+            host: PermissionSet::default()
+                .allow(Permission::ReadProject)
+                .allow(Permission::WriteCandidate),
+            stage: PermissionSet::default()
+                .allow(Permission::ReadProject)
+                .allow(Permission::WriteCandidate),
+            role: PermissionSet::default()
+                .allow(Permission::ReadProject)
+                .allow(Permission::WriteCandidate),
+            attempt_dir: attempt.clone(),
+            template_roots: vec![root.clone()],
+            genre: "top_down_tank".into(),
+            design_dir: None,
+            pxl: std::sync::Arc::new(crate::adapters::PxlAdapter::unavailable()),
+        };
+        let reg = registry();
+        // read_template finds the genre template and lists its assets.
+        let out = reg
+            .dispatch("design.read_template", &serde_json::json!({}), &ctx)
+            .unwrap();
+        assert!(out.ok, "{}", out.summary);
+        assert!(out.data["template"]["genre"] == "top_down_tank");
+        assert!(out.data["available_assets"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|v| v == "assets/palette.json"));
+        // Missing genre fails cleanly.
+        let missing = ToolContext { genre: "nope".into(), ..ctx };
+        let out = reg
+            .dispatch("design.read_template", &serde_json::json!({}), &missing)
+            .unwrap();
+        assert!(!out.ok);
+        // request_review writes the review request into the candidate.
+        let out = reg
+            .dispatch(
+                "design.request_review",
+                &serde_json::json!({
+                    "summary": "3 levels complete",
+                    "risks": ["water readability"],
+                    "open_questions": ["enemy density"]
+                }),
+                &missing,
+            )
+            .unwrap();
+        assert!(out.ok, "{}", out.summary);
+        let review: Value = serde_json::from_str(
+            &fs::read_to_string(attempt.join("design-review.json")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(review["summary"], "3 levels complete");
+        assert_eq!(review["risks"][0], "water readability");
+        // Empty summaries are refused.
+        let out = reg
+            .dispatch("design.request_review", &serde_json::json!({"summary": " "}), &missing)
+            .unwrap();
         assert!(!out.ok);
     }
 }

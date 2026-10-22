@@ -197,6 +197,7 @@ mod tests {
             role: full,
             attempt_dir: attempt.to_path_buf(),
             template_roots: vec![],
+            genre: String::new(),
             design_dir: None,
             pxl: Arc::new(crate::adapters::PxlAdapter::unavailable()),
         }

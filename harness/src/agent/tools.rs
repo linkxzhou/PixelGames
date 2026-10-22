@@ -129,6 +129,9 @@ pub struct ToolContext {
     pub attempt_dir: std::path::PathBuf,
     /// Approved template roots (read-only).
     pub template_roots: Vec<std::path::PathBuf>,
+    /// Genre template name resolved from project identity (read-only for
+    /// the model: it cannot pick arbitrary directories to read).
+    pub genre: String,
     /// Frozen design revision directory, when the stage consumes one.
     pub design_dir: Option<std::path::PathBuf>,
     pub pxl: std::sync::Arc<crate::adapters::PxlAdapter>,
@@ -280,6 +283,7 @@ mod tests {
             role: PermissionSet::default().allow(Permission::ReadProject),
             attempt_dir: std::path::PathBuf::from("/tmp"),
             template_roots: vec![],
+            genre: String::new(),
             design_dir: None,
             pxl: std::sync::Arc::new(dummy_adapter()),
         };

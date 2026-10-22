@@ -75,6 +75,11 @@ pub enum Event {
         revision: String,
         digest: String,
     },
+    ReviewRequested {
+        stage: String,
+        task_id: String,
+        digest: String,
+    },
     RunStatus {
         status: String,
     },

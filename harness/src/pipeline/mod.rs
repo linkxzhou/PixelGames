@@ -3,6 +3,7 @@
 //! the stage modules).
 
 pub mod design_stage;
+pub mod review_view;
 pub mod runner;
 pub mod state;
 
