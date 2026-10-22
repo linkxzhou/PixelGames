@@ -189,6 +189,9 @@ pub struct Anim {
     pub dirs: Vec<String>,
     #[serde(default)]
     pub frames: AnimFrames,
+    /// `dynamic` (default) or `static` for a deliberate single-frame anim.
+    #[serde(default)]
+    pub mode: crate::recipe::AnimMode,
 }
 
 fn default_fps() -> u32 {

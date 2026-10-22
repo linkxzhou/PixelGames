@@ -31,6 +31,9 @@ pub struct AgentRunner<'a> {
     pub ctx: &'a ToolContext,
     pub ledger: &'a mut BudgetLedger,
     pub events: &'a mut EventLog,
+    /// Directory for immutable rendered tool-result texts (attempt-relative).
+    /// `None` disables result persistence (kept for callers without a run dir).
+    pub run_dir: Option<&'a std::path::Path>,
 }
 
 impl<'a> AgentRunner<'a> {
@@ -61,6 +64,7 @@ impl<'a> AgentRunner<'a> {
                 stage: task.stage.clone(),
                 task_id: task.task_id.clone(),
                 turn: turns_used,
+                attempt: task.attempt,
             })?;
             let started = std::time::Instant::now();
             let response: ProviderResponse = self
@@ -70,6 +74,9 @@ impl<'a> AgentRunner<'a> {
             let elapsed = started.elapsed().as_millis() as u64;
             self.ledger
                 .settle(response.prompt_tokens, response.completion_tokens, elapsed);
+            // Persist after every finished model call: a crash between
+            // settlement and the stage-level save must not lose usage.
+            self.save_ledger()?;
             turns_used += 1;
             self.events.append(Event::ModelTurnFinished {
                 stage: task.stage.clone(),
@@ -78,6 +85,8 @@ impl<'a> AgentRunner<'a> {
                 stop_reason: response.stop_reason.clone(),
                 prompt_tokens: response.prompt_tokens,
                 completion_tokens: response.completion_tokens,
+                attempt: task.attempt,
+                elapsed_ms: elapsed,
             })?;
             if response.tool_calls.is_empty() {
                 return Ok(LoopResult {
@@ -98,7 +107,7 @@ impl<'a> AgentRunner<'a> {
             });
             for call in &response.tool_calls {
                 let call_id = if call.id.is_empty() {
-                    format!("call_{}_{}", call.name, turns_used)
+                    format!("call_{}_{}_{}", call.name, task.attempt, turns_used)
                 } else {
                     call.id.clone()
                 };
@@ -110,26 +119,49 @@ impl<'a> AgentRunner<'a> {
                     arguments_digest: crate::digest::digest_bytes(call.arguments.as_bytes()),
                     call_id: call_id.clone(),
                 })?;
+                let tool_started = std::time::Instant::now();
                 let outcome = self.execute_call(call, tools);
-                let (ok, artifact_digests, error_code) = match &outcome {
-                    Ok(o) => (o.ok, artifact_pairs(o), None),
-                    Err(e) => (
-                        false,
-                        Vec::new(),
-                        Some(e.code.as_str().to_string()),
+                let tool_elapsed = tool_started.elapsed().as_millis() as u64;
+                let summary = match &outcome {
+                    Ok(o) => render_outcome(o),
+                    Err(e) => format!(
+                        "tool error [{}]: {}{}",
+                        e.code.as_str(),
+                        e.message,
+                        e.hint
+                            .as_ref()
+                            .map(|h| format!(" (hint: {h})"))
+                            .unwrap_or_default()
                     ),
                 };
-                self.ledger.settle_tool(0);
+                // Persist the exact rendered text the model will see, so the
+                // feedback chain is auditable across crash and repair rounds.
+                let result_digest = self.persist_tool_result(&call_id, &summary)?;
+                let (ok, artifact_digests, error_code, exit_code, pxl_error_code) = match &outcome {
+                    Ok(o) => (
+                        o.ok,
+                        artifact_pairs(o),
+                        None,
+                        o.exit_code,
+                        o.error_code.clone(),
+                    ),
+                    Err(e) => (false, Vec::new(), Some(e.code.as_str().to_string()), None, None),
+                };
+                self.ledger.settle_tool(tool_elapsed);
+                self.save_ledger()?;
                 self.events.append(Event::ToolFinished {
                     stage: task.stage.clone(),
                     task_id: task.task_id.clone(),
                     attempt: task.attempt,
                     tool: call.name.clone(),
                     ok,
-                    exit_code: None,
+                    exit_code,
                     artifact_digests,
                     error_code,
                     call_id: call_id.clone(),
+                    result_digest,
+                    elapsed_ms: tool_elapsed,
+                    pxl_error_code,
                 })?;
                 if let Ok(o) = outcome.as_ref() {
                     if o.ok {
@@ -149,18 +181,6 @@ impl<'a> AgentRunner<'a> {
                         }
                     }
                 }
-                let summary = match outcome {
-                    Ok(o) => render_outcome(&o),
-                    Err(e) => format!(
-                        "tool error [{}]: {}{}",
-                        e.code.as_str(),
-                        e.message,
-                        e.hint
-                            .as_ref()
-                            .map(|h| format!(" (hint: {h})"))
-                            .unwrap_or_default()
-                    ),
-                };
                 messages.push(ChatMessage {
                     role: "tool".into(),
                     content: summary,
@@ -170,6 +190,45 @@ impl<'a> AgentRunner<'a> {
                 });
             }
         }
+    }
+
+    /// Persist the ledger bound to the event seq already written, so a crash
+    /// between an event and the snapshot never double-counts or loses usage.
+    fn save_ledger(&mut self) -> Result<()> {
+        if let Some(dir) = self.run_dir {
+            if let Some(seq) = self.events.last_seq() {
+                self.ledger.settled_seq = seq;
+            }
+            self.ledger.save(dir)?;
+        }
+        Ok(())
+    }
+
+    /// Write the rendered tool-result text to `tool-results/<call_id>.txt`
+    /// and return its digest. Failures to persist are surfaced: feedback
+    /// auditing is a core guarantee, not best-effort.
+    fn persist_tool_result(&mut self, call_id: &str, text: &str) -> Result<String> {
+        let digest = crate::digest::digest_bytes(text.as_bytes());
+        if let Some(dir) = self.run_dir {
+            let results_dir = dir.join("tool-results");
+            std::fs::create_dir_all(&results_dir).map_err(|e| {
+                HarnessError::io(format!("{}: {e}", results_dir.display()))
+            })?;
+            let safe: String = call_id
+                .chars()
+                .map(|c| {
+                    if c.is_ascii_alphanumeric() || c == '-' || c == '_' {
+                        c
+                    } else {
+                        '_'
+                    }
+                })
+                .collect();
+            let path = results_dir.join(format!("{safe}.txt"));
+            std::fs::write(&path, text)
+                .map_err(|e| HarnessError::io(format!("{}: {e}", path.display())))?;
+        }
+        Ok(digest)
     }
 
     fn execute_call(
@@ -276,6 +335,7 @@ mod tests {
             ctx: &tool_ctx,
             ledger: &mut ledger,
             events: &mut events,
+            run_dir: Some(&dir),
         };
         let result = runner
             .run(&task, "system", "user", &specs)
@@ -286,13 +346,24 @@ mod tests {
         let logged = EventLog::read_all(&dir).unwrap();
         assert!(logged.iter().any(|e| matches!(
             &e.event,
-            Event::ToolFinished { ok: true, tool, .. } if tool == "echo"
+            Event::ToolFinished { ok: true, tool, result_digest, .. }
+                if tool == "echo" && !result_digest.is_empty()
         )));
+        // The exact rendered feedback text is persisted per call.
+        let results_dir = dir.join("tool-results");
+        assert!(results_dir.is_dir());
+        let saved = std::fs::read_to_string(
+            results_dir.join("call_echo_1_1.txt"),
+        )
+        .unwrap_or_else(|_| std::fs::read_to_string(results_dir.join("call_echo_1_2.txt")).unwrap());
+        assert!(saved.contains("echo:hi"), "{saved}");
         // Bad arguments were reported as an error outcome, not a crash.
         assert!(logged.iter().any(|e| matches!(
             &e.event,
             Event::ToolFinished { ok: false, error_code: Some(c), .. } if c == "E_USAGE"
         )));
+        // The ledger is persisted after every settled turn (crash consistency).
+        assert!(dir.join("budget.json").is_file());
     }
 
     #[test]
@@ -319,6 +390,7 @@ mod tests {
             ctx: &tool_ctx,
             ledger: &mut ledger,
             events: &mut events,
+            run_dir: Some(&dir),
         };
         // Scripted provider ends immediately when its turns run out; force
         // the cap by asking for 0 turns.
@@ -355,6 +427,7 @@ mod tests {
             ctx: &tool_ctx,
             ledger: &mut ledger,
             events: &mut events,
+            run_dir: Some(&dir),
         };
         let err = runner.run(&task, "s", "u", &specs).unwrap_err();
         assert_eq!(err.code, crate::error::ErrorCode::Budget);

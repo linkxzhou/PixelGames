@@ -74,6 +74,104 @@ fn allowed_args(name: &str) -> &'static [&'static str] {
     }
 }
 
+/// Default values per argument, mirroring the `arg_*` helpers used at expand
+/// time so the listing and the implementation cannot drift apart.
+fn arg_defaults(name: &str) -> &'static [(&'static str, &'static str)] {
+    match name {
+        "tread_cycle" => &[("steps", "4"), ("cycle", "tread"), ("bob", "0"), ("region", "auto_tread")],
+        "idle_rumble" => &[("steps", "2"), ("amp", "1")],
+        "idle_breathe" => &[("steps", "2"), ("period", "4"), ("amp", "1")],
+        "bob" => &[("amp", "1")],
+        "walk_side" => &[("stride", "2"), ("bob", "1")],
+        "run_side" => &[("stride", "3"), ("bob", "1")],
+        "hurt_flash" => &[("steps", "2")],
+        "death_dissolve" => &[("steps", "4"), ("seed", "0"), ("pattern", " dissolve")],
+        "blink" => &[("lid", "1")],
+        "spin_projectile" => &[("steps", "4")],
+        "pulse_glow" => &[("ramp", "olive")],
+        "doll" => &[("anim", "idle")],
+        _ => &[],
+    }
+}
+
+/// Frames a macro emits by default, and a ready-to-paste example call.
+fn macro_frames(name: &str) -> u32 {
+    match name {
+        "tread_cycle" => 4,
+        "idle_rumble" | "idle_breathe" | "hurt_flash" => 2,
+        "bob" => 2,
+        "walk_side" | "run_side" => 4,
+        "death_dissolve" => 4,
+        "blink" => 2,
+        "spin_projectile" => 4,
+        // pulse_glow drives a brightness pulse across two frames.
+        "pulse_glow" => 2,
+        "doll" => 1,
+        _ => 0,
+    }
+}
+
+/// One macro argument as exposed by `pxl list macros`.
+pub struct MacroArgInfo {
+    pub name: &'static str,
+    /// Default used when the argument is omitted; `None` means required.
+    pub default: Option<&'static str>,
+}
+
+/// Structured metadata for `pxl list macros`: arguments, defaults, output
+/// frame count and an example. Derived from `allowed_args`/`arg_defaults` so
+/// the listing and the validator share one source of truth.
+pub struct MacroInfo {
+    pub name: &'static str,
+    pub args: Vec<MacroArgInfo>,
+    pub frames: u32,
+    pub example: String,
+}
+
+pub fn macro_info(name: &str) -> Option<MacroInfo> {
+    let canonical = MACRO_NAMES.iter().find(|n| **n == name)?;
+    let args = allowed_args(canonical)
+        .iter()
+        .map(|a| MacroArgInfo {
+            name: a,
+            default: arg_defaults(canonical)
+                .iter()
+                .find(|(k, _)| k == a)
+                .map(|(_, v)| *v),
+        })
+        .collect();
+    Some(MacroInfo {
+        name: canonical,
+        args,
+        frames: macro_frames(canonical),
+        example: example_call(canonical),
+    })
+}
+
+fn example_call(name: &str) -> String {
+    match name {
+        "tread_cycle" => "tread_cycle(steps=4, region=auto_tread, cycle=tread, bob=1)".into(),
+        "idle_rumble" => "idle_rumble(steps=2, amp=1)".into(),
+        "idle_breathe" => "idle_breathe(steps=2, period=4, amp=1)".into(),
+        "bob" => "bob(amp=1)".into(),
+        "walk_side" => "walk_side(stride=2, bob=1)".into(),
+        "run_side" => "run_side(stride=3, bob=1)".into(),
+        "hurt_flash" => "hurt_flash(steps=2)".into(),
+        "death_dissolve" => "death_dissolve(steps=4)".into(),
+        "blink" => "blink(lid=1)".into(),
+        "spin_projectile" => "spin_projectile(steps=4)".into(),
+        // No `steps` argument exists; frame count follows the ramp pulse.
+        "pulse_glow" => "pulse_glow(ramp=water)".into(),
+        "doll" => "doll(anim=walk)".into(),
+        _ => name.to_string(),
+    }
+}
+
+/// Full listing consumed by the CLI and the harness capability tool.
+pub fn macro_catalog() -> Vec<MacroInfo> {
+    MACRO_NAMES.iter().filter_map(|n| macro_info(n)).collect()
+}
+
 fn check_args(name: &str, args: &BTreeMap<String, String>) -> PxlResult<()> {
     let allowed = allowed_args(name);
     for key in args.keys() {
@@ -712,6 +810,52 @@ mod tests {
             pose: RefCell::new(BTreeMap::new()),
         };
         apply_ops(frame, ops, &cx).unwrap()
+    }
+
+    /// Metadata must describe exactly the arguments the validator accepts, and
+    /// every documented default must actually be accepted by `check_args`.
+    #[test]
+    fn macro_metadata_matches_validator_signatures() {
+        for name in MACRO_NAMES {
+            let info = macro_info(name).expect("every macro has metadata");
+            let allowed = allowed_args(name);
+            assert_eq!(info.args.len(), allowed.len(), "{name} arg count");
+            for arg in &info.args {
+                assert!(allowed.contains(&arg.name), "{name}: {0} not allowed", arg.name);
+                // A documented default must be a real accepted argument.
+                let mut map = BTreeMap::new();
+                map.insert(arg.name.to_string(), arg.default.unwrap_or("1").to_string());
+                assert!(
+                    check_args(name, &map).is_ok(),
+                    "{name}: default for {0} rejected", arg.name
+                );
+            }
+            // Unknown arguments must still be rejected (no silent drift).
+            let mut bad = BTreeMap::new();
+            bad.insert("steps".to_string(), "2".to_string());
+            if !allowed.contains(&"steps") {
+                assert!(check_args(name, &bad).is_err(), "{name} wrongly accepts steps");
+            }
+            assert!(!info.example.is_empty(), "{name} needs an example");
+        }
+    }
+
+    /// `pulse_glow` has no `steps` argument: the historical `pulse_glow(steps=2)`
+    /// call must stay a schema error with an actionable hint.
+    #[test]
+    fn pulse_glow_rejects_steps_and_lists_real_signature() {
+        let mut args = BTreeMap::new();
+        args.insert("steps".into(), "2".into());
+        let err = check_args("pulse_glow", &args).unwrap_err();
+        assert!(err.message.contains("steps"), "{err:?}");
+        assert!(err.hint.as_deref().unwrap_or("").contains("ramp"), "{err:?}");
+        let info = macro_info("pulse_glow").unwrap();
+        assert_eq!(info.args.len(), 1);
+        assert_eq!(info.args[0].name, "ramp");
+        assert_eq!(info.args[0].default, Some("olive"));
+        assert!(info.example.contains("ramp="), "{}", info.example);
+        // It emits two frames without any frame-count argument.
+        assert_eq!(info.frames, 2);
     }
 
     fn expand(spec: &str, frame: &IndexFrame) -> PxlResult<Vec<Vec<Op>>> {

@@ -62,12 +62,34 @@ pub fn registry() -> ToolRegistry {
                 .iter()
                 .filter(|r| r.required)
                 .map(|r| {
+                    // Full requirement context: animations, fps, looping,
+                    // seamless tiling, semantics and priority. Without anims
+                    // the model cannot know how many frames to author.
+                    let anims: Vec<Value> = r
+                        .anims
+                        .iter()
+                        .map(|a| {
+                            serde_json::json!({
+                                "name": a.name,
+                                "fps": a.fps,
+                                "looped": a.looped,
+                                "frames": a.frames,
+                                "dirs": a.dirs,
+                            })
+                        })
+                        .collect();
                     serde_json::json!({
                         "asset_id": r.asset_id,
                         "kind": r.kind,
                         "strategy": r.strategy,
                         "size_px": r.size_px,
                         "directions": r.directions,
+                        "anims": anims,
+                        "seamless": r.seamless,
+                        "semantics": r.semantics,
+                        "priority": r.priority,
+                        "style_ref": r.style_ref,
+                        "consumer_refs": r.consumer_refs,
                     })
                 })
                 .collect();
@@ -181,6 +203,61 @@ pub fn registry() -> ToolRegistry {
         }),
     });
     reg.register(ToolDef {
+        name: "assets.schema".into(),
+        description: "Read the pxl schema for recipe, shapes, doc, or palette. Use it before writing a recipe to check field names.".into(),
+        parameters: serde_json::json!({
+            "type": "object",
+            "required": ["kind"],
+            "properties": {"kind": {"type": "string", "enum": ["recipe", "shapes", "doc", "palette"]}}
+        }),
+        needed: Permission::Pxl,
+        run: Box::new(|args, ctx| {
+            let kind = args["kind"].as_str().unwrap_or("recipe");
+            // Bounded allow-list: the model gets schemas, never CLI internals.
+            if !matches!(kind, "recipe" | "shapes" | "doc" | "palette") {
+                return Ok(ToolOutcome::fail(format!("unknown schema kind {kind}")));
+            }
+            match ctx.pxl.schema(kind) {
+                Ok(schema) => {
+                    let body = clip(&serde_json::to_string(&schema).unwrap_or_default(), 16_000);
+                    Ok(ToolOutcome::ok(format!("schema for {kind}")).with_data(serde_json::json!({"schema": body})))
+                }
+                Err(e) => Ok(ToolOutcome::fail(format!("schema {kind} unavailable: {}", e.message))),
+            }
+        }),
+    });
+    reg.register(ToolDef {
+        name: "assets.status".into(),
+        description: "Show the harness-managed check queue: which assets were written but never built, which failed, and the next todo.".into(),
+        parameters: serde_json::json!({"type": "object", "properties": {}}),
+        needed: Permission::ReadProject,
+        run: Box::new(|_args, ctx| {
+            let queue = crate::pipeline::asset_queue::AssetQueue::load(&ctx.attempt_dir);
+            let summary = queue.status_summary();
+            let states: Vec<Value> = queue
+                .entries
+                .iter()
+                .map(|e| {
+                    serde_json::json!({
+                        "asset_id": e.asset_id,
+                        "state": crate::pipeline::asset_queue::state_name(e.state),
+                        "missing": e.missing,
+                        "last_error_code": e.last_error_code,
+                        "last_failure": e.last_failure,
+                        "last_report": e.last_report,
+                        "build_attempts": e.build_attempts,
+                        "repair_attempts": e.repair_attempts,
+                    })
+                })
+                .collect();
+            Ok(ToolOutcome::ok(format!("{} assets tracked", states.len()))
+                .with_data(serde_json::json!({
+                    "queue": summary,
+                    "entries": states,
+                })))
+        }),
+    });
+    reg.register(ToolDef {
         name: "assets.request_publish".into(),
         description: "Build asset-manifest.json from the sheets on disk and request publication.".into(),
         parameters: serde_json::json!({
@@ -239,6 +316,36 @@ pub fn write_candidate(ctx: &ToolContext, rel: &str, content: &str) -> Result<To
     }
     let digest = digest_bytes(content.as_bytes());
     fs::write(&path, content).map_err(|e| HarnessError::io(e.to_string()))?;
+    // Writing specs only marks the queue dirty; building happens via the
+    // harness-managed pending-check queue (never a silent success).
+    let file_name = Path::new(rel)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("");
+    let reqs = load_requirements(ctx).ok();
+    let required: Vec<String> = reqs
+        .as_ref()
+        .map(|r| {
+            r.requirements
+                .iter()
+                .filter(|a| a.required)
+                .map(|a| a.asset_id.clone())
+                .collect()
+        })
+        .unwrap_or_default();
+    let affected = crate::pipeline::asset_queue::AssetQueue::affected_ids(file_name, &required);
+    if !affected.is_empty() {
+        let mut queue = crate::pipeline::asset_queue::AssetQueue::load(&ctx.attempt_dir);
+        queue.seed(&required);
+        if file_name == "palette.json" {
+            queue.mark_all_dirty(&ctx.attempt_dir);
+        } else {
+            for id in &affected {
+                queue.mark_dirty(id, &ctx.attempt_dir);
+            }
+        }
+        queue.save(&ctx.attempt_dir)?;
+    }
     Ok(ToolOutcome::ok(format!("wrote {rel}"))
         .with_data(serde_json::json!({
             "path": rel,
@@ -332,29 +439,89 @@ fn build_candidate(ctx: &ToolContext, recipe: &str, out_rel: &str) -> Result<Too
     let built = ctx
         .pxl
         .build(&recipe_path, &out_dir, None, Some(&ctx.attempt_dir))?;
-    let failed: Vec<String> = built
-        .failed_checks()
-        .iter()
-        .map(|c| c.to_string())
-        .take(8)
-        .collect();
+    // Unified rendering: full check objects (value/limit), never bare "failed".
+    let failed = crate::adapters::pxl::render_failed_checks(&built.checks, 8);
+    // Record the result in the pending-check queue so explicit builds and
+    // auto-checks share one state machine.
+    queue_record_build(ctx, recipe, out_rel, &built);
     let data = serde_json::json!({
         "ok": built.qa_ok(),
         "out_dir": out_rel,
         "outputs": built.outputs,
         "message": built.result.message,
         "error_code": built.result.error_code,
+        "hint": built.result.hint,
         "failed_checks": failed,
     });
     if built.qa_ok() {
         Ok(ToolOutcome::ok(format!("built {recipe} -> {out_rel}")).with_data(data))
     } else {
         Ok(ToolOutcome::fail(format!(
-            "pxl build failed ({}) {}",
-            built.result.error_code, built.result.message
+            "pxl build failed for {recipe} ({}) {}{}",
+            built.result.error_code,
+            built.result.message,
+            built
+                .result
+                .hint
+                .as_ref()
+                .map(|h| format!(" -- hint: {h}"))
+                .unwrap_or_default()
         ))
-        .with_data(data))
+        .with_data(data)
+        .with_pxl_result(&built.result))
     }
+}
+
+/// Mirror an explicit build into the queue state so coverage and the repair
+/// budget reflect every real build, not only harness-initiated ones.
+fn queue_record_build(
+    ctx: &ToolContext,
+    recipe: &str,
+    out_rel: &str,
+    built: &crate::adapters::pxl::PxlBuildOutput,
+) {
+    let reqs = load_requirements(ctx).ok();
+    let required: Vec<String> = reqs
+        .as_ref()
+        .map(|r| {
+            r.requirements
+                .iter()
+                .filter(|a| a.required)
+                .map(|a| a.asset_id.clone())
+                .collect()
+        })
+        .unwrap_or_default();
+    let stem = Path::new(recipe)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("");
+    let Some(asset_id) = required.iter().find(|r| r.as_str() == stem) else {
+        return;
+    };
+    let mut queue = crate::pipeline::asset_queue::AssetQueue::load(&ctx.attempt_dir);
+    queue.seed(&required);
+    let fingerprint = crate::pipeline::asset_queue::input_fingerprint(
+        &ctx.attempt_dir,
+        asset_id,
+        recipe,
+    );
+    if let Some(entry) = queue.entries.iter_mut().find(|e| &e.asset_id == asset_id) {
+        entry.out_dir = out_rel.to_string();
+        // Dedup by fingerprint even for explicit builds.
+        if !entry.built_fingerprints.iter().any(|f| f == &fingerprint) {
+            entry.built_fingerprints.push(fingerprint.clone());
+        }
+    }
+    if built.qa_ok() {
+        queue.record_success(asset_id);
+    } else {
+        let blocked = queue.record_failure_and_count(asset_id, &built.result);
+        if blocked {
+            // Blocked assets stop consuming the repair budget; the stage
+            // round note will surface this to the model.
+        }
+    }
+    let _ = queue.save(&ctx.attempt_dir);
 }
 
 fn validate_candidate(ctx: &ToolContext, sheet: &str, rules: &str) -> Result<ToolOutcome> {
@@ -364,42 +531,31 @@ fn validate_candidate(ctx: &ToolContext, sheet: &str, rules: &str) -> Result<Too
         return Ok(ToolOutcome::fail(format!("sheet {sheet} does not exist")));
     }
     let result = ctx.pxl.validate(&path, rules)?;
-    let value: Value = serde_json::from_str(&result.stdout).unwrap_or(Value::Null);
-    let failed: Vec<String> = value
-        .get("checks")
-        .and_then(|c| c.as_array())
-        .map(|checks| {
-            checks
-                .iter()
-                .filter(|c| c.get("pass").and_then(|p| p.as_bool()) == Some(false))
-                .filter_map(|c| {
-                    Some(format!(
-                        "{}: {}",
-                        c.get("id").and_then(|v| v.as_str()).unwrap_or("check"),
-                        c.get("message")
-                            .or_else(|| c.get("detail"))
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("failed")
-                    ))
-                })
-                .take(12)
-                .collect()
-        })
-        .unwrap_or_default();
+    // The CLI `checks_json` emits {id, pass, value, limit}; render from those
+    // objects only. Never assume message/detail exist.
+    let failed = crate::adapters::pxl::render_failed_checks(&result.checks(), 12);
     let data = serde_json::json!({
         "ok": result.ok,
         "error_code": result.error_code,
         "message": result.message,
+        "hint": result.hint,
         "failed_checks": failed,
     });
     if result.ok {
         Ok(ToolOutcome::ok(format!("validated {sheet} ({rules})")).with_data(data))
     } else {
         Ok(ToolOutcome::fail(format!(
-            "pxl validate failed ({}) {}",
-            result.error_code, result.message
+            "pxl validate failed ({}) {}{}",
+            result.error_code,
+            result.message,
+            result
+                .hint
+                .as_ref()
+                .map(|h| format!(" -- hint: {h}"))
+                .unwrap_or_default()
         ))
-        .with_data(data))
+        .with_data(data)
+        .with_pxl_result(&result))
     }
 }
 
@@ -428,11 +584,36 @@ fn request_publish(ctx: &ToolContext, summary: &str) -> Result<ToolOutcome> {
         .and_then(|n| n.to_str())
         .unwrap_or("unknown")
         .to_string();
+    // Only assets whose *current* inputs produced a successful build may be
+    // published. A leftover PNG from an older, now-failing recipe is not
+    // evidence of delivery.
+    let queue = crate::pipeline::asset_queue::AssetQueue::load(&ctx.attempt_dir);
+    let mut stale: Vec<String> = Vec::new();
     let mut entries = Vec::new();
     for id in &required {
         let Some(hits) = frames.get(id.as_str()) else {
             continue;
         };
+        // Reject residue: not built, built for other inputs, or failed.
+        match queue.entry(id) {
+            Some(e)
+                if matches!(
+                    e.state,
+                    crate::pipeline::asset_queue::AssetState::Built
+                        | crate::pipeline::asset_queue::AssetState::Validated
+                ) => {}
+            Some(e) => {
+                stale.push(format!(
+                    "{id}: {} (no successful build for current inputs)",
+                    crate::pipeline::asset_queue::state_name(e.state)
+                ));
+                continue;
+            }
+            None => {
+                stale.push(format!("{id}: no build recorded"));
+                continue;
+            }
+        }
         let recipe = recipe_for(&ctx.attempt_dir, id).unwrap_or_else(|| "unknown.recipe.json".into());
         let recipe_path = ctx.attempt_dir.join(&recipe);
         let recipe_digest = if recipe_path.is_file() {
@@ -466,18 +647,81 @@ fn request_publish(ctx: &ToolContext, summary: &str) -> Result<ToolOutcome> {
                     .map(|a| a.size_px)
             })
             .unwrap_or([16, 16]);
+        // Real provenance: seed and animations come from the recipe, and the
+        // shapes spec is listed as an input. Never fake a fixed seed.
+        let recipe_doc: Option<Value> = fs::read_to_string(&recipe_path)
+            .ok()
+            .and_then(|t| serde_json::from_str(&t).ok());
+        let seed = recipe_doc
+            .as_ref()
+            .and_then(|v| v.get("seed").and_then(|s| s.as_u64()))
+            .unwrap_or(0);
+        // Real spec provenance: (path, digest) pairs, not an empty list.
+        let mut spec_paths: Vec<(String, String)> = Vec::new();
+        let shapes_name = format!("{id}.shapes.json");
+        let shapes_path = ctx.attempt_dir.join(&shapes_name);
+        if shapes_path.is_file() {
+            spec_paths.push((
+                shapes_name,
+                digest_file(&shapes_path).unwrap_or_else(|_| "sha256:missing".into()),
+            ));
+        }
+        // Animations with the real atlas frame keys per direction, so
+        // "some {id}_* frame exists" can never stand in for the requirement.
+        let mut animations = Vec::new();
+        if let Some(doc) = &recipe_doc {
+            if let Some(sprites) = doc.get("sprites").and_then(|s| s.as_array()) {
+                for sprite in sprites {
+                    let sid = sprite.get("id").and_then(|i| i.as_str()).unwrap_or("");
+                    if sid != id.as_str() {
+                        continue;
+                    }
+                    if let Some(anims) = sprite.get("anims").and_then(|a| a.as_array()) {
+                        for anim in anims {
+                            let name = anim.get("name").and_then(|n| n.as_str()).unwrap_or("");
+                            let fps = anim.get("fps").and_then(|f| f.as_u64()).unwrap_or(0) as u32;
+                            let looped =
+                                anim.get("loop").and_then(|l| l.as_bool()).unwrap_or(true);
+                            let dirs: Vec<(String, Vec<String>)> = anim
+                                .get("dirs")
+                                .and_then(|d| d.as_array())
+                                .map(|d| {
+                                    d.iter()
+                                        .filter_map(|x| x.as_str())
+                                        .map(|dir| {
+                                            (
+                                                dir.to_string(),
+                                                frame_keys_for(
+                                                    &ctx.attempt_dir, id, name, dir,
+                                                ),
+                                            )
+                                        })
+                                        .collect()
+                                })
+                                .unwrap_or_default();
+                            animations.push(crate::contracts::assets::ManifestAnim {
+                                name: name.to_string(),
+                                fps,
+                                looped,
+                                dirs,
+                            });
+                        }
+                    }
+                }
+            }
+        }
         entries.push(crate::contracts::assets::ManifestEntry {
             asset_id: id.clone(),
             status: DeliveryStatus::Delivered,
             required: true,
             recipe_path: recipe,
             recipe_digest,
-            spec_paths: vec![],
+            spec_paths,
             palette_path: "palette.json".into(),
             palette_digest,
-            seed: 1,
+            seed,
             outputs,
-            animations: vec![],
+            animations,
             size_px: size,
             pivot: None,
         });
@@ -495,6 +739,7 @@ fn request_publish(ctx: &ToolContext, summary: &str) -> Result<ToolOutcome> {
         warnings: missing
             .iter()
             .map(|id| format!("missing frames for {id}"))
+            .chain(stale.iter().map(|s| format!("stale or unverified output: {s}")))
             .collect(),
         visual_review: VisualReviewState::NotRun,
     };
@@ -507,6 +752,16 @@ fn request_publish(ctx: &ToolContext, summary: &str) -> Result<ToolOutcome> {
             missing.join(", ")
         ))
         .with_data(serde_json::json!({"missing": missing})));
+    }
+    // Leftover outputs from earlier inputs must not be published: they are
+    // residue, not delivery.
+    if !stale.is_empty() {
+        return Ok(ToolOutcome::fail(format!(
+            "not ready to publish; {} asset(s) have outputs but no successful build for their current inputs: {}",
+            stale.len(),
+            stale.join("; ")
+        ))
+        .with_data(serde_json::json!({"stale": stale})));
     }
     let request = serde_json::json!({
         "schema_version": 1,
@@ -521,6 +776,31 @@ fn request_publish(ctx: &ToolContext, summary: &str) -> Result<ToolOutcome> {
     Ok(ToolOutcome::ok("publish requested").with_data(serde_json::json!({
         "assets": required.len(),
     })))
+}
+
+/// Real atlas frame keys for one `{asset}_{anim}_{dir}` sequence, taken from
+/// the sheets on disk. Empty when the frames were never produced.
+fn frame_keys_for(attempt: &Path, asset_id: &str, anim: &str, dir: &str) -> Vec<String> {
+    let prefix = format!("{asset_id}_{anim}_{dir}_");
+    let mut keys: Vec<String> = Vec::new();
+    for sheet in find_sheets(attempt) {
+        let Ok(text) = fs::read_to_string(&sheet) else {
+            continue;
+        };
+        let Ok(value) = serde_json::from_str::<Value>(&text) else {
+            continue;
+        };
+        let Some(frames) = value.get("frames").and_then(|f| f.as_object()) else {
+            continue;
+        };
+        for key in frames.keys() {
+            if key.starts_with(&prefix) && !keys.contains(key) {
+                keys.push(key.clone());
+            }
+        }
+    }
+    keys.sort();
+    keys
 }
 
 struct FrameHit {
@@ -714,12 +994,62 @@ pub fn gates(ctx: &ToolContext) -> Result<GateReport> {
         limit: "every required asset_id has a `{id}_*` frame on a sheet".into(),
         failures: missing.iter().map(|id| format!("missing {id}")).collect(),
     });
+    // `coverage.png` only judges byte validity of outputs that exist. Missing
+    // assets belong to `coverage.frames`; a valid PNG with a missing asset must
+    // never be reported as "PNG is broken".
     checks.push(GateCheck {
         id: "coverage.png".into(),
-        passed: png_failures.is_empty() && missing.is_empty(),
-        value: if png_failures.is_empty() { "png".into() } else { "bad".into() },
-        limit: "sheet png exists and is a non-empty PNG".into(),
+        passed: png_failures.is_empty(),
+        value: if png_failures.is_empty() {
+            "png".into()
+        } else {
+            format!("{} bad", png_failures.len())
+        },
+        limit: "every sheet png that exists is a non-empty PNG".into(),
         failures: png_failures,
+    });
+    // Pending / failed / stale outputs: nothing may reach the manifest unless
+    // the current input fingerprint produced it.
+    let queue = crate::pipeline::asset_queue::AssetQueue::load(&ctx.attempt_dir);
+    let (mut queue_gaps, mut not_attempted) = (Vec::new(), Vec::new());
+    for id in &required {
+        match queue.entry(id) {
+            None => not_attempted.push(format!("{id}: not tracked")),
+            Some(e) => match e.state {
+                crate::pipeline::asset_queue::AssetState::MissingSpecs
+                | crate::pipeline::asset_queue::AssetState::PendingDependencies => {
+                    not_attempted.push(format!(
+                        "{}: {} ({})",
+                        id,
+                        crate::pipeline::asset_queue::state_name(e.state),
+                        e.missing.join(", ")
+                    ));
+                }
+                crate::pipeline::asset_queue::AssetState::Blocked => {
+                    queue_gaps.push(format!("{id}: blocked after {} repairs", e.repair_attempts));
+                }
+                crate::pipeline::asset_queue::AssetState::BuildFailed => {
+                    queue_gaps.push(format!(
+                        "{id}: build_failed ({})",
+                        e.last_error_code.as_deref().unwrap_or("unknown")
+                    ));
+                }
+                crate::pipeline::asset_queue::AssetState::PendingBuild => {
+                    queue_gaps.push(format!("{id}: pending_build (never built)"));
+                }
+                crate::pipeline::asset_queue::AssetState::Built
+                | crate::pipeline::asset_queue::AssetState::Validated => {}
+            },
+        }
+    }
+    let mut queue_failures = queue_gaps;
+    queue_failures.extend(not_attempted);
+    checks.push(GateCheck {
+        id: "coverage.queue".into(),
+        passed: queue_failures.is_empty(),
+        value: format!("{} gaps", queue_failures.len()),
+        limit: "every required asset has a successful build for its current inputs".into(),
+        failures: queue_failures,
     });
     let manifest_gaps = if let Some(m) = &manifest {
         required
@@ -926,14 +1256,17 @@ Requirements:\n{req_text}"
                 ctx: &ctx,
                 ledger,
                 events,
+                run_dir: Some(run.dir()),
             };
             runner.run(&task, &role.prompt, &user_prompt, &specs)
         }?;
-        set_stage(state, "assets", StageStatus::Validating)?;
         state
             .task_mut("assets", "asset_package")
             .stopped_reason = Some(outcome.stop_reason.clone());
         run.save(state)?;
+        // Harness auto-check pass: build every complete dirty recipe the model
+        // never built (the `w` hole). Independent events + resource metering.
+        let auto_feedback = auto_check_pass(&ctx, ledger, events)?;
         report = gates(&ctx)?;
         fs::write(
             run.reports_dir()?.join("assets.gates.json"),
@@ -957,6 +1290,17 @@ Requirements:\n{req_text}"
         if report.passed() && !published {
             lines.push("- publish: call assets.request_publish".into());
         }
+        // Repair prompt carries per-asset latest diagnostics (option a):
+        // injected into the next round's user message, never an orphan tool
+        // message.
+        if !auto_feedback.is_empty() {
+            lines.push(format!(
+                "harness auto-check results (you did not build these yourself):\n{auto_feedback}"
+            ));
+        }
+        // Coverage-first scheduling: assets that never had a turn are listed
+        // before deep repairs, so one stuck asset cannot starve the rest.
+        lines.extend(coverage_first_note(&ctx));
         repair_note = lines.join("\n");
         set_stage(state, "assets", StageStatus::Running)?;
         run.save(state)?;
@@ -991,6 +1335,126 @@ Requirements:\n{req_text}"
     })?;
     record_provenance(run)?;
     Ok(StageStatus::Succeeded)
+}
+
+/// Coverage-first scheduling note (P0-C): never-attempted assets come first,
+/// blocked assets are named and explicitly deprioritised, so repeated repairs
+/// on one asset cannot consume the whole package budget.
+fn coverage_first_note(ctx: &ToolContext) -> Vec<String> {
+    use crate::pipeline::asset_queue::{AssetState, AssetQueue};
+    let reqs = load_requirements(ctx).ok();
+    let mut required: Vec<(String, u32)> = reqs
+        .as_ref()
+        .map(|r| {
+            r.requirements
+                .iter()
+                .filter(|a| a.required)
+                .map(|a| (a.asset_id.clone(), a.priority))
+                .collect()
+        })
+        .unwrap_or_default();
+    // Lower priority number ships first; stable id order breaks ties.
+    required.sort_by(|a, b| a.1.cmp(&b.1).then_with(|| a.0.cmp(&b.0)));
+    let queue = AssetQueue::load(&ctx.attempt_dir);
+    let mut never: Vec<String> = Vec::new();
+    let mut blocked: Vec<String> = Vec::new();
+    for (id, _) in &required {
+        match queue.entry(id) {
+            None => never.push(id.clone()),
+            Some(e) => match e.state {
+                AssetState::MissingSpecs | AssetState::PendingDependencies => {
+                    never.push(id.clone())
+                }
+                AssetState::Blocked => blocked.push(format!(
+                    "{id} (blocked after {} attempts: {})",
+                    e.repair_attempts,
+                    e.last_failure.as_deref().unwrap_or("see report")
+                )),
+                _ => {}
+            },
+        }
+    }
+    let mut out = Vec::new();
+    if !never.is_empty() {
+        out.push(format!(
+            "Do these FIRST (never attempted yet): {}. Write their specs and build them before repairing anything else.",
+            never.join(", ")
+        ));
+    }
+    if !blocked.is_empty() {
+        out.push(format!(
+            "Stop repairing these (harness-blocked, budget exhausted): {}. Move on to the untried assets above.",
+            blocked.join("; ")
+        ));
+    }
+    out
+}
+
+/// Harness-initiated automatic build of every complete dirty recipe (P0-B).
+///
+/// Closes the `w` hole: a spec the model wrote but never built still gets a
+/// build and a diagnosis. Independent events (`AutoCheck*`) and real resource
+/// metering, so auto-builds are auditable and never free.
+fn auto_check_pass(
+    ctx: &ToolContext,
+    ledger: &mut BudgetLedger,
+    events: &mut EventLog,
+) -> Result<String> {
+    let reqs = load_requirements(ctx).ok();
+    let required: Vec<String> = reqs
+        .as_ref()
+        .map(|r| {
+            r.requirements
+                .iter()
+                .filter(|a| a.required)
+                .map(|a| a.asset_id.clone())
+                .collect()
+        })
+        .unwrap_or_default();
+    let mut queue = crate::pipeline::asset_queue::AssetQueue::load(&ctx.attempt_dir);
+    queue.seed(&required);
+    // Pick up inputs written after the last probe (e.g. specs authored without
+    // going through write_candidate, or a resumed run).
+    for id in &required {
+        queue.mark_dirty(id, &ctx.attempt_dir);
+    }
+    let mut sink = |ev: crate::pipeline::asset_queue::AutoCheckEvent| {
+        match ev.phase {
+            crate::pipeline::asset_queue::AutoCheckPhase::Started => {
+                let _ = events.append(Event::AutoCheckStarted {
+                    stage: "assets".into(),
+                    asset_id: ev.asset_id,
+                    recipe: ev.recipe,
+                    input_digest: ev.input_digest,
+                });
+            }
+            crate::pipeline::asset_queue::AutoCheckPhase::Finished => {
+                let _ = events.append(Event::AutoCheckFinished {
+                    stage: "assets".into(),
+                    asset_id: ev.asset_id,
+                    recipe: ev.recipe,
+                    input_digest: ev.input_digest,
+                    ok: ev.ok,
+                    error_code: ev.error_code,
+                    elapsed_ms: ev.elapsed_ms,
+                    report_path: ev.report_rel,
+                });
+            }
+        }
+    };
+    let outcomes = queue.auto_build(&ctx.attempt_dir, &ctx.pxl, &mut sink);
+    // Auto-builds consume real resources and must be metered.
+    for (_, outcome) in &outcomes {
+        ledger.settle_tool(outcome.result.elapsed_ms);
+    }
+    queue.save(&ctx.attempt_dir)?;
+    if outcomes.is_empty() {
+        return Ok(String::new());
+    }
+    Ok(crate::pipeline::asset_queue::render_auto_check_feedback(
+        &outcomes,
+        &ctx.attempt_dir,
+    ))
 }
 
 fn record_provenance(run: &RunStore) -> Result<()> {
@@ -1149,8 +1613,60 @@ mod tests {
         )
         .unwrap();
         write_original_specs(&attempt, &["player_tank", "b"]);
+        // Frames/PNG/manifest alone are not enough: the harness queue must
+        // record a successful build for the current inputs.
+        let report_before = gates(&context).unwrap();
+        assert!(
+            report_before
+                .failed_checks()
+                .iter()
+                .any(|c| c.id == "coverage.queue"),
+            "queue gate must fail before a build is recorded: {:?}",
+            report_before.failed_checks()
+        );
+        let mut queue = crate::pipeline::asset_queue::AssetQueue::load(&attempt);
+        queue.seed(&["player_tank".into(), "b".into()]);
+        queue.record_success("player_tank");
+        queue.record_success("b");
+        queue.save(&attempt).unwrap();
         let report = gates(&context).unwrap();
         assert!(report.passed(), "{:?}", report.failed_checks());
+    }
+
+    #[test]
+    fn valid_png_with_missing_asset_does_not_blame_png() {
+        let root = std::env::temp_dir().join(format!("pxl_h_pngsplit_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        let design = root.join("design");
+        let attempt = root.join("attempt");
+        write_reqs(&design, &["player_tank", "b"]);
+        fs::create_dir_all(attempt.join("out")).unwrap();
+        // A valid PNG covering player_tank only; `b` is missing entirely.
+        fs::write(
+            attempt.join("out/units.sheet.json"),
+            r#"{"frames":{"player_tank_move_N_0":{"frame":{"x":0,"y":0,"w":16,"h":16}}}}"#,
+        )
+        .unwrap();
+        fs::write(
+            attempt.join("out/units.sheet.png"),
+            b"\x89PNG\r\n\x1a\n................padding-bytes!!",
+        )
+        .unwrap();
+        let context = ctx(&attempt, &design);
+        let report = gates(&context).unwrap();
+        let png = report
+            .checks
+            .iter()
+            .find(|c| c.id == "coverage.png")
+            .expect("coverage.png present");
+        assert!(png.passed, "valid PNG must not fail: {:?}", png.failures);
+        let frames = report
+            .checks
+            .iter()
+            .find(|c| c.id == "coverage.frames")
+            .unwrap();
+        assert!(!frames.passed);
+        assert!(frames.failures.iter().any(|f| f.contains("missing b")));
     }
 
     fn write_original_specs(attempt: &Path, ids: &[&str]) {
@@ -1224,5 +1740,254 @@ mod tests {
             .checks
             .iter()
             .any(|c| c.id == "provenance.not_template" && !c.passed));
+    }
+
+    // --- P0-B scheduling regressions -------------------------------------
+    // Carrier assets use multi-frame directional animations (never the
+    // single-frame bullet fly, which cannot pass QA before batch D).
+
+    /// A spec written but never built must surface as a queue gap, not as a
+    /// silent success. This is the `w` hole: nothing in the model's own tool
+    /// results can reveal an error it never triggered.
+    #[test]
+    fn written_but_never_built_is_caught_by_queue_gate() {
+        let root = std::env::temp_dir().join(format!("pxl_h_neverbuilt_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        let design = root.join("design");
+        let attempt = root.join("attempt");
+        write_reqs(&design, &["player_tank", "w"]);
+        fs::create_dir_all(&attempt).unwrap();
+        let context = ctx(&attempt, &design);
+        let reg = registry();
+        // Model writes full specs for both assets...
+        write_original_specs(&attempt, &["player_tank", "w"]);
+        // ...but only builds player_tank; `w` is never built.
+        let mut queue = crate::pipeline::asset_queue::AssetQueue::load(&attempt);
+        queue.seed(&["player_tank".into(), "w".into()]);
+        queue.mark_dirty("player_tank", &attempt);
+        queue.mark_dirty("w", &attempt);
+        queue.record_success("player_tank");
+        queue.save(&attempt).unwrap();
+        let report = gates(&context).unwrap();
+        let queue_check = report
+            .checks
+            .iter()
+            .find(|c| c.id == "coverage.queue")
+            .expect("coverage.queue gate exists");
+        assert!(!queue_check.passed, "unbuilt asset must fail the gate");
+        assert!(
+            queue_check.failures.iter().any(|f| f.contains("w")),
+            "{:?}",
+            queue_check.failures
+        );
+        // The status tool tells the model exactly what is outstanding.
+        let status = reg
+            .dispatch("assets.status", &serde_json::json!({}), &context)
+            .unwrap();
+        assert!(status.ok);
+        let text = serde_json::to_string(&status.data).unwrap();
+        assert!(text.contains("pending_build"), "{text}");
+    }
+
+    /// Palette rewrite cascades dirt to every asset (debounce: at most one
+    /// auto-build per asset per pass, deduped by input fingerprint).
+    #[test]
+    fn palette_rewrite_does_not_trigger_more_than_one_rebuild_per_asset() {
+        let root = std::env::temp_dir().join(format!("pxl_h_debounce_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        let design = root.join("design");
+        let attempt = root.join("attempt");
+        write_reqs(&design, &["player_tank"]);
+        fs::create_dir_all(&attempt).unwrap();
+        // Full specs exist (multi-frame directional anim carrier).
+        write_original_specs(&attempt, &["player_tank"]);
+        // Three consecutive palette rewrites in one turn (observed 7x).
+        for i in 0..3 {
+            fs::write(
+                attempt.join("palette.json"),
+                format!(r##"{{"v":1,"id":"pal-{i}","colors":["#00000000","#101010"]}}"##),
+            )
+            .unwrap();
+        }
+        let mut queue = crate::pipeline::asset_queue::AssetQueue::load(&attempt);
+        queue.seed(&["player_tank".into()]);
+        queue.mark_all_dirty(&attempt);
+        // Only one pending entry regardless of how many palette writes happened.
+        let pending = queue
+            .entries
+            .iter()
+            .filter(|e| e.state == crate::pipeline::asset_queue::AssetState::PendingBuild)
+            .count();
+        assert_eq!(pending, 1, "one asset = one pending build, not one per write");
+        // Auto-build is deduped per fingerprint: a second pass with unchanged
+        // inputs builds nothing new.
+        let mut events = 0u32;
+        let first = queue.auto_build(&attempt, &ctx(&attempt, &design).pxl, &mut |_| {
+            events += 1;
+        });
+        assert!(first.is_empty() || events == 0, "pxl unavailable offline => no builds");
+        // Recording the fingerprint means a repeat pass is a no-op.
+        let fingerprint = queue.entry("player_tank").unwrap().input_fingerprint.clone();
+        queue
+            .entries
+            .iter_mut()
+            .find(|e| e.asset_id == "player_tank")
+            .unwrap()
+            .built_fingerprints
+            .push(fingerprint);
+        let second = queue.auto_build(&attempt, &ctx(&attempt, &design).pxl, &mut |_| {
+            events += 1;
+        });
+        assert!(second.is_empty(), "same fingerprint must not rebuild");
+    }
+
+    /// Coverage-first: the repair note names never-attempted assets first and
+    /// tells the model to stop repairing blocked ones.
+    #[test]
+    fn coverage_first_note_prioritises_untried_assets() {
+        let root = std::env::temp_dir().join(format!("pxl_h_covfirst_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        let design = root.join("design");
+        let attempt = root.join("attempt");
+        write_reqs(&design, &["explosion", "w", "hq_base"]);
+        fs::create_dir_all(&attempt).unwrap();
+        // explosion is blocked; w and hq_base were never attempted.
+        let mut queue = crate::pipeline::asset_queue::AssetQueue::load(&attempt);
+        queue.seed(&["explosion".into(), "w".into(), "hq_base".into()]);
+        let res = crate::adapters::pxl::PxlResult_ {
+            ok: false,
+            exit_code: Some(5),
+            error_code: "E_QA".into(),
+            message: "frame diff too large".into(),
+            hint: None,
+            path: None,
+            stdout: String::new(),
+            stderr: String::new(),
+            timed_out: false,
+            elapsed_ms: 1,
+        };
+        for _ in 0..3 {
+            queue.record_failure_and_count("explosion", &res);
+        }
+        queue.save(&attempt).unwrap();
+        let note = coverage_first_note(&ctx(&attempt, &design));
+        let joined = note.join("\n");
+        assert!(joined.contains("FIRST"), "{joined}");
+        assert!(joined.contains("w"), "untried w must be listed: {joined}");
+        assert!(joined.contains("hq_base"), "untried hq_base must be listed: {joined}");
+        assert!(joined.contains("Stop repairing"), "{joined}");
+        assert!(joined.contains("explosion"), "blocked asset must be named: {joined}");
+        // The untried assets must not be described as blocked.
+        let first_line = &note[0];
+        assert!(!first_line.contains("explosion"), "{first_line}");
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    /// A leftover PNG produced by an older/failing recipe must never be
+    /// published: outputs alone are not delivery.
+    #[test]
+    fn stale_output_from_old_inputs_cannot_be_published() {
+        let root = std::env::temp_dir().join(format!("pxl_h_stale_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        let design = root.join("design");
+        let attempt = root.join("attempt");
+        write_reqs(&design, &["player_tank"]);
+        fs::create_dir_all(attempt.join("out")).unwrap();
+        // A sheet + PNG exist on disk, but no successful build is recorded.
+        fs::write(
+            attempt.join("out/units.sheet.json"),
+            r#"{"frames":{"player_tank_move_N_0":{"frame":{"x":0,"y":0,"w":16,"h":16}}}}"#,
+        )
+        .unwrap();
+        fs::write(
+            attempt.join("out/units.sheet.png"),
+            b"\x89PNG\r\n\x1a\n................padding-bytes!!",
+        )
+        .unwrap();
+        write_original_specs(&attempt, &["player_tank"]);
+        let context = ctx(&attempt, &design);
+        let rejected = request_publish(&context, "looks done").unwrap();
+        assert!(!rejected.ok, "residue must not publish: {}", rejected.summary);
+        assert!(rejected.summary.contains("no successful build"), "{}", rejected.summary);
+        assert!(!attempt.join("publish-request.json").is_file());
+        // The manifest records the reason instead of claiming delivery.
+        let manifest: Value =
+            serde_json::from_str(&fs::read_to_string(attempt.join("asset-manifest.json")).unwrap())
+                .unwrap();
+        let warnings = manifest["warnings"].as_array().unwrap();
+        assert!(
+            warnings.iter().any(|w| w.as_str().unwrap().contains("stale")),
+            "{warnings:?}"
+        );
+        assert!(manifest["entries"].as_array().unwrap().is_empty());
+
+        // After a real successful build for the current inputs, publish works.
+        let mut queue = crate::pipeline::asset_queue::AssetQueue::load(&attempt);
+        queue.seed(&["player_tank".into()]);
+        queue.record_success("player_tank");
+        queue.save(&attempt).unwrap();
+        let accepted = request_publish(&context, "now complete").unwrap();
+        assert!(accepted.ok, "{}", accepted.summary);
+        let manifest: Value =
+            serde_json::from_str(&fs::read_to_string(attempt.join("asset-manifest.json")).unwrap())
+                .unwrap();
+        let entry = &manifest["entries"][0];
+        assert_eq!(entry["asset_id"], "player_tank");
+        // Real seed from the recipe (write_original_specs uses seed 9), not 1.
+        assert_eq!(entry["seed"], 9, "seed must come from the recipe: {entry}");
+        assert!(attempt.join("publish-request.json").is_file());
+    }
+
+    /// A blocked asset must not consume the whole package: other assets keep
+    /// their state and remain schedulable.
+    #[test]
+    fn blocked_asset_does_not_starve_others() {
+        let root = std::env::temp_dir().join(format!("pxl_h_blocked_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        let design = root.join("design");
+        let attempt = root.join("attempt");
+        write_reqs(&design, &["explosion", "hq_base", "HUD"]);
+        fs::create_dir_all(&attempt).unwrap();
+        let mut queue = crate::pipeline::asset_queue::AssetQueue::load(&attempt);
+        queue.seed(&["explosion".into(), "hq_base".into(), "HUD".into()]);
+        // explosion fails E_QA three times -> blocked.
+        let res = crate::adapters::pxl::PxlResult_ {
+            ok: false,
+            exit_code: Some(5),
+            error_code: "E_QA".into(),
+            message: "1 check(s) failed".into(),
+            hint: None,
+            path: None,
+            stdout: String::new(),
+            stderr: String::new(),
+            timed_out: false,
+            elapsed_ms: 1,
+        };
+        for _ in 0..3 {
+            queue.record_failure_and_count("explosion", &res);
+        }
+        queue.save(&attempt).unwrap();
+        assert_eq!(
+            queue.entry("explosion").unwrap().state,
+            crate::pipeline::asset_queue::AssetState::Blocked
+        );
+        // Others are untouched and still eligible for their first attempt.
+        assert_eq!(
+            queue.entry("hq_base").unwrap().state,
+            crate::pipeline::asset_queue::AssetState::MissingSpecs
+        );
+        assert_eq!(
+            queue.entry("HUD").unwrap().state,
+            crate::pipeline::asset_queue::AssetState::MissingSpecs
+        );
+        let report = gates(&ctx(&attempt, &design)).unwrap();
+        let queue_check = report.checks.iter().find(|c| c.id == "coverage.queue").unwrap();
+        assert!(!queue_check.passed);
+        assert!(queue_check.failures.iter().any(|f| f.contains("blocked")));
+        // Not-yet-attempted assets are reported as such, not silently omitted.
+        assert!(queue_check
+            .failures
+            .iter()
+            .any(|f| f.contains("hq_base") && f.contains("missing_specs")));
     }
 }

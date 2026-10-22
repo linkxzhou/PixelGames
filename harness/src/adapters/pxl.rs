@@ -27,10 +27,31 @@ pub struct PxlResult_ {
     /// `E_USAGE` etc., or `INFRA_*` for timeout / non-JSON / spawn errors.
     pub error_code: String,
     pub message: String,
+    /// `error.hint` from the pxl JSON envelope, when present.
+    #[serde(default)]
+    pub hint: Option<String>,
+    /// `error.path` from the pxl JSON envelope, when present.
+    #[serde(default)]
+    pub path: Option<String>,
     pub stdout: String,
     pub stderr: String,
     pub timed_out: bool,
     pub elapsed_ms: u64,
+}
+
+impl PxlResult_ {
+    /// Structured checks array parsed from stdout, preserving full
+    /// `id/pass/value/limit` objects rather than flattened strings.
+    pub fn checks(&self) -> Vec<Value> {
+        serde_json::from_str::<Value>(&self.stdout)
+            .ok()
+            .and_then(|v| {
+                v.get("checks")
+                    .and_then(|c| c.as_array())
+                    .cloned()
+            })
+            .unwrap_or_default()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -305,42 +326,37 @@ fn probe_version(bin: &Path) -> Result<String> {
 
 /// Map a raw process result onto the normalized error taxonomy.
 fn normalize(out: &ProcOutput, argv: &[String]) -> Result<PxlResult_> {
-    if out.timed_out {
-        return Ok(PxlResult_ {
-            ok: false,
-            exit_code: out.exit_code,
-            error_code: "INFRA_TIMEOUT".into(),
-            message: format!("pxl timed out after {} ms", out.elapsed_ms),
-            stdout: out.stdout.clone(),
-            stderr: out.stderr.clone(),
-            timed_out: true,
-            elapsed_ms: out.elapsed_ms,
-        });
-    }
-    let Some(code) = out.exit_code else {
-        return Ok(PxlResult_ {
-            ok: false,
-            exit_code: None,
-            error_code: "INFRA_NO_EXIT".into(),
-            message: "pxl process exited without a status code".into(),
-            stdout: out.stdout.clone(),
-            stderr: out.stderr.clone(),
-            timed_out: false,
-            elapsed_ms: out.elapsed_ms,
-        });
+    let base = |error_code: &str, message: String| PxlResult_ {
+        ok: false,
+        exit_code: out.exit_code,
+        error_code: error_code.into(),
+        message,
+        hint: None,
+        path: None,
+        stdout: out.stdout.clone(),
+        stderr: out.stderr.clone(),
+        timed_out: out.timed_out,
+        elapsed_ms: out.elapsed_ms,
     };
+    if out.timed_out {
+        return Ok(base(
+            "INFRA_TIMEOUT",
+            format!("pxl timed out after {} ms", out.elapsed_ms),
+        ));
+    }
+    if out.exit_code.is_none() {
+        return Ok(base(
+            "INFRA_NO_EXIT",
+            "pxl process exited without a status code".into(),
+        ));
+    }
+    let code = out.exit_code.unwrap();
     let parsed: Option<Value> = serde_json::from_str(&out.stdout).ok();
     if code != 0 && parsed.is_none() && !out.stdout.trim().is_empty() {
-        return Ok(PxlResult_ {
-            ok: false,
-            exit_code: Some(code),
-            error_code: "INFRA_NON_JSON".into(),
-            message: format!("pxl exited {code} with non-JSON stdout"),
-            stdout: out.stdout.clone(),
-            stderr: out.stderr.clone(),
-            timed_out: false,
-            elapsed_ms: out.elapsed_ms,
-        });
+        return Ok(base(
+            "INFRA_NON_JSON",
+            format!("pxl exited {code} with non-JSON stdout"),
+        ));
     }
     // Success and JSON errors share the ok/error envelope.
     if let Some(v) = &parsed {
@@ -357,12 +373,24 @@ fn normalize(out: &ProcOutput, argv: &[String]) -> Result<PxlResult_> {
             .and_then(|m| m.as_str())
             .unwrap_or("")
             .to_string();
+        let hint = v
+            .get("error")
+            .and_then(|e| e.get("hint"))
+            .and_then(|h| h.as_str())
+            .map(str::to_string);
+        let path = v
+            .get("error")
+            .and_then(|e| e.get("path"))
+            .and_then(|p| p.as_str())
+            .map(str::to_string);
         if ok && code == 0 {
             return Ok(PxlResult_ {
                 ok: true,
                 exit_code: Some(0),
                 error_code: String::new(),
                 message: String::new(),
+                hint,
+                path,
                 stdout: out.stdout.clone(),
                 stderr: out.stderr.clone(),
                 timed_out: false,
@@ -374,6 +402,8 @@ fn normalize(out: &ProcOutput, argv: &[String]) -> Result<PxlResult_> {
             exit_code: Some(code),
             error_code,
             message,
+            hint,
+            path,
             stdout: out.stdout.clone(),
             stderr: out.stderr.clone(),
             timed_out: false,
@@ -381,20 +411,39 @@ fn normalize(out: &ProcOutput, argv: &[String]) -> Result<PxlResult_> {
         });
     }
     // No JSON at all (e.g. crashed before printing).
-    Ok(PxlResult_ {
-        ok: false,
-        exit_code: Some(code),
-        error_code: if code == 0 {
-            "INFRA_NON_JSON".into()
-        } else {
-            "E_IO".into()
-        },
-        message: format!("pxl exited {code}; argv: {argv:?}"),
-        stdout: out.stdout.clone(),
-        stderr: out.stderr.clone(),
-        timed_out: false,
-        elapsed_ms: out.elapsed_ms,
-    })
+    let error_code = if code == 0 { "INFRA_NON_JSON" } else { "E_IO" };
+    Ok(base(
+        error_code,
+        format!("pxl exited {code}; argv: {argv:?}"),
+    ))
+}
+
+/// Render failed checks with full value/limit detail. The CLI prints
+/// `{id, pass, value, limit}` objects (see `checks_json` in pxl-cli cmd.rs);
+/// never degrade a failure to a bare `"{id}: failed"`.
+pub fn render_failed_checks(checks: &[Value], max: usize) -> Vec<String> {
+    checks
+        .iter()
+        .filter(|c| c.get("pass").and_then(|p| p.as_bool()) == Some(false))
+        .take(max)
+        .map(|c| {
+            let id = c.get("id").and_then(|v| v.as_str()).unwrap_or("check");
+            let value = c.get("value");
+            let limit = c.get("limit");
+            let value = match value {
+                Some(Value::String(s)) => s.clone(),
+                Some(other) => other.to_string(),
+                None => String::new(),
+            };
+            match limit {
+                Some(Value::String(l)) => format!("{id}: value={value}, limit={l}"),
+                Some(other) if !other.is_null() => {
+                    format!("{id}: value={value}, limit={}", other)
+                }
+                _ => format!("{id}: value={value}"),
+            }
+        })
+        .collect()
 }
 
 /// Map pxl error codes onto the harness repair taxonomy.
@@ -462,6 +511,79 @@ mod tests {
         assert_eq!(repair_class("E_QA"), RepairClass::AssetFix);
         assert_eq!(repair_class("E_EXISTS"), RepairClass::IsolationConflict);
         assert_eq!(repair_class("INFRA_TIMEOUT"), RepairClass::Infrastructure);
+    }
+
+    fn proc(stdout: &str, exit: i32) -> ProcOutput {
+        ProcOutput {
+            argv: vec!["pxl".into()],
+            exit_code: Some(exit),
+            stdout: stdout.into(),
+            stderr: String::new(),
+            stdout_truncated: false,
+            stderr_truncated: false,
+            timed_out: false,
+            elapsed_ms: 12,
+        }
+    }
+
+    #[test]
+    fn normalize_extracts_hint_and_path_from_error_envelope() {
+        let out = proc(
+            r#"{"ok":false,"error":{"code":"E_SCHEMA","message":"macro pulse_glow has no argument 'steps'","path":"/macros","hint":"pulse_glow takes: ramp"}}"#,
+            3,
+        );
+        let res = normalize(&out, &vec!["pxl".into()]).unwrap();
+        assert!(!res.ok);
+        assert_eq!(res.error_code, "E_SCHEMA");
+        assert_eq!(res.exit_code, Some(3));
+        assert_eq!(res.hint.as_deref(), Some("pulse_glow takes: ramp"));
+        assert_eq!(res.path.as_deref(), Some("/macros"));
+        assert!(res.message.contains("pulse_glow"));
+    }
+
+    #[test]
+    fn checks_keep_value_and_limit_objects() {
+        // Matches the CLI `checks_json` output shape: {id, pass, value, limit}.
+        let out = proc(
+            r#"{"ok":false,"error":{"code":"E_QA","message":"1 check(s) failed"},"checks":[{"id":"anim.exp.diff_0_1","pass":false,"value":"42.96%","limit":"at least 1%, and at most 35% unless a 1px shift explains it"},{"id":"palette.alpha","pass":true,"value":"opaque-or-clear","limit":"alpha 0 or 255, index 0 clear"}]}"#,
+            5,
+        );
+        let res = normalize(&out, &vec!["pxl".into()]).unwrap();
+        let checks = res.checks();
+        assert_eq!(checks.len(), 2);
+        let failed = render_failed_checks(&checks, 8);
+        assert_eq!(failed.len(), 1);
+        assert!(failed[0].contains("anim.exp.diff_0_1"), "{failed:?}");
+        assert!(failed[0].contains("42.96%"), "{failed:?}");
+        assert!(failed[0].contains("35%"), "{failed:?}");
+        assert!(!failed[0].contains("failed"), "must not degrade to bare 'failed': {failed:?}");
+    }
+
+    #[test]
+    fn validate_contract_keeps_value_and_limit() {
+        let a = test_adapter();
+        if !a.bin.is_file() {
+            return; // pxl not available in this environment
+        }
+        // Build the tank example; its sheet must validate cleanly. Then run a
+        // real `pxl validate` and confirm the checks array carries value/limit.
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .join("examples/tank");
+        let out = std::env::temp_dir().join(format!("pxl_h_val_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&out);
+        a.build(&root.join("tank.recipe.json"), &out, None, Some(&root)).unwrap();
+        let res = a.validate(&out.join("tank.sheet.json"), "tank").unwrap();
+        assert!(res.ok, "{} {} hint={:?}", res.error_code, res.message, res.hint);
+        for check in res.checks() {
+            assert!(check.get("id").is_some(), "check missing id: {check}");
+            assert!(check.get("pass").is_some(), "check missing pass: {check}");
+            // The CLI only emits {id, pass, value, limit}; message/detail do
+            // not exist and must never be assumed.
+            assert!(check.get("message").is_none() && check.get("detail").is_none());
+        }
+        let _ = fs::remove_dir_all(&out);
     }
 
     #[test]

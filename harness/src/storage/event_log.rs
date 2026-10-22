@@ -28,6 +28,10 @@ pub enum Event {
         stage: String,
         task_id: String,
         turn: u32,
+        /// Repair-round attempt (1-based); distinguishes turn resets across
+        /// rounds so call ids stay unambiguous in the log.
+        #[serde(default)]
+        attempt: u32,
     },
     ModelTurnFinished {
         stage: String,
@@ -36,6 +40,12 @@ pub enum Event {
         stop_reason: String,
         prompt_tokens: u64,
         completion_tokens: u64,
+        #[serde(default)]
+        attempt: u32,
+        /// Wall-clock duration of the provider call in ms. Old events have no
+        /// value; readers must not fabricate one.
+        #[serde(default)]
+        elapsed_ms: u64,
     },
     ToolStarted {
         stage: String,
@@ -58,6 +68,34 @@ pub enum Event {
         error_code: Option<String>,
         #[serde(default)]
         call_id: String,
+        /// Digest of the immutable rendered tool-result text stored under
+        /// `tool-results/`, so the exact model feedback is auditable.
+        #[serde(default)]
+        result_digest: String,
+        /// Real tool execution time in ms.
+        #[serde(default)]
+        elapsed_ms: u64,
+        /// pxl error code (E_QA etc.) for normal-return failures.
+        #[serde(default)]
+        pxl_error_code: Option<String>,
+    },
+    /// Harness-initiated automatic build of a dirty recipe (not requested by
+    /// the model). Carries its own resource accounting and diagnostics.
+    AutoCheckStarted {
+        stage: String,
+        asset_id: String,
+        recipe: String,
+        input_digest: String,
+    },
+    AutoCheckFinished {
+        stage: String,
+        asset_id: String,
+        recipe: String,
+        input_digest: String,
+        ok: bool,
+        error_code: String,
+        elapsed_ms: u64,
+        report_path: String,
     },
     /// A candidate file written by the model, with the call that produced it.
     CandidateWritten {
@@ -162,6 +200,11 @@ impl EventLog {
             .map_err(|e| HarnessError::io(format!("{}: {e}", self.path.display())))?;
         self.next_seq += 1;
         Ok(logged)
+    }
+
+    /// Seq of the last appended event; `None` when nothing has been written.
+    pub fn last_seq(&self) -> Option<u64> {
+        self.next_seq.checked_sub(1)
     }
 
     pub fn read_all(run_dir: &Path) -> Result<Vec<LoggedEvent>> {

@@ -6,3 +6,4 @@
 {"seq":5,"ts_ms":1792635401521,"event":"tool_started","stage":"design","task_id":"design_package","attempt":1,"tool":"design.read_template","arguments_digest":"sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"}
 {"seq":6,"ts_ms":1792635401526,"event":"tool_finished","stage":"design","task_id":"design_package","attempt":1,"tool":"design.read_template","ok":true,"exit_code":null,"artifact_digests":[],"error_code":null}
 {"seq":7,"ts_ms":1792635401530,"event":"model_turn_started","stage":"design","task_id":"design_package","turn":1}
+{"seq":8,"ts_ms":1792637803674,"event":"run_status","status":"failed"}

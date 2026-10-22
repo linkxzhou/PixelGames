@@ -46,6 +46,20 @@ pub struct RecipeAnim {
     /// Each entry is the op list for one frame, applied to the direction frame.
     #[serde(default)]
     pub frames: Vec<Vec<Op>>,
+    /// `dynamic` (default) enforces the frame-count and anti-duplication
+    /// checks; `static` declares a deliberately single-frame anim (idle/fly)
+    /// and skips adjacent-frame difference checks. Derived from the frozen
+    /// design, never a way to silence a real failure.
+    #[serde(default)]
+    pub mode: AnimMode,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum AnimMode {
+    #[default]
+    Dynamic,
+    Static,
 }
 
 fn default_fps() -> u32 {

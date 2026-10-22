@@ -18,7 +18,7 @@ use pxl_gen::{
     builtin_palette, builtin_template, generate_bollinger, generate_noise_tile, generate_shapes,
     palette_ids, template_ids, variant_seed, RuntimeMask,
 };
-use pxl_ops::{apply_ops, compose_rig, expand_macro, ApplyCx, MACRO_NAMES};
+use pxl_ops::{apply_ops, compose_rig, expand_macro, macro_catalog, ApplyCx, MACRO_NAMES};
 use pxl_qa::{validate, AnimSeq, Report, ValidateInput};
 use serde_json::{json, Map, Value};
 
@@ -585,6 +585,7 @@ fn anim_cmd(ctx: &Ctx, args: AnimArgs) -> CmdResult<()> {
             looped: !args.no_loop,
             dirs: dirs.clone(),
             frames,
+            mode: pxl_format::AnimMode::Dynamic,
         },
     );
     let hash = util::save_doc(&doc, &args.out, ctx.overwrite, ctx.json)?;
@@ -913,9 +914,21 @@ fn pack_loaded(
                     }
                 }
             }
+            // `mode` is written so a standalone `pxl validate` sees the same
+            // static/dynamic intent that build used.
+            let mode = if anim.mode == pxl_format::AnimMode::Static {
+                "static"
+            } else {
+                "dynamic"
+            };
             pxl_anims.insert(
                 key,
-                json!({"fps": anim.fps, "loop": anim.looped, "dirs": Value::Object(dir_map)}),
+                json!({
+                    "fps": anim.fps,
+                    "loop": anim.looped,
+                    "mode": mode,
+                    "dirs": Value::Object(dir_map),
+                }),
             );
         }
         if dirs.is_empty() {
@@ -1306,6 +1319,7 @@ fn doc_input(doc: &PxlDoc, palette: &Palette) -> CmdResult<ValidateInput> {
                 dir: None,
                 looped: anim.looped,
                 frames: lookup_frames(doc, &names)?,
+                static_mode: false,
             });
         } else {
             for dir in dirs {
@@ -1315,6 +1329,7 @@ fn doc_input(doc: &PxlDoc, palette: &Palette) -> CmdResult<ValidateInput> {
                     dir: Some(dir.clone()),
                     looped: anim.looped,
                     frames: lookup_frames(doc, &names)?,
+                    static_mode: false,
                 });
             }
         }
@@ -1412,6 +1427,13 @@ fn sheet_input(json_path: &Path, value: &Value) -> CmdResult<ValidateInput> {
     if let Some(obj) = pxl.get("anims").and_then(|v| v.as_object()) {
         for (name, anim) in obj {
             let looped = anim.get("loop").and_then(|v| v.as_bool()).unwrap_or(true);
+            // Static intent travels with the sheet so a standalone `pxl
+            // validate` agrees with what `pxl build` did.
+            let static_mode = anim
+                .get("mode")
+                .and_then(|v| v.as_str())
+                .map(|m| m == "static")
+                .unwrap_or(false);
             let dirs = anim.get("dirs").and_then(|v| v.as_object());
             if let Some(dirs) = dirs {
                 for (dir, list) in dirs {
@@ -1431,6 +1453,7 @@ fn sheet_input(json_path: &Path, value: &Value) -> CmdResult<ValidateInput> {
                         dir: if dir == "_" { None } else { Some(dir.clone()) },
                         looped,
                         frames,
+                        static_mode,
                     });
                 }
             }
@@ -1591,6 +1614,30 @@ fn list_cmd(ctx: &Ctx, kind: &str) -> CmdResult<()> {
     let mut body = util::ok_base("list");
     body.insert("kind".into(), json!(kind));
     body.insert("items".into(), json!(items));
+    // Macros carry argument metadata (defaults, frame count, example) so
+    // callers do not have to guess signatures like `pulse_glow(steps=...)`.
+    if kind == "macros" {
+        let catalog: Vec<Value> = macro_catalog()
+            .into_iter()
+            .map(|m| {
+                let args: Vec<Value> = m
+                    .args
+                    .iter()
+                    .map(|a| match a.default {
+                        Some(d) => json!({"name": a.name, "default": d}),
+                        None => json!({"name": a.name, "required": true}),
+                    })
+                    .collect();
+                json!({
+                    "name": m.name,
+                    "args": args,
+                    "frames": m.frames,
+                    "example": m.example,
+                })
+            })
+            .collect();
+        body.insert("macros".into(), json!(catalog));
+    }
     util::emit_ok(ctx, &Value::Object(body));
     let _ = builtin_palette;
     let _ = builtin_template;
@@ -2035,6 +2082,7 @@ fn build_sprite(
                 } else {
                     AnimFrames::ByDir(by_dir)
                 },
+                mode: anim.mode,
             },
         );
     }

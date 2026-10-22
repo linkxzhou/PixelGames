@@ -5,9 +5,11 @@
 //! outline modes via [`pxl_core::paint_outline`].
 
 mod apply;
-mod macros;
+pub mod macros;
 mod parts;
 
 pub use apply::{apply_op, apply_ops, ApplyCx};
-pub use macros::{expand_macro, parse_macro_call, MACRO_NAMES};
+pub use macros::{
+    expand_macro, macro_catalog, macro_info, parse_macro_call, MacroArgInfo, MacroInfo, MACRO_NAMES,
+};
 pub use parts::{compose_rig, PartPose};

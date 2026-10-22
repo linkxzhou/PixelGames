@@ -1,0 +1,38 @@
+{
+  "v": 1,
+  "asset": "bullet",
+  "gen_version": 1,
+  "seed": 5,
+  "palette": "static_bullet.palette.json",
+  "sprites": [
+    {
+      "id": "bullet",
+      "base": { "gen": "shapes", "spec": "static_bullet.shapes.json", "seed": 5 },
+      "post": [
+        { "op": "outline", "color": 1 }
+      ],
+      "directions": [
+        {"id": "N", "from": "base", "ops": [{"op": "noop"}]}
+      ],
+      "anims": [
+        {
+          "name": "fly",
+          "fps": 1,
+          "loop": false,
+          "mode": "static",
+          "dirs": ["N"],
+          "frames": [
+            [{"op": "noop"}]
+          ]
+        }
+      ]
+    }
+  ],
+  "sheet": {
+    "sources": ["bullet"],
+    "layout": "rows-by-anim",
+    "pad": 1,
+    "file": "static_bullet.sheet.png"
+  },
+  "validate": { "rules": "default" }
+}

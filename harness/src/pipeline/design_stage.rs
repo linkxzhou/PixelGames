@@ -675,6 +675,7 @@ pub fn run_design_stage(
                 ctx: &ctx,
                 ledger,
                 events,
+                run_dir: Some(run.dir()),
             };
             runner.run(&task, &role.prompt, &user_prompt, &specs)
         }?;

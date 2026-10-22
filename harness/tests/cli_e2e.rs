@@ -187,6 +187,99 @@ fn fake_provider_full_design_flow() {
     std::env::remove_var("PXL_HARNESS_FAKE_TURNS");
 }
 
+/// P0-B regression (`w` hole): the model writes specs for two assets but only
+/// builds one. The harness must auto-check the unbuilt one and surface it as a
+/// queue failure, instead of treating saved specs as delivered.
+///
+/// Multi-frame directional assets are used as carriers (single-frame bullet fly
+/// cannot pass QA before batch D and must not carry a scheduling test).
+#[test]
+fn unbuilt_asset_is_auto_checked_and_reported() {
+    // Unit-level assertion of the queue + gate contract, driven through the
+    // same harness code the CLI uses (no API key, no real model).
+    let dir = std::env::temp_dir().join(format!("pxl_h_e2e_unbuilt_{}", std::process::id()));
+    let _ = fs::remove_dir_all(&dir);
+    let attempt = dir.join("attempt");
+    let design = dir.join("design");
+    fs::create_dir_all(&attempt).unwrap();
+    fs::create_dir_all(&design).unwrap();
+    fs::write(design.join("asset-requirements.json"), REQS).unwrap();
+
+    let reqs: Value = serde_json::from_str(REQS).unwrap();
+    let required: Vec<String> = reqs["requirements"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|r| r["required"] == true)
+        .map(|r| r["asset_id"].as_str().unwrap().to_string())
+        .collect();
+    assert!(required.contains(&"player_tank".to_string()));
+    assert!(required.contains(&"w".to_string()));
+
+    // Both assets get complete specs (multi-frame anim carrier + tile).
+    let palette = r##"{"v":1,"id":"e2e","colors":["#00000000","#101010","#f4f0e6"],"ramps":{"water":[1,2]},"cycles":{},"special":{"transparent":0,"outline":1}}"##;
+    fs::write(attempt.join("palette.json"), palette).unwrap();
+    for id in &required {
+        fs::write(
+            attempt.join(format!("{id}.shapes.json")),
+            format!(r##"{{"w":8,"h":8,"name":"{id}","draw":[{{"rect":[1,1,2,2],"c":1}}]}}"##),
+        )
+        .unwrap();
+        fs::write(
+            attempt.join(format!("{id}.recipe.json")),
+            format!(
+                r##"{{"v":1,"asset":"{id}","gen_version":1,"seed":9,"palette":"palette.json"}}"##
+            ),
+        )
+        .unwrap();
+    }
+
+    // Simulate: model built player_tank only; `w` was written but never built.
+    let mut queue = pxl_harness::pipeline::asset_queue::AssetQueue::load(&attempt);
+    queue.seed(&required);
+    queue.mark_all_dirty(&attempt);
+    queue.record_success("player_tank");
+    queue.save(&attempt).unwrap();
+
+    let loaded = pxl_harness::pipeline::asset_queue::AssetQueue::load(&attempt);
+    // `w` must be pending_build: written, complete, never built.
+    let w = loaded.entry("w").expect("w tracked in queue");
+    assert_eq!(
+        pxl_harness::pipeline::asset_queue::state_name(w.state),
+        "pending_build",
+        "written-but-unbuilt asset must be pending_build"
+    );
+    assert!(!w.input_fingerprint.is_empty());
+    // player_tank is built; it must not be silently re-marked dirty.
+    assert_eq!(
+        pxl_harness::pipeline::asset_queue::state_name(
+            loaded.entry("player_tank").unwrap().state
+        ),
+        "built"
+    );
+    // The status summary names the outstanding item.
+    let summary = loaded.status_summary();
+    assert!(summary.contains("w [pending_build]"), "{summary}");
+    assert!(summary.contains("player_tank [built]"), "{summary}");
+
+    // Changing an input invalidates the earlier success (no stale endorsement).
+    fs::write(
+        attempt.join("player_tank.recipe.json"),
+        r##"{"v":1,"asset":"player_tank","gen_version":1,"seed":99,"palette":"palette.json"}"##,
+    )
+    .unwrap();
+    let mut q2 = pxl_harness::pipeline::asset_queue::AssetQueue::load(&attempt);
+    q2.mark_dirty("player_tank", &attempt);
+    assert_eq!(
+        pxl_harness::pipeline::asset_queue::state_name(
+            q2.entry("player_tank").unwrap().state
+        ),
+        "pending_build",
+        "recipe change must invalidate the prior success"
+    );
+    let _ = fs::remove_dir_all(&dir);
+}
+
 #[test]
 fn init_refuses_twice_and_bad_briefs() {
     let project = tmp_project("init");

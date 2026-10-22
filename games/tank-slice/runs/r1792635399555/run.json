@@ -6,8 +6,8 @@
   "config_digest": "sha256:32243fcb82c9d16063994ea0abd07742f1273eb3ca5cb3585a0d6cc169827f8c",
   "stages": {
     "assets": "not_requested",
-    "design": "running"
+    "design": "failed"
   },
   "until": "design",
-  "status": "created"
+  "status": "failed"
 }

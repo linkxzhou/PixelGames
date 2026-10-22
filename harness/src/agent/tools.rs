@@ -18,6 +18,13 @@ pub struct ToolOutcome {
     pub artifact: Option<ArtifactRef>,
     #[serde(default)]
     pub data: serde_json::Value,
+    /// pxl error code (e.g. `E_QA`) for normal-return failures, so events can
+    /// audit what the tool actually reported instead of only HarnessErrors.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub error_code: Option<String>,
+    /// Underlying process exit code (e.g. pxl exit 5 for E_QA).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub exit_code: Option<i32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -34,6 +41,8 @@ impl ToolOutcome {
             summary: summary.into(),
             artifact: None,
             data: serde_json::Value::Null,
+            error_code: None,
+            exit_code: None,
         }
     }
     pub fn fail(summary: impl Into<String>) -> Self {
@@ -42,10 +51,21 @@ impl ToolOutcome {
             summary: summary.into(),
             artifact: None,
             data: serde_json::Value::Null,
+            error_code: None,
+            exit_code: None,
         }
     }
     pub fn with_data(mut self, data: serde_json::Value) -> Self {
         self.data = data;
+        self
+    }
+    /// Attach a pxl outcome's error code and exit code so the event log and
+    /// diagnostics can audit normal-return failures, not just HarnessErrors.
+    pub fn with_pxl_result(mut self, result: &crate::adapters::pxl::PxlResult_) -> Self {
+        if !result.ok {
+            self.error_code = Some(result.error_code.clone());
+            self.exit_code = result.exit_code;
+        }
         self
     }
     pub fn with_artifact(mut self, path: impl Into<String>, digest: impl Into<String>, bytes: u64) -> Self {

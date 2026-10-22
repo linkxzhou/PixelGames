@@ -1,0 +1,10 @@
+{
+  "v": 1,
+  "id": "static_bullet",
+  "colors": ["#00000000", "#141018", "#3a4a66", "#6f86ad", "#c9d6ef"],
+  "ramps": {
+    "steel": [1, 2, 3, 4]
+  },
+  "cycles": {},
+  "special": { "transparent": 0, "outline": 1, "flash": 4 }
+}

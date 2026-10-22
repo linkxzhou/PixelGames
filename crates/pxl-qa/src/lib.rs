@@ -32,6 +32,10 @@ pub struct AnimSeq {
     pub dir: Option<String>,
     pub looped: bool,
     pub frames: Vec<IndexFrame>,
+    /// Declared as a deliberate single-frame anim (idle/fly) by the frozen
+    /// design. Static anims skip adjacent-frame difference checks; dynamic
+    /// anims keep the minimum frame count and anti-duplication rules.
+    pub static_mode: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -210,11 +214,31 @@ fn anim_diff(anim: &AnimSeq, min_bps: u32, max_bps: u32, include_loop: bool) -> 
         Some(d) => format!("{}.{}", anim.name, d),
         None => anim.name.clone(),
     };
+    // A declared static anim intentionally has one frame; requiring two would
+    // make legal single-frame idle/fly assets unbuildable.
+    if anim.static_mode {
+        out.push(Check {
+            id: format!("anim.{label}.static_single_frame"),
+            pass: anim.frames.len() == 1,
+            value: anim.frames.len().to_string(),
+            limit: "declared static: exactly 1 frame".into(),
+        });
+        if anim.frames.len() < 2 {
+            return out;
+        }
+        // Declared static but given more frames is a spec error, not a pass.
+        out.push(fail(
+            &format!("anim.{label}.static_frames"),
+            &anim.frames.len().to_string(),
+            "static anim must declare exactly 1 frame",
+        ));
+        return out;
+    }
     if anim.frames.len() < 2 {
         out.push(fail(
             &format!("anim.{label}.frames"),
             &anim.frames.len().to_string(),
-            ">= 2 frames",
+            ">= 2 frames (or declare mode=static in the recipe)",
         ));
         return out;
     }
@@ -823,6 +847,7 @@ mod tests {
                 dir: None,
                 looped: false,
                 frames: seq,
+                static_mode: false,
             }],
             facings: BTreeMap::new(),
             tiles: vec![],
@@ -851,6 +876,7 @@ mod tests {
             dir: None,
             looped: true,
             frames: vec![high.clone(), low.clone()],
+            static_mode: false,
         };
         let report = validate(
             &ValidateInput {
@@ -883,6 +909,7 @@ mod tests {
             dir: None,
             looped: true,
             frames: vec![a, b],
+            static_mode: false,
         };
         let report = validate(
             &ValidateInput {
@@ -898,6 +925,87 @@ mod tests {
         )
         .unwrap();
         assert!(!report.ok(), "a full-canvas colour swap must still fail");
+    }
+
+    fn anim_input(anim: AnimSeq) -> ValidateInput {
+        ValidateInput {
+            palette: pal(),
+            frames: vec![],
+            anims: vec![anim],
+            facings: BTreeMap::new(),
+            tiles: vec![],
+            tile_ramp: "ground".into(),
+            tile_ramps: BTreeMap::new(),
+        }
+    }
+
+    fn one_frame() -> IndexFrame {
+        let mut f = IndexFrame::new(16, 16).unwrap();
+        for y in 3..13 {
+            for x in 3..13 {
+                f.set(x, y, 2);
+            }
+        }
+        f
+    }
+
+    /// A single-frame idle/fly is legal when the recipe declares it static;
+    /// `anim_diff` must not force two frames onto it.
+    #[test]
+    fn declared_static_single_frame_passes() {
+        let anim = AnimSeq {
+            name: "fly".into(),
+            dir: None,
+            looped: true,
+            frames: vec![one_frame()],
+            static_mode: true,
+        };
+        let report = validate(&anim_input(anim), "default").unwrap();
+        let failed: Vec<_> = report.checks.iter().filter(|c| !c.pass).collect();
+        assert!(failed.is_empty(), "static single frame rejected: {failed:?}");
+    }
+
+    /// The same single frame without the declaration is still a failure: the
+    /// mode is not a way to silently relax checks.
+    #[test]
+    fn undeclared_single_frame_still_fails() {
+        let anim = AnimSeq {
+            name: "fly".into(),
+            dir: None,
+            looped: true,
+            frames: vec![one_frame()],
+            static_mode: false,
+        };
+        let report = validate(&anim_input(anim), "default").unwrap();
+        assert!(!report.ok());
+        assert!(
+            report.checks.iter().any(|c| !c.pass && c.id.contains("frames")),
+            "{:?}",
+            report.checks
+        );
+        // The failure tells the author how to declare the intent.
+        let check = report.checks.iter().find(|c| !c.pass).unwrap();
+        assert!(check.limit.contains("mode=static"), "{}", check.limit);
+    }
+
+    /// Declaring static but supplying several frames is a spec error.
+    #[test]
+    fn static_declaration_with_multiple_frames_fails() {
+        let mut second = one_frame();
+        second.set(4, 4, 3);
+        let anim = AnimSeq {
+            name: "idle".into(),
+            dir: None,
+            looped: true,
+            frames: vec![one_frame(), second],
+            static_mode: true,
+        };
+        let report = validate(&anim_input(anim), "default").unwrap();
+        assert!(!report.ok(), "static with 2 frames must fail");
+        assert!(report
+            .checks
+            .iter()
+            .any(|c| c.id.contains("static_frames") && !c.pass));
     }
 
     #[test]
@@ -1056,6 +1164,7 @@ mod tests {
                 dir: Some(dir.into()),
                 looped,
                 frames: seq,
+                static_mode: false,
             });
         };
         for dir in ["down", "up", "left", "right"] {
