@@ -1,0 +1,15 @@
+{
+  "n": 94,
+  "id": "celeste-spikes",
+  "game": "Celeste",
+  "category": "effects",
+  "w": 8,
+  "h": 8,
+  "description": "Single peak on a base, 8x8. rotate90 builds right, down, and left. A two-frame glint swaps the highlight. No shade-before-rotate, so every direction keeps the same value pattern.",
+  "source_url": "https://raw.githubusercontent.com/NoelFB/Celeste/master/Source/PICO-8/Graphics/atlas.png",
+  "source_note": "atlas cell (1, 1), the upward spike pair",
+  "license": "NoelFB/Celeste PICO-8 graphics (review reference; MIT covers the code only)",
+  "anim": "spike",
+  "style": 6,
+  "readability": 8
+}

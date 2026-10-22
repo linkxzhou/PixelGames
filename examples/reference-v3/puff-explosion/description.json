@@ -1,0 +1,15 @@
+{
+  "n": 96,
+  "id": "puff-explosion",
+  "game": "Terraria",
+  "category": "effects",
+  "w": 16,
+  "h": 16,
+  "description": "Hot disc with a white core. 16x16. Motion is a 1px step so the frame diff stays inside the shift allowance.",
+  "source_url": "https://opengameart.org/sites/default/files/Roguelike%20pack.zip",
+  "source_note": "Kenney Roguelike sheet cell (11, 15) at 16px with a 1px gap",
+  "license": "CC0 Kenney roguelike/RPG pack (OpenGameArt)",
+  "anim": "glint",
+  "style": 6,
+  "readability": 7
+}

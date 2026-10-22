@@ -1,0 +1,15 @@
+{
+  "n": 17,
+  "id": "terra-tiles",
+  "game": "Terraria",
+  "category": "tiles",
+  "w": 8,
+  "h": 8,
+  "description": "Six 8x8 stamps in one sheet: dirt, dirt variant, grass-over-dirt, grass variant, ore, ore variant. Edges match within one ramp step. Grass is a real layer boundary (top grass, bottom dirt) so the vertical seam is exempt. Ore sits in the interior.",
+  "source_url": "https://raw.githubusercontent.com/Zorz42/Terralistic/master/base_game/resources/blocks/Template_grass_block.png",
+  "source_note": "Terralistic base_game/resources/blocks/Template_grass_block.png, first cell of the strip",
+  "license": "GPL-3.0 (Zorz42/Terralistic art; reference only, not linked into the engine)",
+  "anim": "static",
+  "style": 6,
+  "readability": 7
+}

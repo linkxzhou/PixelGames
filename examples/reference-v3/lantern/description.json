@@ -1,0 +1,15 @@
+{
+  "n": 37,
+  "id": "lantern",
+  "game": "Octopath Traveler",
+  "category": "props",
+  "w": 16,
+  "h": 16,
+  "description": "Hanging lantern, warm glass, dark cap.  Top-left light baked into the ramp, checker dither on the broad face.",
+  "source_url": "https://opengameart.org/sites/default/files/Roguelike%20pack.zip",
+  "source_note": "Kenney Roguelike sheet cell (12, 5) at 16px with a 1px gap",
+  "license": "CC0 Kenney roguelike/RPG pack (OpenGameArt)",
+  "anim": "bob",
+  "style": 6,
+  "readability": 7
+}

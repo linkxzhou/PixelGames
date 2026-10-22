@@ -1,0 +1,15 @@
+{
+  "n": 60,
+  "id": "orchard-tree",
+  "game": "Stardew Valley",
+  "category": "crops",
+  "w": 32,
+  "h": 40,
+  "description": "Tree, 32x40. Three canopy lobes instead of one circle, a three-pixel trunk, fruit pixels tucked into the leaves. Wind would be a row shift; bob is what stays inside the outline and the diff cap.",
+  "source_url": "https://opengameart.org/sites/default/files/Roguelike%20pack.zip",
+  "source_note": "Kenney Roguelike sheet cell (0, 8) at 16px with a 1px gap",
+  "license": "CC0 Kenney roguelike/RPG pack (OpenGameArt)",
+  "anim": "bob",
+  "style": 6,
+  "readability": 8
+}

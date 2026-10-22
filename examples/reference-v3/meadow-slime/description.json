@@ -1,0 +1,15 @@
+{
+  "n": 71,
+  "id": "meadow-slime",
+  "game": "Stardew Valley",
+  "category": "enemies",
+  "w": 16,
+  "h": 16,
+  "description": "Flat slime, 16x16, desaturated green-grey rather than a saturated green. Highlight on the upper left, dark foot. The hop is a 1px bob.",
+  "source_url": "https://opengameart.org/sites/default/files/kenney_pixel-platformer.zip",
+  "source_note": "Kenney Pixel Platformer Tiles/Characters/tile_0014.png",
+  "license": "CC0 Kenney (https://kenney.nl, mirrored on OpenGameArt)",
+  "anim": "static",
+  "style": 7,
+  "readability": 8
+}

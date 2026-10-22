@@ -1,0 +1,15 @@
+{
+  "n": 47,
+  "id": "pickaxe",
+  "game": "Terraria",
+  "category": "items",
+  "w": 16,
+  "h": 16,
+  "description": "Pick, metal head, wooden haft. 16x16 icon, top-left light, dither on the largest face.",
+  "source_url": "https://raw.githubusercontent.com/Zorz42/Terralistic/master/base_game/resources/items/pickaxe.png",
+  "source_note": "Terralistic base_game/resources/items/pickaxe.png, first cell of the strip",
+  "license": "GPL-3.0 (Zorz42/Terralistic art; reference only, not linked into the engine)",
+  "anim": "glint",
+  "style": 6,
+  "readability": 8
+}

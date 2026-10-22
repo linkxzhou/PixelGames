@@ -1,0 +1,20 @@
+{
+  "w": 8,
+  "h": 8,
+  "draw": [
+    {
+      "pixels": [
+        "aadbcbca",
+        "aabcbcba",
+        "cbcbebcc",
+        "bcbefgbb",
+        "cbefgeac",
+        "bcbgefab",
+        "cbcdaacc",
+        "aadbcbca"
+      ],
+      "x": 0,
+      "y": 0
+    }
+  ]
+}

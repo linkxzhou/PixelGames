@@ -1,0 +1,15 @@
+{
+  "n": 10,
+  "id": "deadcells-roll",
+  "game": "Dead Cells",
+  "category": "characters",
+  "w": 24,
+  "h": 24,
+  "description": "Rolled-up silhouette, 24x24, a compact teal body rather than a full figure. Reads as a tucked roll, not a standing pose. Bob stands in for the spin (arbitrary angles are still refused).",
+  "source_url": "https://opengameart.org/sites/default/files/kenney_pixel-platformer.zip",
+  "source_note": "Kenney Pixel Platformer Tiles/Characters/tile_0006.png",
+  "license": "CC0 Kenney (https://kenney.nl, mirrored on OpenGameArt)",
+  "anim": "static",
+  "style": 4,
+  "readability": 4
+}

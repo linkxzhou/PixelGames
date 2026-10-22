@@ -1,0 +1,15 @@
+{
+  "n": 84,
+  "id": "heart-meter",
+  "game": "Undertale",
+  "category": "ui",
+  "w": 32,
+  "h": 16,
+  "description": "Three hearts over a shared baseline, two filled and one empty. Flat UI, two or three ramps, no faux bevel beyond the top-left rim.",
+  "source_url": "https://raw.githubusercontent.com/Zorz42/Terralistic/master/base_game/resources/misc/hearts.png",
+  "source_note": "Terralistic base_game/resources/misc/hearts.png, first cell of the strip",
+  "license": "GPL-3.0 (Zorz42/Terralistic art; reference only, not linked into the engine)",
+  "anim": "glint",
+  "style": 7,
+  "readability": 8
+}

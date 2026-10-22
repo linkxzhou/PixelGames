@@ -1,0 +1,15 @@
+{
+  "n": 98,
+  "id": "ring-bullet",
+  "game": "Undertale",
+  "category": "effects",
+  "w": 16,
+  "h": 16,
+  "description": "White ring, center punched out, still one component. 16x16. Motion is a 1px step so the frame diff stays inside the shift allowance.",
+  "source_url": "https://opengameart.org/sites/default/files/Roguelike%20pack.zip",
+  "source_note": "Kenney Roguelike sheet cell (13, 15) at 16px with a 1px gap",
+  "license": "CC0 Kenney roguelike/RPG pack (OpenGameArt)",
+  "anim": "slide",
+  "style": 6,
+  "readability": 7
+}

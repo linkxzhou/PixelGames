@@ -1,0 +1,32 @@
+{
+  "v": 1,
+  "id": "octopath-cobble",
+  "colors": [
+    "#00000000",
+    "#12121a",
+    "#4a4038",
+    "#8a7868",
+    "#c8b8a0",
+    "#f0e4d0",
+    "#8a7868",
+    "#f0e4d0",
+    "#fff4d0"
+  ],
+  "ramps": {
+    "body": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "accent": [
+      6,
+      7
+    ]
+  },
+  "special": {
+    "transparent": 0,
+    "outline": 1,
+    "flash": 8
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "n": 4,
+  "id": "undertale-frisk",
+  "game": "Undertale",
+  "category": "characters",
+  "w": 16,
+  "h": 24,
+  "description": "Front-facing child, blue shirt, striped by the shade ramp rather than a drawn stripe. 16x24, black-blue hair, warm skin, two eyes. Bob.",
+  "source_url": "https://opengameart.org/sites/default/files/kenney_pixel-platformer.zip",
+  "source_note": "Kenney Pixel Platformer Tiles/Characters/tile_0000.png",
+  "license": "CC0 Kenney (https://kenney.nl, mirrored on OpenGameArt)",
+  "anim": "static",
+  "style": 6,
+  "readability": 7
+}

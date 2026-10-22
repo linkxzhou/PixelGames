@@ -1,0 +1,15 @@
+{
+  "n": 35,
+  "id": "signpost",
+  "game": "Stardew Valley",
+  "category": "props",
+  "w": 16,
+  "h": 16,
+  "description": "Sign board on a post.  Top-left light baked into the ramp, checker dither on the broad face.",
+  "source_url": "https://opengameart.org/sites/default/files/Roguelike%20pack.zip",
+  "source_note": "Kenney Roguelike sheet cell (10, 6) at 16px with a 1px gap",
+  "license": "CC0 Kenney roguelike/RPG pack (OpenGameArt)",
+  "anim": "bob",
+  "style": 6,
+  "readability": 7
+}

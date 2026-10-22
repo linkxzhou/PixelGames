@@ -1,0 +1,15 @@
+{
+  "n": 1,
+  "id": "celeste-run",
+  "game": "Celeste",
+  "category": "characters",
+  "w": 8,
+  "h": 8,
+  "description": "Side-view runner, 8x8, four poses. Red-orange hair over a cool blue jacket, warm skin, top-left light, no dither (the frame budget is 22 pixels). Legs swap; the jacket stays put.",
+  "source_url": "https://raw.githubusercontent.com/NoelFB/Celeste/master/Source/PICO-8/Graphics/atlas.png",
+  "source_note": "atlas cells (1..4, 0), the 8x8 run cycle",
+  "license": "NoelFB/Celeste PICO-8 graphics (review reference; MIT covers the code only)",
+  "anim": "run",
+  "style": 7,
+  "readability": 8
+}

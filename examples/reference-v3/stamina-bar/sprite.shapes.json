@@ -1,0 +1,24 @@
+{
+  "w": 32,
+  "h": 12,
+  "draw": [
+    {
+      "pixels": [
+        "................................",
+        "................................",
+        "................................",
+        "..gggggggggggggggggggggggggggf..",
+        "..geeeededddddddddddgfgfgfgfff..",
+        "..gedededdddddddddddfgfgffffff..",
+        "..gdedddddddddddddddgfgfffffff..",
+        "..geddddddddddddddddffffffffff..",
+        "..gfffffffffffffffffffffffffff..",
+        "................................",
+        "................................",
+        "................................"
+      ],
+      "x": 0,
+      "y": 0
+    }
+  ]
+}

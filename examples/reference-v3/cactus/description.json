@@ -1,0 +1,15 @@
+{
+  "n": 67,
+  "id": "cactus",
+  "game": "Terraria",
+  "category": "crops",
+  "w": 16,
+  "h": 24,
+  "description": "Column with two arms. 16x24, soil band at the bottom, top-left light on the leaves, dither where the leaf is wide.",
+  "source_url": "https://raw.githubusercontent.com/Zorz42/Terralistic/master/base_game/resources/blocks/cactus.png",
+  "source_note": "Terralistic base_game/resources/blocks/cactus.png, first cell of the strip",
+  "license": "GPL-3.0 (Zorz42/Terralistic art; reference only, not linked into the engine)",
+  "anim": "bob",
+  "style": 6,
+  "readability": 7
+}

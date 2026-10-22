@@ -1,0 +1,22 @@
+{
+  "v": 1,
+  "id": "celeste-spikes",
+  "colors": [
+    "#00000000",
+    "#12121a",
+    "#c8d0d8",
+    "#f4f8fc",
+    "#fff4d0"
+  ],
+  "ramps": {
+    "metal": [
+      2,
+      3
+    ]
+  },
+  "special": {
+    "transparent": 0,
+    "outline": 1,
+    "flash": 4
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "v": 1,
+  "id": "wooden-shield",
+  "colors": [
+    "#00000000",
+    "#12121a",
+    "#4a3018",
+    "#a06830",
+    "#e0b070",
+    "#3a4454",
+    "#8a98a8",
+    "#e8eef4",
+    "#fff4d0"
+  ],
+  "ramps": {
+    "wood": [
+      2,
+      3,
+      4
+    ],
+    "metal": [
+      5,
+      6,
+      7
+    ]
+  },
+  "special": {
+    "transparent": 0,
+    "outline": 1,
+    "flash": 8
+  }
+}

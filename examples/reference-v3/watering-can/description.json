@@ -1,0 +1,15 @@
+{
+  "n": 49,
+  "id": "watering-can",
+  "game": "Stardew Valley",
+  "category": "items",
+  "w": 16,
+  "h": 16,
+  "description": "Can with a two-pixel spout drop. 16x16 icon, top-left light, dither on the largest face.",
+  "source_url": "https://opengameart.org/sites/default/files/Roguelike%20pack.zip",
+  "source_note": "Kenney Roguelike sheet cell (4, 11) at 16px with a 1px gap",
+  "license": "CC0 Kenney roguelike/RPG pack (OpenGameArt)",
+  "anim": "glint",
+  "style": 5,
+  "readability": 6
+}

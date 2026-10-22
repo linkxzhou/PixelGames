@@ -1,0 +1,15 @@
+{
+  "n": 2,
+  "id": "celeste-dash",
+  "game": "Celeste",
+  "category": "characters",
+  "w": 16,
+  "h": 16,
+  "description": "Dash pose at 16x16 with a small pack. Hair is a warm ramp (shadow purple, highlight peach); jacket is a cool blue ramp. 1px selective rim, checker dither on the mid band. Bob.",
+  "source_url": "https://raw.githubusercontent.com/NoelFB/Celeste/master/Source/PICO-8/Graphics/atlas.png",
+  "source_note": "atlas cell (5, 0), a later run pose used as the dash reference",
+  "license": "NoelFB/Celeste PICO-8 graphics (review reference; MIT covers the code only)",
+  "anim": "static",
+  "style": 6,
+  "readability": 7
+}

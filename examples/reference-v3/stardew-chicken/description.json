@@ -1,0 +1,15 @@
+{
+  "n": 13,
+  "id": "stardew-chicken",
+  "game": "Stardew Valley",
+  "category": "characters",
+  "w": 16,
+  "h": 16,
+  "description": "Hen, 16x16. Cream body with a warm highlight, orange beak and comb, two-pixel legs joined to the body. Bob.",
+  "source_url": "https://opengameart.org/sites/default/files/kenney_pixel-platformer.zip",
+  "source_note": "Kenney Pixel Platformer Tiles/Characters/tile_0011.png",
+  "license": "CC0 Kenney (https://kenney.nl, mirrored on OpenGameArt)",
+  "anim": "static",
+  "style": 6,
+  "readability": 7
+}

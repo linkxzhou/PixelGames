@@ -1,0 +1,15 @@
+{
+  "n": 80,
+  "id": "spike-ball",
+  "game": "Dead Cells",
+  "category": "enemies",
+  "w": 16,
+  "h": 16,
+  "description": "Core with eight spikes joined back to the body. 16x16, top-left light, dark rim on the lower right.",
+  "source_url": "https://opengameart.org/sites/default/files/Roguelike%20pack.zip",
+  "source_note": "Kenney Roguelike sheet cell (13, 15) at 16px with a 1px gap",
+  "license": "CC0 Kenney roguelike/RPG pack (OpenGameArt)",
+  "anim": "bob",
+  "style": 6,
+  "readability": 7
+}

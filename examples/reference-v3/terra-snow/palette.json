@@ -1,0 +1,32 @@
+{
+  "v": 1,
+  "id": "terra-snow",
+  "colors": [
+    "#00000000",
+    "#12121a",
+    "#5a6878",
+    "#98a8b8",
+    "#d0dce8",
+    "#e8f0f4",
+    "#ffffff",
+    "#d0e8f0",
+    "#fff4d0"
+  ],
+  "ramps": {
+    "body": [
+      2,
+      3,
+      4
+    ],
+    "accent": [
+      5,
+      6,
+      7
+    ]
+  },
+  "special": {
+    "transparent": 0,
+    "outline": 1,
+    "flash": 8
+  }
+}

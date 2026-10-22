@@ -1,0 +1,15 @@
+{
+  "n": 11,
+  "id": "octopath-hero",
+  "game": "Octopath Traveler",
+  "category": "characters",
+  "w": 16,
+  "h": 24,
+  "description": "HD-2D is out of reach; this is the sprite half. 16x24 traveller, plum coat, gold-warm highlight on the hair, cool purple shadow. Top-left lamp light.",
+  "source_url": "https://opengameart.org/sites/default/files/kenney_pixel-platformer.zip",
+  "source_note": "Kenney Pixel Platformer Tiles/Characters/tile_0007.png",
+  "license": "CC0 Kenney (https://kenney.nl, mirrored on OpenGameArt)",
+  "anim": "static",
+  "style": 6,
+  "readability": 7
+}

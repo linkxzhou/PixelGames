@@ -1,0 +1,32 @@
+{
+  "v": 1,
+  "id": "terra-ice",
+  "colors": [
+    "#00000000",
+    "#12121a",
+    "#3a6888",
+    "#78b0d0",
+    "#d0eef8",
+    "#ffffff",
+    "#d0eef8",
+    "#ffffff",
+    "#fff4d0"
+  ],
+  "ramps": {
+    "body": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "accent": [
+      6,
+      7
+    ]
+  },
+  "special": {
+    "transparent": 0,
+    "outline": 1,
+    "flash": 8
+  }
+}

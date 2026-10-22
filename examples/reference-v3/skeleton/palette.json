@@ -1,0 +1,30 @@
+{
+  "v": 1,
+  "id": "skeleton",
+  "colors": [
+    "#00000000",
+    "#12121a",
+    "#8a8478",
+    "#e8e0d4",
+    "#f8f4ec",
+    "#1a1a22",
+    "#f4f0c8",
+    "#fff4d0"
+  ],
+  "ramps": {
+    "bone": [
+      2,
+      3,
+      4
+    ],
+    "eye": [
+      5,
+      6
+    ]
+  },
+  "special": {
+    "transparent": 0,
+    "outline": 1,
+    "flash": 7
+  }
+}

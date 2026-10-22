@@ -1,0 +1,15 @@
+{
+  "n": 59,
+  "id": "crop-stages",
+  "game": "Stardew Valley",
+  "category": "crops",
+  "w": 16,
+  "h": 32,
+  "description": "Four growth stages on 16x32: soil and a short stem, then leaves, then a wider leaf, then fruit. Each stage keeps the soil band so the bbox stays in range. Adjacent stages change only the plant, under the 35% frame-diff cap. Leaves use a yellow-green highlight and a blue-green shadow.",
+  "source_url": "https://opengameart.org/sites/default/files/Roguelike%20pack.zip",
+  "source_note": "Kenney Roguelike sheet cell (2, 12) at 16px with a 1px gap",
+  "license": "CC0 Kenney roguelike/RPG pack (OpenGameArt)",
+  "anim": "grow",
+  "style": 6,
+  "readability": 7
+}

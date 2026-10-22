@@ -1,0 +1,26 @@
+{
+  "v": 1,
+  "id": "earth-worm",
+  "colors": [
+    "#00000000",
+    "#12121a",
+    "#2a2018",
+    "#6a4030",
+    "#c08058",
+    "#f0d0b0",
+    "#fff4d0"
+  ],
+  "ramps": {
+    "body": [
+      2,
+      3,
+      4,
+      5
+    ]
+  },
+  "special": {
+    "transparent": 0,
+    "outline": 1,
+    "flash": 6
+  }
+}

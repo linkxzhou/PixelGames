@@ -1,0 +1,46 @@
+{
+  "v": 1,
+  "id": "undertale-flowey",
+  "colors": [
+    "#00000000",
+    "#12121a",
+    "#1e5a20",
+    "#48b040",
+    "#2a8a30",
+    "#a0e060",
+    "#e8e0a0",
+    "#fff4c0",
+    "#1a1a22",
+    "#f4f0c0",
+    "#1a1a22",
+    "#f4f0c0",
+    "#fff4d0"
+  ],
+  "ramps": {
+    "stem": [
+      2,
+      3
+    ],
+    "leaf": [
+      4,
+      5
+    ],
+    "flower": [
+      6,
+      7
+    ],
+    "face": [
+      8,
+      9
+    ],
+    "eye": [
+      10,
+      11
+    ]
+  },
+  "special": {
+    "transparent": 0,
+    "outline": 1,
+    "flash": 12
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "n": 93,
+  "id": "soul-bullet",
+  "game": "Undertale",
+  "category": "effects",
+  "w": 16,
+  "h": 16,
+  "description": "Red heart, 16x16, four-step ramp from a cool dark red to a warm highlight, one glint pixel. A three-pixel chevron steps along the bottom across four frames. The heart does not spin.",
+  "source_url": "https://raw.githubusercontent.com/Zorz42/Terralistic/master/base_game/resources/misc/hearts.png",
+  "source_note": "Terralistic base_game/resources/misc/hearts.png, first cell of the strip",
+  "license": "GPL-3.0 (Zorz42/Terralistic art; reference only, not linked into the engine)",
+  "anim": "soul",
+  "style": 7,
+  "readability": 8
+}

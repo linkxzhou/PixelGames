@@ -1,0 +1,43 @@
+{
+  "v": 1,
+  "asset": "shortbow",
+  "gen_version": 1,
+  "seed": 157,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "sprite",
+      "base": {
+        "gen": "shapes",
+        "spec": "sprite.shapes.json"
+      },
+      "anims": [
+        {
+          "name": "idle",
+          "fps": 6,
+          "loop": true,
+          "macro": "bob(amp=1)"
+        }
+      ]
+    }
+  ],
+  "sheet": {
+    "sources": [
+      "sprite"
+    ],
+    "layout": "rows-by-anim",
+    "pad": 1,
+    "file": "shortbow.sheet.png"
+  },
+  "preview": [
+    {
+      "source": "sprite",
+      "scale": 8,
+      "file": "preview.png",
+      "anim": "idle"
+    }
+  ],
+  "validate": {
+    "rules": "default"
+  }
+}

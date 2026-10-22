@@ -1,0 +1,15 @@
+{
+  "n": 26,
+  "id": "stardew-hoedirt",
+  "game": "Stardew Valley",
+  "category": "tiles",
+  "w": 8,
+  "h": 8,
+  "description": "8x8 Hoe rows: a dark line every third row. Hue runs cooler in the dark step and warmer in the light step. Opposite edges match.",
+  "source_url": "https://opengameart.org/sites/default/files/Roguelike%20pack.zip",
+  "source_note": "Kenney Roguelike sheet cell (2, 0) at 16px with a 1px gap",
+  "license": "CC0 Kenney roguelike/RPG pack (OpenGameArt)",
+  "anim": "static",
+  "style": 6,
+  "readability": 7
+}

@@ -1,0 +1,30 @@
+{
+  "v": 1,
+  "id": "spellbook",
+  "colors": [
+    "#00000000",
+    "#12121a",
+    "#3a2868",
+    "#6850b0",
+    "#c0b0e8",
+    "#e8dcc0",
+    "#fff4e0",
+    "#fff4d0"
+  ],
+  "ramps": {
+    "cover": [
+      2,
+      3,
+      4
+    ],
+    "page": [
+      5,
+      6
+    ]
+  },
+  "special": {
+    "transparent": 0,
+    "outline": 1,
+    "flash": 7
+  }
+}

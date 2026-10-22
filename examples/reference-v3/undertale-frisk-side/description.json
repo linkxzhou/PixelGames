@@ -1,0 +1,15 @@
+{
+  "n": 5,
+  "id": "undertale-frisk-side",
+  "game": "Undertale",
+  "category": "characters",
+  "w": 16,
+  "h": 24,
+  "description": "Same child in side view, 16x24. One eye, blue torso, cool hair shadow. Selective rim breaks on the lit side.",
+  "source_url": "https://opengameart.org/sites/default/files/kenney_pixel-platformer.zip",
+  "source_note": "Kenney Pixel Platformer Tiles/Characters/tile_0001.png",
+  "license": "CC0 Kenney (https://kenney.nl, mirrored on OpenGameArt)",
+  "anim": "static",
+  "style": 6,
+  "readability": 7
+}

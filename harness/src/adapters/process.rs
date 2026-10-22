@@ -1,6 +1,8 @@
 //! Controlled process execution: parameter arrays (never a shell string),
 //! drained stdout/stderr with size caps, timeouts and process-group cleanup.
 
+#[cfg(unix)]
+use std::os::unix::process::CommandExt;
 use std::process::{Command, Stdio};
 
 use serde::{Deserialize, Serialize};
@@ -37,16 +39,21 @@ pub struct ProcSpec {
 pub fn run(spec: &ProcSpec) -> Result<ProcOutput> {
     let argv = format_argv(&spec.program, &spec.args);
     let started = std::time::Instant::now();
-    let mut child = Command::new(&spec.program)
-        .args(&spec.args)
+    let mut cmd = Command::new(&spec.program);
+    cmd.args(&spec.args)
         .current_dir(spec.cwd.as_deref().unwrap_or(std::path::Path::new(".")))
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
+        .stderr(Stdio::piped());
+    // setpgid after exec fails with EACCES, so a shell grandchild (sleep) stays
+    // in our group, survives kill(pid), and holds the pipes open until it exits.
+    #[cfg(unix)]
+    {
+        cmd.process_group(0);
+    }
+    let mut child = cmd
         .spawn()
         .map_err(|e| HarnessError::tool(format!("cannot spawn {}: {e}", spec.program)))?;
-    #[cfg(unix)]
-    set_process_group(&mut child);
     let mut stdout_pipe = child
         .stdout
         .take()
@@ -124,23 +131,13 @@ fn read_capped<R: std::io::Read>(r: &mut R, max: usize) -> (String, bool) {
 }
 
 #[cfg(unix)]
-fn set_process_group(child: &mut std::process::Child) {
-    // setpgid on the child id from the parent after spawn; if the child has
-    // already exec'd and exited this is a harmless best-effort call.
-    extern "C" {
-        fn setpgid(pid: i32, pgid: i32) -> i32;
-    }
-    let pid = child.id() as i32;
-    let _ = unsafe { setpgid(pid, 0) };
-}
-
-#[cfg(unix)]
 fn kill_group(child: &mut std::process::Child) {
     extern "C" {
         fn kill(pgid: i32, sig: i32) -> i32;
     }
     const SIGKILL: i32 = 9;
     let pid = child.id() as i32;
+    // The child was spawned with process_group(0), so its pgid is its pid.
     let _ = unsafe { kill(-pid, SIGKILL) };
     let _ = unsafe { kill(pid, SIGKILL) };
     let _ = child.wait();
