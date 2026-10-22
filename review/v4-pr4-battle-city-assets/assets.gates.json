@@ -1,0 +1,101 @@
+{
+  "report_version": 1,
+  "gate_version": 1,
+  "stage": "assets",
+  "gate_id": "assets.gates",
+  "status": "failed",
+  "input_digest": "sha256:94b58b3ca9b0074e784ca384ba592dc3b023dc2169218d18b10f1aa1dd3fcb44",
+  "checks": [
+    {
+      "id": "files.requirements",
+      "passed": true,
+      "value": "13",
+      "limit": "frozen requirements list at least one required asset"
+    },
+    {
+      "id": "files.manifest",
+      "passed": false,
+      "value": "missing",
+      "limit": "asset-manifest.json parses"
+    },
+    {
+      "id": "coverage.frames",
+      "passed": false,
+      "value": "10 missing",
+      "limit": "every required asset_id has a `{id}_*` frame on a sheet",
+      "failures": [
+        "missing explosion",
+        "missing hq_base",
+        "missing hud_life_icon",
+        "missing hud_stage_label",
+        "missing b",
+        "missing x",
+        "missing w",
+        "missing h",
+        "missing g",
+        "missing t"
+      ]
+    },
+    {
+      "id": "coverage.png",
+      "passed": false,
+      "value": "png",
+      "limit": "sheet png exists and is a non-empty PNG"
+    },
+    {
+      "id": "coverage.manifest",
+      "passed": false,
+      "value": "1 gaps",
+      "limit": "manifest lists every required asset as delivered with outputs",
+      "failures": [
+        "manifest missing"
+      ]
+    },
+    {
+      "id": "provenance.authored_specs",
+      "passed": false,
+      "value": "18 missing",
+      "limit": "palette.json plus {asset_id}.shapes.json and {asset_id}.recipe.json for every required asset",
+      "failures": [
+        "missing hq_base.shapes.json",
+        "missing hq_base.recipe.json",
+        "missing hud_life_icon.shapes.json",
+        "missing hud_life_icon.recipe.json",
+        "missing hud_stage_label.shapes.json",
+        "missing hud_stage_label.recipe.json",
+        "missing b.shapes.json",
+        "missing b.recipe.json",
+        "missing x.shapes.json",
+        "missing x.recipe.json",
+        "missing w.shapes.json",
+        "missing w.recipe.json",
+        "missing h.shapes.json",
+        "missing h.recipe.json",
+        "missing g.shapes.json",
+        "missing g.recipe.json",
+        "missing t.shapes.json",
+        "missing t.recipe.json"
+      ]
+    },
+    {
+      "id": "provenance.not_template",
+      "passed": true,
+      "value": "original",
+      "limit": "no authored spec is the same JSON document as a bundled template file"
+    },
+    {
+      "id": "pxl.validate",
+      "passed": true,
+      "value": "passed",
+      "limit": "pxl validate passes using the rules declared in the recipe"
+    }
+  ],
+  "metrics": {
+    "required": 13
+  },
+  "tool_versions": {
+    "harness": "0.1.0",
+    "pxl": "0.1.0"
+  },
+  "executed_ms": 0
+}
