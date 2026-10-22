@@ -1,0 +1,94 @@
+{
+  "v": 1,
+  "asset": "celeste-spikes",
+  "gen_version": 1,
+  "seed": 194,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "sprite",
+      "base": {
+        "gen": "shapes",
+        "spec": "sprite.shapes.json"
+      },
+      "directions": [
+        {
+          "id": "right",
+          "from": "base",
+          "ops": [
+            {
+              "op": "rotate90",
+              "dir": "cw"
+            }
+          ]
+        },
+        {
+          "id": "down",
+          "from": "right",
+          "ops": [
+            {
+              "op": "rotate90",
+              "dir": "cw"
+            }
+          ]
+        },
+        {
+          "id": "left",
+          "from": "down",
+          "ops": [
+            {
+              "op": "rotate90",
+              "dir": "cw"
+            }
+          ]
+        }
+      ],
+      "anims": [
+        {
+          "name": "glint",
+          "fps": 4,
+          "loop": true,
+          "dirs": [
+            "base",
+            "right",
+            "down",
+            "left"
+          ],
+          "frames": [
+            [
+              {
+                "op": "noop"
+              }
+            ],
+            [
+              {
+                "op": "palette_swap",
+                "map": "2->3"
+              }
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "sheet": {
+    "sources": [
+      "sprite"
+    ],
+    "layout": "rows-by-anim",
+    "pad": 1,
+    "file": "celeste-spikes.sheet.png"
+  },
+  "preview": [
+    {
+      "source": "sprite",
+      "scale": 8,
+      "file": "preview.png",
+      "anim": "glint",
+      "dir": "base"
+    }
+  ],
+  "validate": {
+    "rules": "default"
+  }
+}

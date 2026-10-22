@@ -1,0 +1,15 @@
+{
+  "n": 21,
+  "id": "terra-ore",
+  "game": "Terraria",
+  "category": "tiles",
+  "w": 8,
+  "h": 8,
+  "description": "8x8 Stone host, copper-coloured vein kept off the edge. Hue runs cooler in the dark step and warmer in the light step. Opposite edges match.",
+  "source_url": "https://raw.githubusercontent.com/Zorz42/Terralistic/master/base_game/resources/blocks/Template_copper_ore.png",
+  "source_note": "Terralistic base_game/resources/blocks/Template_copper_ore.png, first cell of the strip",
+  "license": "GPL-3.0 (Zorz42/Terralistic art; reference only, not linked into the engine)",
+  "anim": "static",
+  "style": 6,
+  "readability": 7
+}

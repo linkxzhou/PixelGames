@@ -1,0 +1,15 @@
+{
+  "n": 9,
+  "id": "deadcells-idle",
+  "game": "Dead Cells",
+  "category": "characters",
+  "w": 24,
+  "h": 32,
+  "description": "Horned prisoner, 24x32. Teal cloth against a warm bone-coloured head, no face detail beyond two eyes. The horns are part of the hair mass so they stay connected.",
+  "source_url": "https://opengameart.org/sites/default/files/kenney_pixel-platformer.zip",
+  "source_note": "Kenney Pixel Platformer Tiles/Characters/tile_0005.png",
+  "license": "CC0 Kenney (https://kenney.nl, mirrored on OpenGameArt)",
+  "anim": "static",
+  "style": 6,
+  "readability": 7
+}

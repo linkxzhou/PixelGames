@@ -1,0 +1,24 @@
+{
+  "v": 1,
+  "id": "gold-coin",
+  "colors": [
+    "#00000000",
+    "#12121a",
+    "#3a4454",
+    "#8a98a8",
+    "#e8eef4",
+    "#fff4d0"
+  ],
+  "ramps": {
+    "metal": [
+      2,
+      3,
+      4
+    ]
+  },
+  "special": {
+    "transparent": 0,
+    "outline": 1,
+    "flash": 5
+  }
+}

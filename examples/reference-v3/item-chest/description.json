@@ -1,0 +1,15 @@
+{
+  "n": 45,
+  "id": "item-chest",
+  "game": "Terraria",
+  "category": "items",
+  "w": 16,
+  "h": 16,
+  "description": "Closed chest, 16x16. Lid is a lighter wood ramp than the body, lock is cool metal and does not move when the body bobs. Wood grain is the dither, not a noise tile.",
+  "source_url": "https://opengameart.org/sites/default/files/Roguelike%20pack.zip",
+  "source_note": "Kenney Roguelike sheet cell (8, 7) at 16px with a 1px gap",
+  "license": "CC0 Kenney roguelike/RPG pack (OpenGameArt)",
+  "anim": "static",
+  "style": 6,
+  "readability": 8
+}

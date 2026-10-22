@@ -1,0 +1,15 @@
+{
+  "n": 12,
+  "id": "octopath-dancer",
+  "game": "Octopath Traveler",
+  "category": "characters",
+  "w": 16,
+  "h": 24,
+  "description": "Dancer in a long coat that replaces the legs. Gem-coloured sash is the cloth highlight. 16x24, same lamp-from-the-top-left shading.",
+  "source_url": "https://opengameart.org/sites/default/files/kenney_pixel-platformer.zip",
+  "source_note": "Kenney Pixel Platformer Tiles/Characters/tile_0008.png",
+  "license": "CC0 Kenney (https://kenney.nl, mirrored on OpenGameArt)",
+  "anim": "static",
+  "style": 6,
+  "readability": 7
+}

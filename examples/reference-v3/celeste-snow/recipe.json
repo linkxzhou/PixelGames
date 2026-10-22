@@ -1,0 +1,36 @@
+{
+  "v": 1,
+  "asset": "celeste-snow",
+  "gen_version": 1,
+  "seed": 127,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "sprite",
+      "base": {
+        "gen": "shapes",
+        "spec": "sprite.shapes.json"
+      },
+      "kind": "tiles",
+      "tile_ramp": "body"
+    }
+  ],
+  "sheet": {
+    "sources": [
+      "sprite"
+    ],
+    "layout": "rows-by-anim",
+    "pad": 1,
+    "file": "celeste-snow.sheet.png"
+  },
+  "preview": [
+    {
+      "source": "sprite",
+      "scale": 8,
+      "file": "preview.png"
+    }
+  ],
+  "validate": {
+    "rules": "default"
+  }
+}

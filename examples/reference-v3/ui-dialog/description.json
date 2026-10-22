@@ -1,0 +1,15 @@
+{
+  "n": 83,
+  "id": "ui-dialog",
+  "game": "Undertale",
+  "category": "ui",
+  "w": 32,
+  "h": 20,
+  "description": "Dialogue panel, 32x20. Paper ramp with a cooler shadow, a short ink word joined to a baseline, and a 3x3 cursor that swaps to the paper highlight. Not a 9-slice.",
+  "source_url": "https://opengameart.org/sites/default/files/Roguelike%20pack.zip",
+  "source_note": "Kenney Roguelike sheet cell (0, 18) at 16px with a 1px gap",
+  "license": "CC0 Kenney roguelike/RPG pack (OpenGameArt)",
+  "anim": "static",
+  "style": 5,
+  "readability": 7
+}

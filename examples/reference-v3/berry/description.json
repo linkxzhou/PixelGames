@@ -1,0 +1,15 @@
+{
+  "n": 54,
+  "id": "berry",
+  "game": "Stardew Valley",
+  "category": "items",
+  "w": 16,
+  "h": 16,
+  "description": "Berry with a leaf joined to the fruit. 16x16 icon, top-left light, dither on the largest face.",
+  "source_url": "https://opengameart.org/sites/default/files/Roguelike%20pack.zip",
+  "source_note": "Kenney Roguelike sheet cell (5, 12) at 16px with a 1px gap",
+  "license": "CC0 Kenney roguelike/RPG pack (OpenGameArt)",
+  "anim": "glint",
+  "style": 6,
+  "readability": 7
+}

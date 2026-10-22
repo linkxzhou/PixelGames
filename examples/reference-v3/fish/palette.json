@@ -1,0 +1,24 @@
+{
+  "v": 1,
+  "id": "fish",
+  "colors": [
+    "#00000000",
+    "#12121a",
+    "#2a68a8",
+    "#68b0e0",
+    "#d0ecf8",
+    "#fff4d0"
+  ],
+  "ramps": {
+    "body": [
+      2,
+      3,
+      4
+    ]
+  },
+  "special": {
+    "transparent": 0,
+    "outline": 1,
+    "flash": 5
+  }
+}

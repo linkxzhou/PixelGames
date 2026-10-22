@@ -1,0 +1,15 @@
+{
+  "n": 78,
+  "id": "ghost",
+  "game": "Terraria",
+  "category": "enemies",
+  "w": 16,
+  "h": 16,
+  "description": "Sheet with a wavy hem. 16x16, top-left light, dark rim on the lower right.",
+  "source_url": "https://opengameart.org/sites/default/files/kenney_pixel-platformer.zip",
+  "source_note": "Kenney Pixel Platformer Tiles/Characters/tile_0017.png",
+  "license": "CC0 Kenney (https://kenney.nl, mirrored on OpenGameArt)",
+  "anim": "bob",
+  "style": 6,
+  "readability": 7
+}

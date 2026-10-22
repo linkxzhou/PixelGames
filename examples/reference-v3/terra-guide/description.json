@@ -1,0 +1,15 @@
+{
+  "n": 14,
+  "id": "terra-guide",
+  "game": "Terraria",
+  "category": "characters",
+  "w": 16,
+  "h": 24,
+  "description": "Town NPC, front view, 16x24. Tan clothes, brown hair, same earth palette as the miner so they share a town.",
+  "source_url": "https://opengameart.org/sites/default/files/kenney_pixel-platformer.zip",
+  "source_note": "Kenney Pixel Platformer Tiles/Characters/tile_0009.png",
+  "license": "CC0 Kenney (https://kenney.nl, mirrored on OpenGameArt)",
+  "anim": "static",
+  "style": 6,
+  "readability": 7
+}

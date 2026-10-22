@@ -1,0 +1,15 @@
+{
+  "n": 81,
+  "id": "shroom-enemy",
+  "game": "Terraria",
+  "category": "enemies",
+  "w": 16,
+  "h": 16,
+  "description": "Cap and stem with eyes. 16x16, top-left light, dark rim on the lower right.",
+  "source_url": "https://opengameart.org/sites/default/files/Roguelike%20pack.zip",
+  "source_note": "Kenney Roguelike sheet cell (8, 12) at 16px with a 1px gap",
+  "license": "CC0 Kenney roguelike/RPG pack (OpenGameArt)",
+  "anim": "bob",
+  "style": 6,
+  "readability": 7
+}

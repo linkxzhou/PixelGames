@@ -1,0 +1,15 @@
+{
+  "n": 33,
+  "id": "shaded-crate",
+  "game": "Octopath Traveler",
+  "category": "props",
+  "w": 16,
+  "h": 16,
+  "description": "Isometric crate, 16x16, three faces on three ramps so the right face stays darker than the lit top. Metal latch. This is the sprite version of a baked crate, without a normal map.",
+  "source_url": "https://opengameart.org/sites/default/files/Roguelike%20pack.zip",
+  "source_note": "Kenney Roguelike sheet cell (7, 6) at 16px with a 1px gap",
+  "license": "CC0 Kenney roguelike/RPG pack (OpenGameArt)",
+  "anim": "static",
+  "style": 6,
+  "readability": 8
+}

@@ -1,0 +1,15 @@
+{
+  "n": 15,
+  "id": "celeste-hair",
+  "game": "Celeste",
+  "category": "characters",
+  "w": 16,
+  "h": 16,
+  "description": "Head-and-shoulders study of the runner's hair. The hair ramp shifts from purple shadow to peach highlight. 16x16, bob where a hair sim would be.",
+  "source_url": "https://raw.githubusercontent.com/NoelFB/Celeste/master/Source/PICO-8/Graphics/atlas.png",
+  "source_note": "atlas cell (2, 0), hair mass of the runner",
+  "license": "NoelFB/Celeste PICO-8 graphics (review reference; MIT covers the code only)",
+  "anim": "static",
+  "style": 6,
+  "readability": 7
+}

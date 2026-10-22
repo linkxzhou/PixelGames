@@ -1,0 +1,32 @@
+{
+  "v": 1,
+  "id": "deadcells-brick",
+  "colors": [
+    "#00000000",
+    "#12121a",
+    "#1a242c",
+    "#3a4854",
+    "#607080",
+    "#a8b8c0",
+    "#2a6068",
+    "#68a0a0",
+    "#fff4d0"
+  ],
+  "ramps": {
+    "body": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "accent": [
+      6,
+      7
+    ]
+  },
+  "special": {
+    "transparent": 0,
+    "outline": 1,
+    "flash": 8
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "n": 65,
+  "id": "sapling",
+  "game": "Stardew Valley",
+  "category": "crops",
+  "w": 16,
+  "h": 24,
+  "description": "Thin stem and a small round crown. 16x24, soil band at the bottom, top-left light on the leaves, dither where the leaf is wide.",
+  "source_url": "https://opengameart.org/sites/default/files/Roguelike%20pack.zip",
+  "source_note": "Kenney Roguelike sheet cell (1, 8) at 16px with a 1px gap",
+  "license": "CC0 Kenney roguelike/RPG pack (OpenGameArt)",
+  "anim": "bob",
+  "style": 6,
+  "readability": 7
+}

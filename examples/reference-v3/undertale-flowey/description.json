@@ -1,0 +1,15 @@
+{
+  "n": 16,
+  "id": "undertale-flowey",
+  "game": "Undertale",
+  "category": "characters",
+  "w": 16,
+  "h": 16,
+  "description": "Flower with a face, 16x16. Stem and cap use the shroom silhouette recolored to a pale petal and a green stem. Not a portrait.",
+  "source_url": "https://opengameart.org/sites/default/files/kenney_pixel-platformer.zip",
+  "source_note": "Kenney Pixel Platformer Tiles/Characters/tile_0012.png",
+  "license": "CC0 Kenney (https://kenney.nl, mirrored on OpenGameArt)",
+  "anim": "static",
+  "style": 5,
+  "readability": 6
+}

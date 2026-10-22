@@ -1,0 +1,15 @@
+{
+  "n": 41,
+  "id": "bed",
+  "game": "Stardew Valley",
+  "category": "props",
+  "w": 16,
+  "h": 16,
+  "description": "Bed, pillow in cloth, frame in wood.  Top-left light baked into the ramp, checker dither on the broad face.",
+  "source_url": "https://opengameart.org/sites/default/files/Roguelike%20pack.zip",
+  "source_note": "Kenney Roguelike sheet cell (6, 8) at 16px with a 1px gap",
+  "license": "CC0 Kenney roguelike/RPG pack (OpenGameArt)",
+  "anim": "glint",
+  "style": 5,
+  "readability": 6
+}

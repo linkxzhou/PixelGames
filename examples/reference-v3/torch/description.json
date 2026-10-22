@@ -1,0 +1,15 @@
+{
+  "n": 36,
+  "id": "torch",
+  "game": "Terraria",
+  "category": "props",
+  "w": 16,
+  "h": 16,
+  "description": "Wall torch, flame on a stick. Flame uses a hot ramp.  Top-left light baked into the ramp, checker dither on the broad face.",
+  "source_url": "https://raw.githubusercontent.com/Zorz42/Terralistic/master/base_game/resources/blocks/torch.png",
+  "source_note": "Terralistic base_game/resources/blocks/torch.png, first cell of the strip",
+  "license": "GPL-3.0 (Zorz42/Terralistic art; reference only, not linked into the engine)",
+  "anim": "bob",
+  "style": 6,
+  "readability": 8
+}

@@ -1,0 +1,15 @@
+{
+  "n": 7,
+  "id": "stardew-water",
+  "game": "Stardew Valley",
+  "category": "characters",
+  "w": 16,
+  "h": 32,
+  "description": "Side farmer with a watering can. Can is a cool metal ramp; a two-pixel water drop sits on the spout. 16x32.",
+  "source_url": "https://opengameart.org/sites/default/files/kenney_pixel-platformer.zip",
+  "source_note": "Kenney Pixel Platformer Tiles/Characters/tile_0003.png",
+  "license": "CC0 Kenney (https://kenney.nl, mirrored on OpenGameArt)",
+  "anim": "static",
+  "style": 6,
+  "readability": 7
+}

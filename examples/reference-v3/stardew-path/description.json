@@ -1,0 +1,15 @@
+{
+  "n": 25,
+  "id": "stardew-path",
+  "game": "Stardew Valley",
+  "category": "tiles",
+  "w": 8,
+  "h": 8,
+  "description": "8x8 Worn path, dark pebbles on a tan bed. Hue runs cooler in the dark step and warmer in the light step. Opposite edges match.",
+  "source_url": "https://opengameart.org/sites/default/files/Roguelike%20pack.zip",
+  "source_note": "Kenney Roguelike sheet cell (1, 0) at 16px with a 1px gap",
+  "license": "CC0 Kenney roguelike/RPG pack (OpenGameArt)",
+  "anim": "static",
+  "style": 5,
+  "readability": 6
+}

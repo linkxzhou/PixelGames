@@ -1,0 +1,15 @@
+{
+  "n": 3,
+  "id": "celeste-climb",
+  "game": "Celeste",
+  "category": "characters",
+  "w": 16,
+  "h": 24,
+  "description": "Climbing silhouette, 16x24, same Madeline-like palette. Hair mass on the back of the head, jacket reads as one shape, legs split. Top-left light, dither on the torso.",
+  "source_url": "https://raw.githubusercontent.com/NoelFB/Celeste/master/Source/PICO-8/Graphics/atlas.png",
+  "source_note": "atlas cell (6, 0)",
+  "license": "NoelFB/Celeste PICO-8 graphics (review reference; MIT covers the code only)",
+  "anim": "static",
+  "style": 6,
+  "readability": 7
+}

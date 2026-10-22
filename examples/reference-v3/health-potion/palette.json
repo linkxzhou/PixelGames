@@ -1,0 +1,28 @@
+{
+  "v": 1,
+  "id": "health-potion",
+  "colors": [
+    "#00000000",
+    "#12121a",
+    "#c8d8e8",
+    "#f4f8fc",
+    "#208060",
+    "#40d0a0",
+    "#fff4d0"
+  ],
+  "ramps": {
+    "glass": [
+      2,
+      3
+    ],
+    "liquid": [
+      4,
+      5
+    ]
+  },
+  "special": {
+    "transparent": 0,
+    "outline": 1,
+    "flash": 6
+  }
+}

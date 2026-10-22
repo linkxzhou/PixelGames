@@ -1,0 +1,15 @@
+{
+  "n": 6,
+  "id": "stardew-farmer",
+  "game": "Stardew Valley",
+  "category": "characters",
+  "w": 16,
+  "h": 32,
+  "description": "Front farmer, 16x32. Green shirt, warm skin, brown hair with a peach highlight. Fills the canvas the way a Stardew walk frame does. Bob.",
+  "source_url": "https://opengameart.org/sites/default/files/kenney_pixel-platformer.zip",
+  "source_note": "Kenney Pixel Platformer Tiles/Characters/tile_0002.png",
+  "license": "CC0 Kenney (https://kenney.nl, mirrored on OpenGameArt)",
+  "anim": "static",
+  "style": 6,
+  "readability": 8
+}

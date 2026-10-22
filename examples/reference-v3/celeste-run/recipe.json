@@ -1,0 +1,112 @@
+{
+  "v": 1,
+  "asset": "celeste-run",
+  "gen_version": 1,
+  "seed": 101,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "sprite",
+      "base": {
+        "gen": "shapes",
+        "spec": "sprite.shapes.json"
+      },
+      "anims": [
+        {
+          "name": "run",
+          "fps": 8,
+          "loop": true,
+          "frames": [
+            [
+              {
+                "op": "patch_pixels",
+                "x": 0,
+                "y": 0,
+                "rows": [
+                  ".2344...",
+                  "2234567.",
+                  ".345678.",
+                  ".88999a.",
+                  ".889abc.",
+                  "..b.c...",
+                  "..c.....",
+                  "........"
+                ]
+              }
+            ],
+            [
+              {
+                "op": "patch_pixels",
+                "x": 0,
+                "y": 0,
+                "rows": [
+                  "2344....",
+                  ".234567.",
+                  ".345678.",
+                  ".88999a.",
+                  ".88abc..",
+                  ".b...c..",
+                  "........",
+                  "........"
+                ]
+              }
+            ],
+            [
+              {
+                "op": "patch_pixels",
+                "x": 0,
+                "y": 0,
+                "rows": [
+                  ".2344...",
+                  "2234567.",
+                  ".345678.",
+                  ".88999a.",
+                  ".889abc.",
+                  "...b.c..",
+                  "....c...",
+                  "........"
+                ]
+              }
+            ],
+            [
+              {
+                "op": "patch_pixels",
+                "x": 0,
+                "y": 0,
+                "rows": [
+                  "..2344..",
+                  ".223456.",
+                  "..34567.",
+                  ".88999a.",
+                  ".8b9ac9.",
+                  ".b.c....",
+                  "..c.....",
+                  "........"
+                ]
+              }
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "sheet": {
+    "sources": [
+      "sprite"
+    ],
+    "layout": "rows-by-anim",
+    "pad": 1,
+    "file": "celeste-run.sheet.png"
+  },
+  "preview": [
+    {
+      "source": "sprite",
+      "scale": 8,
+      "file": "preview.png",
+      "anim": "run"
+    }
+  ],
+  "validate": {
+    "rules": "default"
+  }
+}

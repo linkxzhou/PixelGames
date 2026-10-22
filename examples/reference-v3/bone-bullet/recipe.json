@@ -1,0 +1,72 @@
+{
+  "v": 1,
+  "asset": "bone-bullet",
+  "gen_version": 1,
+  "seed": 197,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "sprite",
+      "base": {
+        "gen": "shapes",
+        "spec": "sprite.shapes.json"
+      },
+      "anims": [
+        {
+          "name": "move",
+          "fps": 8,
+          "loop": true,
+          "frames": [
+            [
+              {
+                "op": "shift",
+                "dx": 0,
+                "dy": 0
+              }
+            ],
+            [
+              {
+                "op": "shift",
+                "dx": 1,
+                "dy": 0
+              }
+            ],
+            [
+              {
+                "op": "shift",
+                "dx": 2,
+                "dy": 0
+              }
+            ],
+            [
+              {
+                "op": "shift",
+                "dx": 1,
+                "dy": 0
+              }
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "sheet": {
+    "sources": [
+      "sprite"
+    ],
+    "layout": "rows-by-anim",
+    "pad": 1,
+    "file": "bone-bullet.sheet.png"
+  },
+  "preview": [
+    {
+      "source": "sprite",
+      "scale": 8,
+      "file": "preview.png",
+      "anim": "move"
+    }
+  ],
+  "validate": {
+    "rules": "default"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "v": 1,
+  "id": "terra-sand",
+  "colors": [
+    "#00000000",
+    "#12121a",
+    "#a07838",
+    "#d0a058",
+    "#f0d090",
+    "#fff0c8",
+    "#a07838",
+    "#f0d090",
+    "#fff4d0"
+  ],
+  "ramps": {
+    "body": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "accent": [
+      6,
+      7
+    ]
+  },
+  "special": {
+    "transparent": 0,
+    "outline": 1,
+    "flash": 8
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "n": 27,
+  "id": "celeste-snow",
+  "game": "Celeste",
+  "category": "tiles",
+  "w": 8,
+  "h": 8,
+  "description": "8x8 Snow ground in the cool Celeste palette. Hue runs cooler in the dark step and warmer in the light step. Opposite edges match.",
+  "source_url": "https://raw.githubusercontent.com/NoelFB/Celeste/master/Source/PICO-8/Graphics/atlas.png",
+  "source_note": "atlas cell (0, 2), a full ground tile",
+  "license": "NoelFB/Celeste PICO-8 graphics (review reference; MIT covers the code only)",
+  "anim": "static",
+  "style": 6,
+  "readability": 7
+}

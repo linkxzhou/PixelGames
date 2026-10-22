@@ -1,0 +1,15 @@
+{
+  "n": 85,
+  "id": "menu-button",
+  "game": "Terraria",
+  "category": "ui",
+  "w": 24,
+  "h": 12,
+  "description": "Button face with a mid ink bar. Flat UI, two or three ramps, no faux bevel beyond the top-left rim.",
+  "source_url": "https://raw.githubusercontent.com/Zorz42/Terralistic/master/resources/play_button.png",
+  "source_note": "Terralistic resources/play_button.png, first cell of the strip",
+  "license": "GPL-3.0 (Zorz42/Terralistic art; reference only, not linked into the engine)",
+  "anim": "static",
+  "style": 5,
+  "readability": 6
+}

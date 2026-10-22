@@ -1,0 +1,15 @@
+{
+  "n": 86,
+  "id": "item-slot",
+  "game": "Stardew Valley",
+  "category": "ui",
+  "w": 16,
+  "h": 16,
+  "description": "Slot, outer face and a darker inset. Flat UI, two or three ramps, no faux bevel beyond the top-left rim.",
+  "source_url": "https://opengameart.org/sites/default/files/Roguelike%20pack.zip",
+  "source_note": "Kenney Roguelike sheet cell (2, 18) at 16px with a 1px gap",
+  "license": "CC0 Kenney roguelike/RPG pack (OpenGameArt)",
+  "anim": "static",
+  "style": 5,
+  "readability": 6
+}
