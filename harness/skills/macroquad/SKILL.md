@@ -51,6 +51,8 @@ Macroquad is pinned to 0.4.13 with default features off (no audio device). The `
 
 Rust 1.83 cannot compile `fontdue` 0.9 (`integer_sign_cast`). Do not bump macroquad past 0.4.13 without pinning an older `fontdue`.
 
+`cargo run -p battle-city` (no `--headless`) is the windowed path. macroquad 0.4.13 links miniquad 0.4.6, whose macOS startup called `center` before `display.view` was stored. AppKit delivers `windowDidChangeScreen` from `center`, `update_dimensions` sent `-bounds` to a nil view, and Apple Silicon aborted with `null pointer dereference occurred` at `miniquad-0.4.6/src/native/macos.rs:168`. The workspace patches that crate from `vendor/miniquad` (same 0.4.6, view stored before `center`, nil view and nil GL context ignored). Leave the patch in place. Headless replay does not open a window and is unchanged.
+
 ## What the harness checks
 
 `pxl-harness run --until playtest` runs, in order: approved design, assets, `compile.native`, `compile.wasm32`, then the playtest gates (`frames`, `palette`, `player_moves`, `shoots`, `destroys`, `screenshot`). `--from build` starts at the compile gates when asset authoring is not part of this invocation. The macroquad skill must load from `harness/skills/macroquad/SKILL.md` before those gates run.
