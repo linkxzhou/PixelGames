@@ -9,6 +9,7 @@ members = [
     "crates/pxl-export",
     "crates/pxl-cli",
     "harness",
+    "games/battle-city/runtime",
 ]
 
 [workspace.package]

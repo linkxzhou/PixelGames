@@ -1,0 +1,39 @@
+{
+  "report_version": 1,
+  "gate_version": 1,
+  "stage": "build",
+  "gate_id": "build.gates",
+  "status": "passed",
+  "input_digest": "sha256:6608b4c6cfdaca2653a2b0316b037e117a741ee0296fb47b8af6eac80da1fdd4",
+  "checks": [
+    {
+      "id": "skill.macroquad",
+      "passed": true,
+      "value": "/workspace/harness/skills/macroquad/SKILL.md",
+      "limit": "harness/skills/macroquad/SKILL.md loads and covers nearest filtering plus headless replay"
+    },
+    {
+      "id": "compile.native",
+      "passed": true,
+      "value": "exit Some(0)",
+      "limit": "native cargo build -p battle-city exits 0"
+    },
+    {
+      "id": "compile.wasm32",
+      "passed": true,
+      "value": "exit Some(0)",
+      "limit": "wasm32-unknown-unknown cargo build -p battle-city exits 0"
+    }
+  ],
+  "metrics": {
+    "elapsed_ms": 1028
+  },
+  "evidence": [
+    "workspace /workspace"
+  ],
+  "tool_versions": {
+    "cargo": "workspace",
+    "harness": "0.1.0"
+  },
+  "executed_ms": 1028
+}

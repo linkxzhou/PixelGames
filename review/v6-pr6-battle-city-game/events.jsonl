@@ -1,0 +1,8 @@
+{"seq":0,"ts_ms":1792726174648,"event":"run_created","harness_version":"0.1.0","config_digest":"sha256:a7485bb2cc93cf9b4043c70d40c1674650fef3efd1283a184ebc25cee7af9637"}
+{"seq":1,"ts_ms":1792726174652,"event":"stage_status","stage":"design","status":"succeeded"}
+{"seq":2,"ts_ms":1792726174653,"event":"stage_status","stage":"assets","status":"not_requested"}
+{"seq":3,"ts_ms":1792726175682,"event":"gate_finished","stage":"build","task_id":"game","passed":true,"failures":0,"report_digest":"sha256:d4d145ffea23392134f72415a11a61a442af955fae2f06b5e55fe6c1119cc3df"}
+{"seq":4,"ts_ms":1792726175687,"event":"stage_status","stage":"build","status":"succeeded"}
+{"seq":5,"ts_ms":1792726176018,"event":"gate_finished","stage":"playtest","task_id":"replay","passed":true,"failures":0,"report_digest":"sha256:8c4492139bd1421e8b52457d75e07fbd853ffc46dfb4a94105cdcc18922ba85e"}
+{"seq":6,"ts_ms":1792726176022,"event":"stage_status","stage":"playtest","status":"succeeded"}
+{"seq":7,"ts_ms":1792726176024,"event":"run_status","status":"succeeded"}

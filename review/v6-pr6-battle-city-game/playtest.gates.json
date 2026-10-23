@@ -1,0 +1,56 @@
+{
+  "report_version": 1,
+  "gate_version": 1,
+  "stage": "playtest",
+  "gate_id": "playtest.gates",
+  "status": "passed",
+  "input_digest": "sha256:3eddbda9dd24116f713a89af77346011fa5d1860d32e0541cf92a85cfb683be0",
+  "checks": [
+    {
+      "id": "playtest.frames",
+      "passed": true,
+      "value": "frames=120 panicked=false",
+      "limit": "at least 60 fixed steps, process did not panic, report ok"
+    },
+    {
+      "id": "playtest.palette",
+      "passed": true,
+      "value": "report=0 files=3",
+      "limit": "every screenshot pixel is transparent or an opaque palette color"
+    },
+    {
+      "id": "playtest.player_moves",
+      "passed": true,
+      "value": "player_moved",
+      "limit": "player tile changes during the replay"
+    },
+    {
+      "id": "playtest.shoots",
+      "passed": true,
+      "value": "shots=6",
+      "limit": "at least one shot"
+    },
+    {
+      "id": "playtest.destroys",
+      "passed": true,
+      "value": "bricks=5 enemies=0",
+      "limit": "a brick or an enemy is destroyed"
+    },
+    {
+      "id": "playtest.screenshot",
+      "passed": true,
+      "value": "frame_0000.png",
+      "limit": "at least one PNG written by the headless replay"
+    }
+  ],
+  "metrics": {
+    "elapsed_ms": 328
+  },
+  "evidence": [
+    "games/battle-city/runs/r1792726174642/reports/playtest"
+  ],
+  "tool_versions": {
+    "harness": "0.1.0"
+  },
+  "executed_ms": 328
+}

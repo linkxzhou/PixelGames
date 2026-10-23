@@ -112,6 +112,10 @@ pub struct RunState {
     pub design_revision: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub assets_revision: Option<String>,
+    /// First stage this run was asked to execute. Earlier stages are reused
+    /// or left `not_requested`. Absent on runs from before build/playtest.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub from_stage: Option<String>,
     pub status: String,
 }
 
@@ -128,12 +132,13 @@ impl Default for RunState {
             until: None,
             design_revision: None,
             assets_revision: None,
+            from_stage: None,
             status: "created".into(),
         }
     }
 }
 
-pub const STAGES: &[&str] = &["design", "assets"];
+pub const STAGES: &[&str] = &["design", "assets", "build", "playtest"];
 
 impl RunState {
     pub fn new(run_id: String, brief_digest: String, config_digest: String, until: &str) -> Self {

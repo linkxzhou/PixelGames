@@ -4,7 +4,9 @@
 
 pub mod asset_queue;
 pub mod assets_stage;
+pub mod build_stage;
 pub mod design_stage;
+pub mod playtest_stage;
 pub mod review_view;
 pub mod runner;
 pub mod state;

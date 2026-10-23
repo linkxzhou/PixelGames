@@ -20,3 +20,4 @@ serde_json = { workspace = true }
 schemars = { workspace = true }
 sha2 = { workspace = true }
 clap = { workspace = true }
+png = { workspace = true }

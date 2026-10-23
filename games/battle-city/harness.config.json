@@ -1,7 +1,7 @@
 {
   "provider": "openai",
-  "model": "",
-  "base_url": "",
+  "model": "deepseek-ai/DeepSeek-V4.1-Flash",
+  "base_url": "https://api.siliconflow.cn/v1",
   "api_key_env": "API_KEY",
   "max_model_turns_per_task": 60,
   "max_fixes_per_task": 3,

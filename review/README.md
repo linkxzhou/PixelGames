@@ -1,6 +1,6 @@
 # Review 对比存档
 
-每轮素材 review 的对比图都存在这里，用来记录 pxl 出图质量的改进过程。v1、v2 每个目录是 10 张单项对比图加一张总览。v3 是 100 张单项对比图，外加按类别的 contact sheet 和一张总览。v4 不是对比图，是 PR #4 上 battle-city 素材阶段的原始记录：[`events.jsonl`](v4-pr4-battle-city-assets/events.jsonl)、[`assets.gates.json`](v4-pr4-battle-city-assets/assets.gates.json)、[`missing-assets.md`](v4-pr4-battle-city-assets/missing-assets.md)、[`failures.md`](v4-pr4-battle-city-assets/failures.md)，以及 player / enemy / bullet 的 x8 图和 [`contact-sheet.png`](v4-pr4-battle-city-assets/contact-sheet.png)。模型是 DeepSeek-V4.1-Flash，13 个必需素材里通过 `pxl build` 的是 3 个。v5 是同一素材阶段在优化后的 harness 上的两次运行，停在用户要求停止时：[`comparison.md`](v5-pr5-battle-city-assets/comparison.md)、两次 run 的 `events.jsonl`、x8 图、[`contact-sheet.png`](v5-pr5-battle-city-assets/contact-sheet.png) 和 [`v4-vs-v5.png`](v5-pr5-battle-city-assets/v4-vs-v5.png)。v5b 的 `out/<id>` 图现在 13/13 能过 `pxl validate`，harness gate 仍是 failed。
+每轮素材 review 的对比图都存在这里，用来记录 pxl 出图质量的改进过程。v1、v2 每个目录是 10 张单项对比图加一张总览。v3 是 100 张单项对比图，外加按类别的 contact sheet 和一张总览。v4 不是对比图，是 PR #4 上 battle-city 素材阶段的原始记录：[`events.jsonl`](v4-pr4-battle-city-assets/events.jsonl)、[`assets.gates.json`](v4-pr4-battle-city-assets/assets.gates.json)、[`missing-assets.md`](v4-pr4-battle-city-assets/missing-assets.md)、[`failures.md`](v4-pr4-battle-city-assets/failures.md)，以及 player / enemy / bullet 的 x8 图和 [`contact-sheet.png`](v4-pr4-battle-city-assets/contact-sheet.png)。模型是 DeepSeek-V4.1-Flash，13 个必需素材里通过 `pxl build` 的是 3 个。v5 是同一素材阶段在优化后的 harness 上的两次运行，停在用户要求停止时：[`comparison.md`](v5-pr5-battle-city-assets/comparison.md)、两次 run 的 `events.jsonl`、x8 图、[`contact-sheet.png`](v5-pr5-battle-city-assets/contact-sheet.png) 和 [`v4-vs-v5.png`](v5-pr5-battle-city-assets/v4-vs-v5.png)。v5b 的 `out/<id>` 图现在 13/13 能过 `pxl validate`，harness gate 仍是 failed。v6 是第一轮可玩切片：macroquad 运行时加上 harness 的 build / playtest 门禁，设计修订沿用已批准的 `d1792638056510`，素材阶段没有新的批准修订。
 
 | 轮次 | 目录 | 代码基线 | PR | 对比图列 |
 |---|---|---|---|---|
@@ -9,6 +9,7 @@
 | v3 | `v3-pr3/` | `36216ea` | [PR #3](https://github.com/linkxzhou/PixelGames/pull/3) | 参考原图 / v2（仅旧 10 张） / v3 |
 | v4 | [`v4-pr4-battle-city-assets/`](v4-pr4-battle-city-assets/) | `b7ded1a` | [PR #4](https://github.com/linkxzhou/PixelGames/pull/4) | battle-city asset stage, DeepSeek-V4.1-Flash, 3/13 assets |
 | v5 | [`v5-pr5-battle-city-assets/`](v5-pr5-battle-city-assets/) | `23d05c3` + `95a645b` | [PR #5](https://github.com/linkxzhou/PixelGames/pull/5) | battle-city assets rerun, DeepSeek-V4.1-Flash, v5b 13/13 sheets validate, gate failed, stopped |
+| v6 | [`v6-pr6-battle-city-game/`](v6-pr6-battle-city-game/) | `ebb8850` + this branch | [PR #6](https://github.com/linkxzhou/PixelGames/pull/6) | macroquad Battle City slice, build + headless playtest gates passed, assets not re-authored |
 
 ## 评分记录（风格 / 辨识度，1–10）
 

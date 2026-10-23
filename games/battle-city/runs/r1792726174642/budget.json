@@ -1,0 +1,16 @@
+{
+  "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "requests": 0,
+    "tool_calls": 0,
+    "elapsed_ms": 0
+  },
+  "token_limit": 0,
+  "request_limit": 0,
+  "wall_clock_limit_ms": 0,
+  "spent_usd_cents": null,
+  "limit_usd_cents": null,
+  "settled_seq": 0,
+  "has_unknown_usage": false
+}
