@@ -2,6 +2,16 @@
 
 日期：2026-10-22。范围：battle-city 素材阶段；本次只产出计划，不修改实现、冻结设计、审查原文或现有运行数据。
 
+> **状态（2026-10-22）：**
+> - ✅ **P0-A**（统一诊断与可回放反馈）已实施——提交 `23d05c3`：`adapters/pxl.rs` 保留 hint/path/exit_code、逐回合账本、诊断事件字段（serde default 兼容旧日志）。
+> - ✅ **P0-B**（资产待检队列消除 w 漏洞）已实施——`pipeline/asset_queue.rs`（728 行）：missing/pending_build/build_failed/built/validated/blocked 状态机、指纹 dirty 传播、同轮延迟构建防抖、队列查询工具。
+> - ✅ **P0-C**（修复调度与反馈门禁）已实施——per-asset 连续失败 3 次上限 → blocked、coverage 门禁、manifest 从成功记录生成并绑 digest。
+> - ✅ **P0-D**（预算崩溃一致性）已实施——`policy/budget.rs` snapshot（temp+rename 原子写、绑定 seq）、事件重放对账、zero-snapshot 重建测试（78 次/1,545,488 token 场景）。
+> - 🔶 **P1-A** 部分：`AnimMode::{dynamic,static}` 已贯穿 recipe/qa/cli（单帧冲突已修，原创 fixtures 已加，见 `examples/static_bullet/`）；effect/one-shot 专门 QA policy **未做**。
+> - 🔶 **P1-B** 部分：artist 角色 checkpoint 说明已更新；`assets.read_requirements` 补齐与受限 schema 查询工具已开（`assets_stage.rs` schema 工具）；宏元数据（参数/默认值/示例）**未做**。
+> - ⬜ **批次 E**（上下文 checkpoint 受控整轮复跑）未实施；上下文压缩部分由 V3-D 的 `agent/compress.rs` 承担。
+> - 回归命令不变：`cargo test --workspace`（2026-10-22 全绿，176 项）。原文保留作为验收依据。
+
 ## 1. 核实结果与证据边界
 
 依据 `review/v4-pr4-battle-city-assets/`，并直接解析 `events.jsonl`、对紧凑 JSON 参数计算 SHA-256 后匹配构建目标；不使用“最近写过哪个素材”猜测目标。

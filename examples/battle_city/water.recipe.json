@@ -1,0 +1,28 @@
+{
+  "v": 1,
+  "asset": "water",
+  "gen_version": 1,
+  "seed": 31,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "water",
+      "kind": "tiles",
+      "tile_ramp": "water",
+      "base": {"gen": "shapes", "spec": "water.shapes.json", "seed": 31},
+      "directions": [
+        {"id": "N", "from": "base", "ops": [{"op": "noop"}]}
+      ],
+      "anims": [
+        {"name": "idle", "fps": 4, "loop": true, "dirs": ["N"], "frames": [
+          [{"op": "noop"}],
+          [{"op": "shift", "dx": 2, "dy": 0, "wrap": true}],
+          [{"op": "shift", "dx": 4, "dy": 0, "wrap": true}],
+          [{"op": "shift", "dx": 6, "dy": 0, "wrap": true}]
+        ]}
+      ]
+    }
+  ],
+  "sheet": {"sources": ["water"], "layout": "rows-by-anim", "pad": 1, "file": "water.sheet.png"},
+  "validate": {"rules": "default"}
+}

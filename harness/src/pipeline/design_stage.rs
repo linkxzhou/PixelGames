@@ -7,9 +7,9 @@ use std::path::PathBuf;
 use serde_json::Value;
 
 use crate::agent::provider::ModelProvider;
-use crate::agent::role::designer;
+use crate::agent::role::designer_for;
 use crate::agent::runner::{AgentRunner, AgentTask};
-use crate::agent::tools::{ToolContext, ToolDef, ToolOutcome, ToolRegistry};
+use crate::agent::tools::{ToolContext, ToolDef, ToolOutcome, ToolRegistry, ToolSource};
 use crate::config::Config;
 use crate::contracts::design::{
     AcceptancePlan, AssetRequirements, GameDesign, LevelDef, StyleGuide,
@@ -39,6 +39,9 @@ pub fn registry() -> ToolRegistry {
         description: "Read the user brief snapshot".into(),
         parameters: serde_json::json!({"type": "object", "properties": {}}),
         needed: Permission::ReadProject,
+        read_only: true,
+        activity: "read brief".into(),
+        source: ToolSource::Stage,
         run: Box::new(|_args, ctx| {
             // The brief snapshot is copied into the attempt before the
             // loop starts; prefer it, fall back to template roots.
@@ -70,6 +73,9 @@ pub fn registry() -> ToolRegistry {
         description: "Read the genre template (defaults, entities, tiles, asset hints)".into(),
         parameters: serde_json::json!({"type": "object", "properties": {}}),
         needed: Permission::ReadProject,
+        read_only: true,
+        activity: "read template".into(),
+        source: ToolSource::Stage,
         run: Box::new(|_args, ctx| {
             // Templates live under the approved template roots only; the
             // genre name comes from project identity, never from the model.
@@ -135,6 +141,9 @@ pub fn registry() -> ToolRegistry {
             }
         }),
         needed: Permission::WriteCandidate,
+        read_only: false,
+        activity: "request review".into(),
+        source: ToolSource::Stage,
         run: Box::new(|args, ctx| {
             // Record the request as a review request file inside the
             // candidate; the harness turns it into the Markdown view and
@@ -178,6 +187,9 @@ pub fn registry() -> ToolRegistry {
             }
         }),
         needed: Permission::WriteCandidate,
+        read_only: false,
+        activity: "write candidate".into(),
+        source: ToolSource::Stage,
         run: Box::new(|args, ctx| {
             let rel = args["path"].as_str().unwrap_or_default();
             let content = args["content"].as_str().unwrap_or_default();
@@ -189,6 +201,9 @@ pub fn registry() -> ToolRegistry {
         description: "Run design gates over the current candidate directory".into(),
         parameters: serde_json::json!({"type": "object", "properties": {}}),
         needed: Permission::WriteCandidate,
+        read_only: true,
+        activity: "validate".into(),
+        source: ToolSource::Stage,
         run: Box::new(|_args, ctx| {
             let report = crate::pipeline::design_stage::gates(ctx)?;
             let issues = issues_from_report(&report);
@@ -622,21 +637,27 @@ pub fn run_design_stage(
     set_stage(state, "design", StageStatus::Running)?;
     run.save(state)?;
     let attempt_dir = run.attempt_dir("design", "design_package", 1)?;
-    let registry = registry();
-    let role = designer();
+    let registry = registry().with_builtin();
+    let role = designer_for(cfg.prompt_lang);
+    // v3: one shared todo manager per stage attempt; the runner injects its
+    // rendered block between turns.
+    let todo_manager = std::sync::Arc::new(crate::agent::tools::TodoManager::new());
     let ctx = ToolContext {
         host: PermissionSet::default()
             .allow(Permission::ReadProject)
-            .allow(Permission::WriteCandidate),
+            .allow(Permission::WriteCandidate)
+            .allow(Permission::Todo),
         stage: PermissionSet::default()
             .allow(Permission::ReadProject)
-            .allow(Permission::WriteCandidate),
+            .allow(Permission::WriteCandidate)
+            .allow(Permission::Todo),
         role: role.permission_set(),
         attempt_dir: attempt_dir.clone(),
         template_roots: template_roots.to_vec(),
         genre: artifacts.identity()?.genre_template.clone(),
         design_dir: None,
         pxl: std::sync::Arc::new(crate::adapters::PxlAdapter::unavailable()),
+        todos: Some(todo_manager),
     };
     // Copy the brief into the attempt so the designer can read it.
     let brief_text = fs::read_to_string(artifacts.brief_path())?;
@@ -793,6 +814,7 @@ mod tests {
             genre: "top_down_tank".into(),
             design_dir: None,
             pxl: std::sync::Arc::new(crate::adapters::PxlAdapter::unavailable()),
+            todos: None,
         }
     }
 
@@ -1024,6 +1046,7 @@ mod tests {
             genre: "top_down_tank".into(),
             design_dir: None,
             pxl: std::sync::Arc::new(crate::adapters::PxlAdapter::unavailable()),
+            todos: None,
         };
         let reg = registry();
         // read_template finds the genre template and lists its assets.
@@ -1038,7 +1061,7 @@ mod tests {
             .iter()
             .any(|v| v == "assets/palette.json"));
         // Missing genre fails cleanly.
-        let missing = ToolContext { genre: "nope".into(), ..ctx };
+        let missing = ToolContext { genre: "nope".into(), todos: None, ..ctx };
         let out = reg
             .dispatch("design.read_template", &serde_json::json!({}), &missing)
             .unwrap();

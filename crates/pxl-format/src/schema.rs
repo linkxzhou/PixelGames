@@ -2,23 +2,30 @@ use pxl_core::{PxlError, PxlResult};
 use schemars::schema_for;
 use serde_json::Value;
 
-use crate::model::{PaletteFile, PxlDoc};
+use crate::model::{PaletteFile, PxlDoc, ShapesFile};
 use crate::ops::Op;
 use crate::parts::PartsFile;
 use crate::recipe::Recipe;
+
+/// Every schema name `pxl schema` accepts, including aliases. `doc` is the name
+/// the harness and older notes use for the `.pxl.json` document (`pxl`).
+pub const SCHEMA_KINDS: &[&str] = &[
+    "recipe", "ops", "op", "pxl", "doc", "palette", "parts", "sheet", "shapes",
+];
 
 pub fn schema_json(kind: &str) -> PxlResult<Value> {
     let value = match kind {
         "ops" => serde_json::to_value(schema_for!(Vec<Op>)),
         "op" => serde_json::to_value(schema_for!(Op)),
-        "pxl" => serde_json::to_value(schema_for!(PxlDoc)),
+        "pxl" | "doc" => serde_json::to_value(schema_for!(PxlDoc)),
         "palette" => serde_json::to_value(schema_for!(PaletteFile)),
         "recipe" => recipe_schema(),
         "parts" => serde_json::to_value(schema_for!(PartsFile)),
+        "shapes" => serde_json::to_value(schema_for!(ShapesFile)),
         "sheet" => Ok(sheet_schema()),
         other => {
             return Err(PxlError::usage(format!("unknown schema '{other}'"))
-                .with_hint("schema is one of: recipe, ops, op, pxl, palette, parts, sheet"));
+                .with_hint(format!("schema is one of: {}", SCHEMA_KINDS.join(", "))));
         }
     };
     value.map_err(|e| PxlError::io(format!("schema encode failed: {e}")))

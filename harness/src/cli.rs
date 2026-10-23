@@ -57,6 +57,9 @@ pub enum Command {
         #[arg(long)]
         project: PathBuf,
     },
+    /// Generic agent mode: one objective, sandboxed tools, optional MCP and
+    /// evaluator-judged goal completion.
+    Agent(crate::cli_agent::AgentArgs),
 }
 
 pub fn main() -> i32 {
@@ -223,6 +226,7 @@ fn dispatch(cli: Cli) -> Result<i32> {
             }))?;
             Ok(exit::OK)
         }
+        Command::Agent(args) => crate::cli_agent::run(&args),
     }
 }
 

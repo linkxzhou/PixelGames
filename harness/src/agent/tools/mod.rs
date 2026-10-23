@@ -1,5 +1,15 @@
 //! Tool registry and typed tool results. Tools declare the permission they
 //! need; the runner checks host ∩ stage ∩ role before executing.
+//!
+//! v3: `ToolDef` additionally carries `read_only`, `activity` and `source`
+//! metadata (structural port of miniagent's `Tool` trait), and the schema
+//! validator understands `additionalProperties: false`.
+
+mod fs_tools;
+mod todo;
+
+pub use fs_tools::builtin_fs_tools;
+pub use todo::{builtin_todo_tools, TodoItem, TodoManager};
 
 use std::collections::BTreeMap;
 
@@ -81,12 +91,78 @@ impl ToolOutcome {
 pub type ToolFn =
     Box<dyn Fn(&serde_json::Value, &ToolContext) -> Result<ToolOutcome> + Send + Sync>;
 
+/// Where a tool came from; used for audits and filtering.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ToolSource {
+    /// Generic built-in (fs/todo) registered for every agent context.
+    Builtin,
+    /// Stage-specific tool owned by a pipeline stage.
+    Stage,
+    /// Bridged from an MCP server (`mcp_<server>_<tool>`).
+    Mcp,
+    /// Goal inspection/creation tools.
+    Goal,
+}
+
 pub struct ToolDef {
     pub name: String,
     pub description: String,
     pub parameters: serde_json::Value,
     pub needed: Permission,
     pub run: ToolFn,
+    /// Read-only tools never mutate attempt state and may run concurrently.
+    #[allow(dead_code)]
+    pub read_only: bool,
+    /// Short human-readable activity label for the event log.
+    #[allow(dead_code)]
+    pub activity: String,
+    /// Provenance tag for audits.
+    #[allow(dead_code)]
+    pub source: ToolSource,
+}
+
+impl ToolDef {
+    /// v2-compatible constructor: a stage-style mutating tool without
+    /// metadata. Existing call sites keep working unchanged.
+    pub fn new(
+        name: impl Into<String>,
+        description: impl Into<String>,
+        parameters: serde_json::Value,
+        needed: Permission,
+        run: ToolFn,
+    ) -> Self {
+        Self {
+            name: name.into(),
+            description: description.into(),
+            parameters,
+            needed,
+            run,
+            read_only: false,
+            activity: String::new(),
+            source: ToolSource::Stage,
+        }
+    }
+}
+
+/// The v3 tool trait (structural port of miniagent `core::tools::Tool`).
+/// Implement this for object-style tools; `ToolRegistry::register_tool`
+/// adapts them into a `ToolDef` with the same permission pipeline.
+pub trait Tool: Send + Sync {
+    fn name(&self) -> &str;
+    fn description(&self) -> &str;
+    /// JSON Schema of the arguments object.
+    fn parameters(&self) -> serde_json::Value;
+    /// Permission this tool needs (host ∩ stage ∩ role still applies).
+    fn needed(&self) -> Permission;
+    /// Read-only tools may run in parallel within one turn.
+    fn read_only(&self) -> bool;
+    /// Short activity label for the event log.
+    fn activity(&self) -> &str;
+    fn source(&self) -> ToolSource {
+        ToolSource::Builtin
+    }
+    fn execute(&self, args: &serde_json::Value, ctx: &ToolContext) -> Result<ToolOutcome>;
 }
 
 pub struct ToolRegistry {
@@ -104,8 +180,48 @@ impl ToolRegistry {
         self.tools.insert(def.name.clone(), def);
     }
 
+    /// Adapt a `Tool` trait object into a registry entry.
+    pub fn register_tool(&mut self, tool: std::sync::Arc<dyn Tool>) {
+        let spec = crate::agent::provider::ToolSpec {
+            name: tool.name().to_string(),
+            description: tool.description().to_string(),
+            parameters: tool.parameters(),
+        };
+        let read_only = tool.read_only();
+        let activity = tool.activity().to_string();
+        let source = tool.source();
+        let needed = tool.needed();
+        let def = ToolDef {
+            name: spec.name,
+            description: spec.description,
+            parameters: spec.parameters,
+            needed,
+            run: Box::new(move |args, ctx| tool.execute(args, ctx)),
+            read_only,
+            activity,
+            source,
+        };
+        self.register(def);
+    }
+
+    /// Register the generic built-in tools (fs + todo). The permission sets
+    /// handed in decide what actually becomes visible.
+    pub fn with_builtin(mut self) -> Self {
+        for tool in builtin_fs_tools() {
+            self.register_tool(tool);
+        }
+        for tool in builtin_todo_tools() {
+            self.register_tool(tool);
+        }
+        self
+    }
+
     pub fn names(&self) -> Vec<String> {
         self.tools.keys().cloned().collect()
+    }
+
+    pub fn get(&self, name: &str) -> Option<&ToolDef> {
+        self.tools.get(name)
     }
 
     pub fn specs(&self, allowed: &PermissionSet) -> Vec<crate::agent::provider::ToolSpec> {
@@ -163,10 +279,24 @@ pub struct ToolContext {
     /// Frozen design revision directory, when the stage consumes one.
     pub design_dir: Option<std::path::PathBuf>,
     pub pxl: std::sync::Arc<crate::adapters::PxlAdapter>,
+    /// v3: shared todo state for the `todo.write` built-in tool. `None`
+    /// keeps older ToolContext builders compile-compatible.
+    pub todos: Option<std::sync::Arc<TodoManager>>,
+}
+
+impl ToolContext {
+    /// v3: render the todo block that gets injected into the next turn's
+    /// user-visible context. Empty when no todos exist.
+    pub fn todo_block(&self) -> String {
+        self.todos
+            .as_ref()
+            .map(|t| t.render())
+            .unwrap_or_default()
+    }
 }
 
 /// Minimal JSON Schema validation: type checks, required, properties,
-/// enums, items, min/max on numbers.
+/// enums, items, min/max on numbers, and `additionalProperties: false`.
 pub fn validate_arguments(schema: &serde_json::Value, args: &serde_json::Value) -> Result<()> {
     validate_node(schema, args, "$")
 }
@@ -199,6 +329,23 @@ fn validate_node(schema: &serde_json::Value, v: &serde_json::Value, path: &str) 
     if let (Some(props), serde_json::Value::Object(map)) =
         (schema.get("properties").and_then(|p| p.as_object()), v)
     {
+        // v3: honor additionalProperties: false — unknown fields are a
+        // usage error, mirroring miniagent's schema contracts. The check is
+        // enabled when the key exists and is exactly `false` (JSON Schema
+        // semantics: absent / true / a schema value means "allow").
+        let rejects_extra = matches!(
+            schema.get("additionalProperties"),
+            Some(serde_json::Value::Bool(false))
+        );
+        if rejects_extra {
+            for key in map.keys() {
+                if !props.contains_key(key) {
+                    return Err(HarnessError::usage(format!(
+                        "{path}: unexpected property '{key}' (schema declares additionalProperties: false)"
+                    )));
+                }
+            }
+        }
         for (key, sub) in props {
             if let Some(value) = map.get(key) {
                 validate_node(sub, value, &format!("{path}.{key}"))?;
@@ -250,6 +397,7 @@ mod tests {
             .allow(Permission::ReadProject)
             .allow(Permission::WriteCandidate)
             .allow(Permission::Pxl)
+            .allow(Permission::Todo)
     }
 
     #[test]
@@ -296,6 +444,39 @@ mod tests {
     }
 
     #[test]
+    fn additional_properties_rejected() {
+        let schema = serde_json::json!({
+            "type": "object",
+            "required": ["path"],
+            "properties": {"path": {"type": "string"}},
+            "additionalProperties": false
+        });
+        assert!(validate_node(
+            &schema,
+            &serde_json::json!({"path": "a"}),
+            "$"
+        )
+        .is_ok());
+        assert!(validate_node(
+            &schema,
+            &serde_json::json!({"path": "a", "extra": 1}),
+            "$"
+        )
+        .is_err());
+        // Without the flag, unknown fields pass (v2 behavior).
+        let open = serde_json::json!({
+            "type": "object",
+            "properties": {"path": {"type": "string"}}
+        });
+        assert!(validate_node(
+            &open,
+            &serde_json::json!({"path": "a", "extra": 1}),
+            "$"
+        )
+        .is_ok());
+    }
+
+    #[test]
     fn permission_intersection_blocks_execution() {
         let mut reg = ToolRegistry::new();
         reg.register(ToolDef {
@@ -304,6 +485,9 @@ mod tests {
             parameters: serde_json::json!({"type": "object"}),
             needed: Permission::Pxl,
             run: Box::new(|_, _| Ok(ToolOutcome::ok("built"))),
+            read_only: false,
+            activity: "building".into(),
+            source: ToolSource::Stage,
         });
         let ctx = ToolContext {
             host: full(),
@@ -314,6 +498,7 @@ mod tests {
             genre: String::new(),
             design_dir: None,
             pxl: std::sync::Arc::new(dummy_adapter()),
+            todos: None,
         };
         assert!(reg.dispatch("pxl.build", &serde_json::json!({}), &ctx).is_err());
         let allowed = ToolContext {

@@ -1,5 +1,7 @@
 # 素材流水线设计（asset-pipeline）
 
+> **状态（2026-10-22）：已实现。** 数据模型、op DSL、recipe、parts 纸娃娃均落地并有测试；v2 新增 op（palette_cycle/texture/noop）与宏（tread_cycle/idle_rumble）已可用。注意实际实现与本文早期示意有出入处以代码为准（如 tank shapes 最终用镜像 rect 表达）。
+
 > v2 说明：数据模型和 op DSL 仍然有效，CLI 中对应 `*.pxl.json` 和 `*.ops.json`（见 cli-design.md）。第 4 节的"Claude 工具 API"在 v2 中由 `pxl` 子命令实现（M1 通过 bash 调用，M2 通过 MCP）。v2 新增 op：`palette_cycle`（按调色板 cycles 定义轮换索引）、`texture`（在 region 内调用生成器填充纹理）、`noop`（复制帧），以及宏 `tread_cycle`、`idle_rumble`。
 
 ## 1. 数据模型

@@ -7,9 +7,9 @@ use std::path::{Path, PathBuf};
 use serde_json::Value;
 
 use crate::agent::provider::ModelProvider;
-use crate::agent::role::artist;
+use crate::agent::role::artist_for;
 use crate::agent::runner::{AgentRunner, AgentTask};
-use crate::agent::tools::{ToolContext, ToolDef, ToolOutcome, ToolRegistry};
+use crate::agent::tools::{ToolContext, ToolDef, ToolOutcome, ToolRegistry, ToolSource};
 use crate::config::Config;
 use crate::contracts::assets::{AssetManifest, DeliveryStatus, VisualReviewState};
 use crate::contracts::design::AssetRequirements;
@@ -22,6 +22,10 @@ use crate::policy::{Permission, PermissionSet};
 use crate::qa::{issues_from_report, GateCheck, GateReport, GateStatus, GATE_REPORT_VERSION};
 use crate::storage::{ArtifactStore, Event, EventLog, RunState, RunStore, StageStatus};
 
+/// Schema kinds the artist may read through `assets.schema` (a subset of
+/// `pxl schema`; `pxl` is the alias of `doc`).
+const SCHEMA_KINDS: &[&str] = &["recipe", "shapes", "parts", "palette", "ops", "op", "sheet", "doc"];
+
 pub fn registry() -> ToolRegistry {
     let mut reg = ToolRegistry::new();
     reg.register(ToolDef {
@@ -29,6 +33,9 @@ pub fn registry() -> ToolRegistry {
         description: "Read the approved design package (game design, style, requirements).".into(),
         parameters: serde_json::json!({"type": "object", "properties": {}}),
         needed: Permission::ReadProject,
+        read_only: true,
+        activity: "read frozen".into(),
+        source: ToolSource::Stage,
         run: Box::new(|_args, ctx| {
             let Some(dir) = &ctx.design_dir else {
                 return Ok(ToolOutcome::fail("no frozen design revision is mounted"));
@@ -55,6 +62,9 @@ pub fn registry() -> ToolRegistry {
         description: "List required asset ids from the frozen design.".into(),
         parameters: serde_json::json!({"type": "object", "properties": {}}),
         needed: Permission::ReadProject,
+        read_only: true,
+        activity: "read requirements".into(),
+        source: ToolSource::Stage,
         run: Box::new(|_args, ctx| {
             let reqs = load_requirements(ctx)?;
             let ids: Vec<Value> = reqs
@@ -106,6 +116,9 @@ pub fn registry() -> ToolRegistry {
             "properties": {"path": {"type": "string"}}
         }),
         needed: Permission::ReadProject,
+        read_only: true,
+        activity: "read candidate".into(),
+        source: ToolSource::Stage,
         run: Box::new(|args, ctx| {
             let rel = args["path"].as_str().unwrap_or_default();
             let root = crate::policy::path::WriteRoot::new(&ctx.attempt_dir);
@@ -121,7 +134,7 @@ pub fn registry() -> ToolRegistry {
     });
     reg.register(ToolDef {
         name: "assets.write_candidate".into(),
-        description: "Write a recipe, shapes spec, or palette JSON file inside the attempt.".into(),
+        description: "Write palette.json, a {id}.recipe.json, or a spec it reads ({id}.shapes.json, {id}.parts.json, {id}.template.json) inside the attempt.".into(),
         parameters: serde_json::json!({
             "type": "object",
             "required": ["path", "content"],
@@ -131,6 +144,9 @@ pub fn registry() -> ToolRegistry {
             }
         }),
         needed: Permission::WriteCandidate,
+        read_only: false,
+        activity: "write candidate".into(),
+        source: ToolSource::Stage,
         run: Box::new(|args, ctx| {
             let rel = args["path"].as_str().unwrap_or_default();
             let content = args["content"].as_str().unwrap_or_default();
@@ -149,6 +165,9 @@ pub fn registry() -> ToolRegistry {
             }
         }),
         needed: Permission::Pxl,
+        read_only: false,
+        activity: "build candidate".into(),
+        source: ToolSource::Stage,
         run: Box::new(|args, ctx| {
             let recipe = args["recipe"].as_str().unwrap_or_default();
             let stem = recipe_asset_id(recipe);
@@ -172,6 +191,9 @@ pub fn registry() -> ToolRegistry {
             }
         }),
         needed: Permission::Pxl,
+        read_only: false,
+        activity: "validate candidate".into(),
+        source: ToolSource::Stage,
         run: Box::new(|args, ctx| {
             let sheet = args["sheet"].as_str().unwrap_or_default();
             let rules = args["rules"].as_str().unwrap_or("default");
@@ -180,13 +202,16 @@ pub fn registry() -> ToolRegistry {
     });
     reg.register(ToolDef {
         name: "assets.list_capabilities".into(),
-        description: "pxl list: generators, ops, macros, templates, or palettes.".into(),
+        description: "pxl list: generators, ops, macros (with args, defaults, frame counts, examples), templates (built-in bollinger ids), or palettes.".into(),
         parameters: serde_json::json!({
             "type": "object",
             "required": ["kind"],
-            "properties": {"kind": {"type": "string"}}
+            "properties": {"kind": {"type": "string", "enum": ["generators", "ops", "macros", "templates", "palettes"]}}
         }),
         needed: Permission::Pxl,
+        read_only: true,
+        activity: "list capabilities".into(),
+        source: ToolSource::Stage,
         run: Box::new(|args, ctx| {
             let kind = args["kind"].as_str().unwrap_or("generators");
             let result = ctx.pxl.list(kind)?;
@@ -201,17 +226,20 @@ pub fn registry() -> ToolRegistry {
     });
     reg.register(ToolDef {
         name: "assets.schema".into(),
-        description: "Read the pxl schema for recipe, shapes, doc, or palette. Use it before writing a recipe to check field names.".into(),
+        description: "Read the pxl JSON schema for recipe, shapes, parts, palette, ops, op, sheet, or doc. Use it before writing a file to check field names.".into(),
         parameters: serde_json::json!({
             "type": "object",
             "required": ["kind"],
-            "properties": {"kind": {"type": "string", "enum": ["recipe", "shapes", "doc", "palette"]}}
+            "properties": {"kind": {"type": "string", "enum": SCHEMA_KINDS}}
         }),
         needed: Permission::Pxl,
+        read_only: true,
+        activity: "schema".into(),
+        source: ToolSource::Stage,
         run: Box::new(|args, ctx| {
             let kind = args["kind"].as_str().unwrap_or("recipe");
             // Bounded allow-list: the model gets schemas, never CLI internals.
-            if !matches!(kind, "recipe" | "shapes" | "doc" | "palette") {
+            if !SCHEMA_KINDS.contains(&kind) {
                 return Ok(ToolOutcome::fail(format!("unknown schema kind {kind}")));
             }
             match ctx.pxl.schema(kind) {
@@ -228,6 +256,9 @@ pub fn registry() -> ToolRegistry {
         description: "Show the harness-managed check queue: which assets were written but never built, which failed, and the next todo.".into(),
         parameters: serde_json::json!({"type": "object", "properties": {}}),
         needed: Permission::ReadProject,
+        read_only: true,
+        activity: "status".into(),
+        source: ToolSource::Stage,
         run: Box::new(|_args, ctx| {
             let queue = crate::pipeline::asset_queue::AssetQueue::load(&ctx.attempt_dir);
             let summary = queue.status_summary();
@@ -263,6 +294,9 @@ pub fn registry() -> ToolRegistry {
             "properties": {"summary": {"type": "string"}}
         }),
         needed: Permission::WriteCandidate,
+        read_only: false,
+        activity: "request publish".into(),
+        source: ToolSource::Stage,
         run: Box::new(|args, ctx| {
             let summary = args["summary"].as_str().unwrap_or_default();
             if summary.trim().is_empty() {
@@ -294,7 +328,7 @@ pub fn write_candidate(ctx: &ToolContext, rel: &str, content: &str) -> Result<To
     let allowed = rel.ends_with(".json") || rel.ends_with(".md");
     if !allowed || rel.contains("asset-manifest.json") {
         return Ok(ToolOutcome::fail(
-            "path must be a recipe, shapes, or palette file (not the manifest)",
+            "path must be palette.json, a recipe, or a shapes/parts/template spec (not the manifest)",
         ));
     }
     let root = crate::policy::path::WriteRoot::new(&ctx.attempt_dir);
@@ -330,7 +364,11 @@ pub fn write_candidate(ctx: &ToolContext, rel: &str, content: &str) -> Result<To
                 .collect()
         })
         .unwrap_or_default();
-    let affected = crate::pipeline::asset_queue::AssetQueue::affected_ids(file_name, &required);
+    let affected = crate::pipeline::asset_queue::AssetQueue::affected_ids_in(
+        &ctx.attempt_dir,
+        rel.trim_start_matches("./"),
+        &required,
+    );
     if !affected.is_empty() {
         let mut queue = crate::pipeline::asset_queue::AssetQueue::load(&ctx.attempt_dir);
         queue.seed(&required);
@@ -418,7 +456,10 @@ fn authored_spec_files(attempt: &Path) -> Vec<PathBuf> {
             let Some(name) = p.file_name().and_then(|n| n.to_str()) else {
                 return false;
             };
-            name == "palette.json" || name.ends_with(".shapes.json") || name.ends_with(".recipe.json")
+            name == "palette.json"
+                || crate::pipeline::asset_queue::SPEC_SUFFIXES
+                    .iter()
+                    .any(|s| name.ends_with(s))
         })
         .collect();
     files.sort();
@@ -665,15 +706,17 @@ fn request_publish(ctx: &ToolContext, summary: &str) -> Result<ToolOutcome> {
             .as_ref()
             .and_then(|v| v.get("seed").and_then(|s| s.as_u64()))
             .unwrap_or(0);
-        // Real spec provenance: (path, digest) pairs, not an empty list.
+        // Real spec provenance: (path, digest) pairs for every spec the
+        // recipe reads (shapes, parts, file templates), not an empty list.
         let mut spec_paths: Vec<(String, String)> = Vec::new();
-        let shapes_name = format!("{id}.shapes.json");
-        let shapes_path = ctx.attempt_dir.join(&shapes_name);
-        if shapes_path.is_file() {
-            spec_paths.push((
-                shapes_name,
-                digest_file(&shapes_path).unwrap_or_else(|_| "sha256:missing".into()),
-            ));
+        for spec in crate::pipeline::asset_queue::recipe_spec_files(&ctx.attempt_dir, &recipe) {
+            let spec_path = ctx.attempt_dir.join(&spec);
+            if spec_path.is_file() {
+                spec_paths.push((
+                    spec,
+                    digest_file(&spec_path).unwrap_or_else(|_| "sha256:missing".into()),
+                ));
+            }
         }
         // Animations with the real atlas frame keys per direction, so
         // "some {id}_* frame exists" can never stand in for the requirement.
@@ -852,6 +895,10 @@ fn match_asset_id(frame: &str, ids: &[String]) -> Option<String> {
         .cloned()
 }
 
+/// `pxl build` stages into `<out>/.staging` and keeps a failed attempt under
+/// `<out>/.rejected`. Neither is a current deliverable, so neither is scanned.
+const NON_DELIVERABLE_DIRS: &[&str] = &[".staging", ".rejected"];
+
 fn find_sheets(dir: &Path) -> Vec<PathBuf> {
     let mut out = Vec::new();
     let mut stack = vec![dir.to_path_buf()];
@@ -862,7 +909,13 @@ fn find_sheets(dir: &Path) -> Vec<PathBuf> {
         for entry in rd.flatten() {
             let path = entry.path();
             if path.is_dir() {
-                stack.push(path);
+                let skip = path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .is_some_and(|n| NON_DELIVERABLE_DIRS.contains(&n));
+                if !skip {
+                    stack.push(path);
+                }
             } else if path.extension().and_then(|e| e.to_str()) == Some("json")
                 && path
                     .file_name()
@@ -1084,10 +1137,14 @@ pub fn gates(ctx: &ToolContext) -> Result<GateReport> {
     let mut copies = Vec::new();
     let mut missing_specs = Vec::new();
     for id in &required {
-        for suffix in ["shapes.json", "recipe.json"] {
-            let name = format!("{id}.{suffix}");
-            if !ctx.attempt_dir.join(&name).is_file() {
-                missing_specs.push(format!("missing {name}"));
+        let recipe = format!("{id}.recipe.json");
+        if !ctx.attempt_dir.join(&recipe).is_file() {
+            missing_specs.push(format!("missing {recipe}"));
+            continue;
+        }
+        for spec in crate::pipeline::asset_queue::recipe_spec_files(&ctx.attempt_dir, &recipe) {
+            if !ctx.attempt_dir.join(&spec).is_file() {
+                missing_specs.push(format!("missing {spec} (read by {recipe})"));
             }
         }
     }
@@ -1117,7 +1174,7 @@ pub fn gates(ctx: &ToolContext) -> Result<GateReport> {
         } else {
             format!("{} missing", missing_specs.len())
         },
-        limit: "palette.json plus {asset_id}.shapes.json and {asset_id}.recipe.json for every required asset".into(),
+        limit: "palette.json plus {asset_id}.recipe.json for every required asset, and every spec file each recipe reads".into(),
         failures: missing_specs,
     });
     checks.push(GateCheck {
@@ -1211,32 +1268,39 @@ pub fn run_assets_stage(
     }
     let design_dir = artifacts.revision_dir("design", &revision);
     let attempt_dir = run.attempt_dir("assets", "asset_package", 1)?;
-    let registry = registry();
-    let role = artist();
+    let registry = registry().with_builtin();
+    let role = artist_for(cfg.prompt_lang);
+    let todo_manager = std::sync::Arc::new(crate::agent::tools::TodoManager::new());
     let ctx = ToolContext {
         host: PermissionSet::default()
             .allow(Permission::ReadProject)
             .allow(Permission::WriteCandidate)
-            .allow(Permission::Pxl),
+            .allow(Permission::Pxl)
+            .allow(Permission::Todo),
         stage: PermissionSet::default()
             .allow(Permission::ReadProject)
             .allow(Permission::WriteCandidate)
-            .allow(Permission::Pxl),
+            .allow(Permission::Pxl)
+            .allow(Permission::Todo),
         role: role.permission_set(),
         attempt_dir: attempt_dir.clone(),
         template_roots: template_roots.to_vec(),
         genre: identity.genre_template.clone(),
         design_dir: Some(design_dir.clone()),
         pxl,
+        todos: Some(todo_manager),
     };
     let req_text = fs::read_to_string(design_dir.join("asset-requirements.json"))?;
     let base_prompt = format!(
         "Author an original asset package for design revision {revision}. \
 Do not copy bundled template files. The harness rejects any spec whose JSON equals a template file. \
-Write palette.json, then for every required asset_id write {{id}}.shapes.json and {{id}}.recipe.json yourself. \
+Write palette.json first, then for every required asset_id write {{id}}.recipe.json plus the spec it reads \
+({{id}}.shapes.json, {{id}}.parts.json or {{id}}.template.json; tile recipes and built-in bollinger templates need none). \
+Pick the generator from each requirement's strategy and kind. \
 Build each recipe with assets.build_candidate (out_dir out/{{id}}) and assets.validate_candidate \
-with rules default. player_tank and enemy_tank still need four directions and a move animation. \
-Then assets.request_publish. \
+with the rules the recipe declares (default unless the recipe meets tank or character). \
+Every sprite must deliver the directions and animations its requirement lists. \
+Check assets.status, then assets.request_publish. \
 Requirements:\n{req_text}"
     );
     let specs = registry.specs(&ctx.role);
@@ -1542,6 +1606,7 @@ mod tests {
             genre: "top_down_tank".into(),
             design_dir: Some(design.to_path_buf()),
             pxl: Arc::new(crate::adapters::PxlAdapter::unavailable()),
+            todos: None,
         }
     }
 
@@ -1656,6 +1721,28 @@ mod tests {
         queue.save(&attempt).unwrap();
         let report = gates(&context).unwrap();
         assert!(report.passed(), "{:?}", report.failed_checks());
+    }
+
+    #[test]
+    fn find_sheets_ignores_rejected_and_staging_builds() {
+        let root = std::env::temp_dir().join(format!("pxl_h_findsheets_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        for rel in [
+            "out/good.sheet.json",
+            "out/.rejected/bad.sheet.json",
+            "out/.staging/half.sheet.json",
+            "out/nested/also.sheet.json",
+        ] {
+            let p = root.join(rel);
+            fs::create_dir_all(p.parent().unwrap()).unwrap();
+            fs::write(&p, "{}").unwrap();
+        }
+        let found: Vec<String> = find_sheets(&root)
+            .iter()
+            .map(|p| rel_to(&root, p))
+            .collect();
+        assert_eq!(found, vec!["out/good.sheet.json", "out/nested/also.sheet.json"]);
+        let _ = fs::remove_dir_all(&root);
     }
 
     #[test]

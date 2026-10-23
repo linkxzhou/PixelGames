@@ -79,8 +79,11 @@ pub struct RecipeSprite {
     pub directions: Vec<DirectionStep>,
     #[serde(default)]
     pub anims: Vec<RecipeAnim>,
-    /// Set to `tiles` for a hand-drawn tile. The document is then exempt from
-    /// sprite structure checks and gets seam checks instead.
+    /// Declared use, which selects the QA profile: `sprite` (default) or
+    /// `parts` keep silhouette rules; `tiles` must be full-bleed and get seam
+    /// checks; `effect` is judged by its one-shot lifecycle (grow, decay, stay
+    /// anchored) instead of the motion cap; `ui` and `overlay` may be sparse
+    /// but must be visible.
     #[serde(default)]
     pub kind: Option<String>,
     /// Ramp used to judge tile seams. Defaults to `ground` when the palette has

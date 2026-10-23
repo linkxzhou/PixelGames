@@ -76,6 +76,26 @@ impl Palette {
             return Err(PxlError::schema("palette index 0 must be transparent")
                 .with_hint("set colors[0] to #00000000"));
         }
+        // Geometry, QA and shading all treat index 0 as the only clear value, so
+        // the declared transparent index must be 0 and no other colour may be
+        // clear: otherwise QA counts a solid pixel the PNG does not show.
+        if self.special.transparent != 0 {
+            return Err(PxlError::schema(alloc::format!(
+                "special.transparent is {}; transparent must be index 0",
+                self.special.transparent
+            ))
+            .with_path("/special/transparent")
+            .with_hint("keep the clear colour at index 0 and leave special.transparent at 0"));
+        }
+        for (i, c) in self.colors.iter().enumerate().skip(1) {
+            if c.is_transparent() {
+                return Err(PxlError::schema(alloc::format!(
+                    "color {i} is transparent but only index 0 may be"
+                ))
+                .with_path(alloc::format!("/colors/{i}"))
+                .with_hint("give it a visible colour, or use index 0 for empty pixels"));
+            }
+        }
         for (name, ramp) in &self.ramps {
             if ramp.is_empty() {
                 return Err(PxlError::schema(alloc::format!("ramp '{name}' is empty")));
@@ -83,6 +103,13 @@ impl Palette {
             for &idx in ramp {
                 self.get(idx)
                     .map_err(|e| e.with_path(alloc::format!("/ramps/{name}")))?;
+                if idx == 0 {
+                    return Err(PxlError::schema(alloc::format!(
+                        "ramp '{name}' contains index 0 (transparent)"
+                    ))
+                    .with_path(alloc::format!("/ramps/{name}"))
+                    .with_hint("ramps list visible colours; shading would erase pixels"));
+                }
             }
         }
         for (name, cycle) in &self.cycles {
@@ -95,6 +122,20 @@ impl Palette {
         }
         self.get(self.special.outline)?;
         self.get(self.special.flash)?;
+        Ok(())
+    }
+
+    /// The text matrix writes one character per index, so it holds 0..=35. Call
+    /// this where a document is about to be written as text, to report the limit
+    /// against the palette instead of failing on the first pixel that exceeds it.
+    pub fn check_text_encodable(&self) -> PxlResult<()> {
+        if self.colors.len() > 36 {
+            return Err(PxlError::semantic(alloc::format!(
+                "palette has {} colors but the text matrix holds at most 36 (indices 0-9, a-z)",
+                self.colors.len()
+            ))
+            .with_hint("use at most 36 colors for .pxl.json documents"));
+        }
         Ok(())
     }
 
@@ -142,7 +183,13 @@ impl Palette {
             return index;
         };
         let next = (pos as i32 + delta).clamp(0, list.len() as i32 - 1);
-        list[next as usize]
+        let target = list[next as usize];
+        // A malformed ramp must never turn a visible pixel into a clear one.
+        if target == 0 {
+            index
+        } else {
+            target
+        }
     }
 
     /// Move `index` along its ramp only when exactly one ramp holds it. A colour
@@ -174,7 +221,8 @@ impl Palette {
                 if next >= len {
                     next = len - 1;
                 }
-                return ramp[next as usize];
+                let target = ramp[next as usize];
+                return if target == 0 { index } else { target };
             }
         }
         index
@@ -290,6 +338,82 @@ mod tests {
         assert_eq!(m[&3], 1);
         let id = p.cycle_map("tread", 0).unwrap();
         assert_eq!(id[&1], 1);
+    }
+}
+
+#[cfg(test)]
+mod transparency_tests {
+    use super::*;
+
+    fn base() -> Palette {
+        Palette {
+            id: "t".into(),
+            colors: alloc::vec![
+                Rgba::TRANSPARENT,
+                Rgba::rgb(10, 10, 10),
+                Rgba::rgb(20, 20, 20),
+                Rgba::rgb(30, 30, 30),
+            ],
+            ramps: BTreeMap::new(),
+            cycles: BTreeMap::new(),
+            special: Special {
+                transparent: 0,
+                outline: 1,
+                flash: 3,
+            },
+        }
+    }
+
+    #[test]
+    fn a_well_formed_palette_validates() {
+        assert!(base().validate().is_ok());
+    }
+
+    #[test]
+    fn transparent_must_be_index_zero() {
+        let mut p = base();
+        p.special.transparent = 2;
+        let err = p.validate().unwrap_err();
+        assert!(err.message.contains("transparent"), "{}", err.message);
+    }
+
+    #[test]
+    fn a_non_zero_colour_cannot_be_transparent() {
+        let mut p = base();
+        p.colors[2] = Rgba::TRANSPARENT;
+        let err = p.validate().unwrap_err();
+        assert!(err.message.contains("color 2"), "{}", err.message);
+    }
+
+    #[test]
+    fn a_ramp_cannot_contain_the_transparent_index() {
+        let mut p = base();
+        p.ramps.insert("steel".into(), alloc::vec![0, 1, 2]);
+        let err = p.validate().unwrap_err();
+        assert!(err.message.contains("steel"), "{}", err.message);
+        assert_eq!(err.path.as_deref(), Some("/ramps/steel"));
+    }
+
+    #[test]
+    fn shading_never_turns_a_solid_pixel_clear() {
+        let mut p = base();
+        // Bypass validate: even a malformed ramp must not erase a pixel.
+        p.ramps.insert("bad".into(), alloc::vec![0, 2, 3]);
+        assert_eq!(p.shift_in_ramp("bad", 2, -1), 2);
+        assert_eq!(p.shift_on_unique_ramp(2, -1), 2);
+        assert_eq!(p.shift_on_ramp(2, -1), 2);
+        assert_eq!(p.shift_in_ramp("bad", 2, 1), 3);
+    }
+
+    #[test]
+    fn text_matrix_range_is_reported_where_the_index_is_chosen() {
+        let mut p = base();
+        for i in 4..40u8 {
+            p.colors.push(Rgba::rgb(i, i, i));
+        }
+        let err = p.check_text_encodable().unwrap_err();
+        assert!(err.message.contains("36"), "{}", err.message);
+        assert!(base().check_text_encodable().is_ok());
     }
 }
 

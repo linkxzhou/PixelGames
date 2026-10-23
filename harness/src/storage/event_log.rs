@@ -117,6 +117,17 @@ pub enum Event {
         failures: u32,
         report_digest: String,
     },
+    /// v3: one independent goal-evaluator verdict. `evaluator_error` is set
+    /// when the evaluator itself failed (never conflated with `yes: false`).
+    GoalEvaluated {
+        stage: String,
+        task_id: String,
+        yes: bool,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        evaluator_error: Option<String>,
+        #[serde(default)]
+        unmet: Vec<String>,
+    },
     StageStatus {
         stage: String,
         status: String,

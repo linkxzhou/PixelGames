@@ -1,98 +1,103 @@
 ---
 name: pxl
-description: Drive the deterministic pxl CLI to generate palette-indexed sprites, animations, tiles, and spritesheets. Always pass --json, validate before finishing, and never write PNG bytes by hand.
+description: Generate deterministic pixel-art assets (sprites, animations, tiles, spritesheets) with the pxl CLI. Use when the task involves creating or repairing game art via pxl commands.
 temperature: 0.2
-max_steps: 40
 ---
 
-# pxl
+# pxl skill
 
-`pxl` is a local Rust CLI. It writes palette-indexed documents (`.pxl.json`), indexed PNG spritesheets, GIF previews, and Aseprite JSON. The same recipe, seed, and `pxl` version produce byte-identical files.
+You drive the `pxl` CLI to produce pixel-art assets. pxl is deterministic: the same
+inputs (spec + palette + seed) always produce the same pixels. Your job is to write
+specs as JSON files, run pxl commands, read structured feedback, and converge on a
+valid, validated spritesheet.
 
-You do not have image libraries. Do not write PNG or GIF bytes yourself. Do not use Python, ImageMagick, or any other tool to draw, crop, or recolor pixels. Every pixel comes from `pxl`.
+## Ground rules
 
-## How to call it
+1. **Always pass `--json`.** Every invocation must include `--json` so stdout is one
+   JSON object. Logs go to stderr and can be ignored.
+2. **Never hand-write PNG output.** Never use Python or any image library to
+   manipulate pixels. All pixels come from pxl commands.
+3. **Discover before you write.** Run `pxl list ...` or `pxl schema ...` first when
+   unsure about a generator, op, macro, or file format.
+4. **Check every exit code.** Exit 0 = success. Non-zero = read the JSON error:
+   - `error.code` — machine code (`E_USAGE`, `E_SCHEMA`, `E_QA`, ...)
+   - `error.message` — what went wrong
+   - `error.hint` — how to fix it (e.g. the exact macro signature)
+   - `error.path` — the offending file, when applicable
+   Fix according to `hint` and retry. **At most 3 retries per failure**, then move
+   on and report the blocker.
+5. **Finish with `pxl validate`.** A task is only complete when
+   `pxl validate <sheet.json> --rules <rules> --json` exits 0.
 
-1. Add `--json` to every command. Stdout is one JSON object. Logs stay on stderr.
-2. Before writing a JSON file, run `pxl list <kind> --json` or `pxl schema <kind> --json`. Kinds for list: `generators`, `ops`, `macros`, `templates`, `palettes`. Kinds for schema: `recipe`, `ops`, `op`, `pxl`, `palette`, `parts`, `sheet`.
-3. Read the exit code. `0` is success. Anything else is a failure.
-4. On failure, read `error.code`, `error.message`, `error.path`, and `error.hint`. Fix the input and retry that step. Stop after 3 failed attempts on the same step and report the last hint.
-5. Finish only after `pxl validate <sheet.json> --rules <rules> --json` exits 0. Use `tank` for the tank demo, `character` for a paper-doll, and `default` for anything else.
+## Command workflow
 
-Exit codes:
-
-| code | name | meaning |
-| --- | --- | --- |
-| 0 | ok | command succeeded |
-| 1 | E_IO | disk or stdin/stdout failure |
-| 2 | E_USAGE | bad arguments |
-| 3 | E_SCHEMA | JSON does not match the schema |
-| 4 | E_SEMANTIC | known fields, impossible combination. Arbitrary-angle `rotate` and `tile autotile` are not implemented. `part_transform` and `compose` are. |
-| 5 | E_QA | `validate` or `build` checks failed. The `checks` array is on the same JSON object |
-| 6 | E_EXISTS | the output file already exists. Pass `--overwrite`, or pick a new path |
-
-`pxl build -o` takes a directory and replaces files inside it. Every other command refuses to replace an existing file unless you pass `--overwrite`.
-
-Do not pass `--seed` unless you mean to override the file. A recipe's `"seed"` is the reproducible input.
-
-## Tank demo
-
-The checked-in files in this directory already pass `--rules tank`. Prefer `pxl build tank.recipe.json -o out/ --json` when the task is the tank demo. Use the step-by-step commands only when you are changing one stage.
-
-Working files:
-
-- `tank.palette.json` — 12 colors. Index 0 is `#00000000`. Ramps `olive`, `tread`, `ground`. Cycle `tread` is `[6, 7, 1]`.
-- `tank_body.shapes.json` — 16×16, gun pointing north (small y), red muzzle index 10 (`a` in the text matrix). Treads are two columns on each side so the move diff stays inside 2%–25%.
-- `tank.recipe.json` — shapes, hull texture, four directions, `tread_cycle` (4 frames) and `idle_rumble` (2 frames), four dirt tiles, sheet, GIF, preview.
-
-Directions, in this order: `N` is the base, `E` is `rotate90` cw of `N`, `S` is flip y of `N`, `W` is flip x of `E`. The canvas stays square.
-
-Step-by-step, if you are not using `build`:
+Typical order for one asset (see `examples/tank/` for a complete reference):
 
 ```bash
-pxl palette show tank.palette.json --json
-pxl gen shapes --spec tank_body.shapes.json --palette tank.palette.json -o tank.pxl.json --json
-pxl op tank.pxl.json --op '{"op":"texture","gen":"bollinger","template":"panel_4x8","region":[4,7,8,4],"ramp":"olive","seed":42}' -o tank.pxl.json --overwrite --json
-pxl op tank.pxl.json --frame base --as N --op '{"op":"noop"}' -o tank.pxl.json --overwrite --json
-pxl op tank.pxl.json --frame N --as E --op '{"op":"rotate90","dir":"cw"}' -o tank.pxl.json --overwrite --json
-pxl op tank.pxl.json --frame N --as S --op '{"op":"flip","axis":"y"}' -o tank.pxl.json --overwrite --json
-pxl op tank.pxl.json --frame E --as W --op '{"op":"flip","axis":"x"}' -o tank.pxl.json --overwrite --json
-pxl anim tank.pxl.json --name move --dirs N,E,S,W --fps 10 --macro 'tread_cycle(steps=4, region=auto_tread, cycle=tread, bob=1)' -o tank.pxl.json --overwrite --json
-pxl anim tank.pxl.json --name idle --dirs N,E,S,W --fps 4 --macro 'idle_rumble(steps=2, amp=1)' -o tank.pxl.json --overwrite --json
-pxl tile gen --kind dirt --size 16 --seed 7 --palette tank.palette.json --variants 4 -o ground.pxl.json --json
-pxl sheet tank.pxl.json ground.pxl.json --layout rows-by-anim --pad 1 -o out/tank.sheet.png --json
-pxl render tank.pxl.json --anim move --dir E --scale 6 -o out/tank_move_E.gif --json
-pxl render out/tank.sheet.png --scale 4 --grid -o out/preview.png --json
-pxl validate out/tank.sheet.json --rules tank --json
+pxl palette show <palette.json> --json            # inspect palette ramps/cycles
+pxl gen shapes --spec <body.shapes.json> --seed 1 -o <id>.pxl.json --json
+pxl op <id>.pxl.json --op '<op JSON>' -o <id>.pxl.json --overwrite --json
+pxl op <id>.pxl.json --frame N --as E --op '{"op":"rotate90","dir":"cw"}' -o <id>.pxl.json --overwrite --json
+pxl anim <id>.pxl.json --name move --dirs N,E,S,W --macro '<macro call>' -o <id>.pxl.json --overwrite --json
+pxl tile gen --kind dirt --size 16 --variants 4 --palette <palette.json> -o ground.pxl.json --json
+pxl sheet <docs...> --layout rows-by-anim --pad 1 -o out/<id>.sheet.png --json
+pxl render out/<id>.sheet.png --scale 4 --grid -o out/preview.png --json
+pxl validate out/<id>.sheet.json --rules tank --json
 ```
 
-`--rules tank` requires: every pixel in the palette, no semi-transparent colors, N/S bounding boxes equal, E/W the transpose of N, at least 4 move frames and 2 idle frames per direction, adjacent move frames (including the loop) differ by 2%–25%, tread pixels change every frame, hull pixel-count variance at most 5%, and at least 4 ground tiles whose opposite edges match or sit one ramp step apart.
+## Writing input files
 
-If a diff check is over 25%, the tread region is too big or the hull bob is repainting too many pixels. Shrink the tread rect. Do not loosen the checker.
+- Specs, palettes, and recipes are JSON files. **Write a JSON file, then pass its
+  path** — do not inline large JSON in shell quotes (quoting errors are the #1
+  failure mode).
+- Use `pxl schema <kind>` (kinds: `palette`, `shapes`, `recipe`, `op`, ...) to get
+  the exact expected structure before writing a file.
+- `pxl list <kind>` (kinds: `gens`, `ops`, `macros`, `templates`, `palettes`) shows
+  available ids.
+- Recipes: once a step-by-step run succeeds, save it as `<asset>.recipe.json` and
+  reproduce with `pxl build <recipe> -o out/`. Recipes make results auditable.
 
-`pxl mcp` and `pxl tile autotile` are not available. Stay on the shell commands above.
+## Animations and directions
 
-## Farmer (paper-doll)
+- `gen shapes` outputs a single frame named `base`. Copy it to direction frames
+  with `--frame base --as N --op '{"op":"noop"}'`.
+- 4 directions derive geometrically: `E = rotate90(cw) of N`, `S = flip y of N`,
+  `W = flip x of E`. Keep the canvas square so rotation is lossless.
+- Animation macros carry their own signature. If you pass a wrong argument, the
+  `hint` field returns the exact accepted arguments, e.g.
+  `tread_cycle(steps=4, region=auto_tread, cycle=tread, bob=1)`. Trust the hint,
+  not your memory.
+- `region=auto_tread` is the only valid region for tread_cycle — it infers tread
+  columns from `ramps.tread` and rotates per direction automatically.
 
-A character is a parts rig. `examples/farmer/` is the reference: 16×32, four facings, walk, idle, and a down-facing hoe. Right is a mirror of left. Build the body from parts with pivots and per-facing sprites.
+## QA thresholds (rules=tank)
 
-Working files:
+`pxl validate --rules tank` enforces, per animation and direction:
 
-- `farmer.palette.json` — index 0 is `#00000000`. Ramps `skin`, `hair`, `shirt`, `pants`, plus swap targets `blonde`, `raven`, `red`, `green`.
-- `farmer.parts.json` — parts with pivots, per-facing sprites (or `"up": "down"` aliases), `order` per facing, and `anims` whose frames are integer `dx` / `dy` / `rot90`.
-- `farmer.recipe.json` — `base.gen` is `parts`. Each direction is `compose`. Animations use `doll(anim=walk)`, `doll(anim=idle)`, or `doll(anim=hoe)`.
+- `anim_diff`: adjacent-frame pixel difference between 2% and 25%; first/last
+  frames must loop seamlessly (unless the anim is explicitly non-looping).
+- `tank_facing`: N/S bounding boxes identical; E/W are transposes of N.
+- `tread_motion`: tread region must change every frame.
+- `hull_stability`: hull pixel count drifts ≤ 5% across frames.
+- `tile_seams`: tiles tile seamlessly on all four edges.
+- `palette.alpha`: no semi-transparent pixels; all indices resolve in the palette.
 
-`post` on a parts sprite runs after every `compose` (outline, then a ramp swap for a variant). One palette serves the whole sheet. A variant is `palette_swap` with `ramp:hair->blonde`, not a second palette file.
+Failed checks return structured values: check `id`, `value` (measured),
+`limit` (threshold). Lower `value` is not always better — `anim_diff` is a band.
+If frames differ too much (>25%), reduce motion amplitude per step (e.g. fewer
+shift pixels, smaller bob); if too little (<2%), increase steps or amplitude.
 
-```bash
-pxl schema parts --json
-pxl gen parts --spec farmer.parts.json --dir down -o farmer.pxl.json --json
-pxl build farmer.recipe.json -o out/ --json
-pxl validate out/farmer.sheet.json --rules character --json
-```
+## Determinism
 
-`--rules character` requires: palette indices only, facings down/up/left/right, left and right bounding boxes equal, right pixels the x-flip of left (idle and every walk/idle frame), down and up boxes within 2px, at least 4 walk frames and 2 idle frames per facing, walk diffs 1%–35% including the loop, idle diffs 0.5%–25%, one shared foot line across walk, idle, and the hoe, and a non-looping `hoe` of at least 4 frames on down.
+- Always pass explicit `--seed`. Without it, pxl defaults seed to 1 and warns.
+- Same inputs → same sha256. Verify reproducibility by running the build twice and
+  comparing hashes when asked.
 
-Keep the head bob on the head part. A torso shift drags the legs and moves the foot line. `rot90` is `cw`, `ccw`, or `180` around the part pivot. If a tool swing drops below the boots, shorten the tool. When a check fails, change the sprite or the pose.
+## Output contract recap
 
-When several sprites share an animation name, the first one keeps tags like `walk_down`. Later sprites get `{id}_walk_down`. `--rules character` checks the first sprite's anims.
+- Success: `{"ok": true, "cmd": "...", "out": "...", "warnings": [...]}` plus
+  command-specific fields (`frames`, `checks`, etc.).
+- Failure: `{"ok": false, "error": {"code", "message", "hint"?, "path"?}}`,
+  non-zero exit code.
+- `--overwrite` is required to replace an existing output file; add it whenever
+  re-running a step in place.

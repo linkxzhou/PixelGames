@@ -4,6 +4,9 @@
 > 状态：**待实施计划，本次不修改生成器、配方、测试或黄金快照。**
 > 输入：`reference-art-analysis.md`、`pxl-quality-analysis.md`，以及当前 `crates/`、`examples/reference/`、已有规划。
 > 本文给出质量改进的执行顺序，不把原规划中的目标当作已实现能力。
+>
+> **版本说明（2026-10-22）：第 1–10 节保留为 v1 历史分析；当前执行计划以文末「v2：基于 v4/v5 实产物的质量与可靠性改进」为准。**
+> **v2 状态勘误：** Q2.1–Q2.4 的主要修复已有实现，Q2.5/Q2.6 仍有多素材身份、空帧豁免和类别传播缺口，不能概括为“全部实施”。`AnimMode` 已存在，但 `.pxl.json` 校验入口仍丢失 static 语义。原 Q0/Q1/Q3–Q6 的目标保留，执行顺序按 v2 调整。实施历史表见第 6 节；历史测试数不是本次测试结果。
 
 ## 1. 结论与证据边界
 
@@ -464,3 +467,331 @@ SSIM、剪影 IoU 只用于同尺寸、同视角且合理对齐的诊断，或�
 **先把目标和输入画对，再把执行语义做可靠，最后扩展能够重复产生收益的算法。**
 
 本轮最有价值的成果不是增加多少 op，而是：三个经过复核的原创样板、一组能捕捉当前真实缺陷的测试、按类别工作的 QA，以及可以重现和审阅每次画质变化的流程。做到这些之后，才能判断哪些生成器扩展值得投入。
+
+---
+
+## v2：基于 v4/v5 实产物的质量与可靠性改进
+
+> 日期：2026-10-22。源码基线：`703d661` 加本次开始时已有的工作区改动；不是只审查该提交，也不是复跑历史二进制。
+> 范围：`crates/` 七个包，以及解释 v4/v5 结果所需的配方、日志和 Harness 接口。**本次只更新本计划，不修实现、不改配方、不更新黄金快照、不重新运行模型或游戏。**
+> 证据分级：**R＝本次最小运行复现；S＝当前源码确认、尚未新增回归测试；H＝历史日志/报告；P＝直接读取留存 PNG 像素。** S 不冒充 R，H 不冒充当前版本验证。
+> 阅读顺序：V2.1 结论 → V2.2 图片/历史证据 → V2.3 缺陷 → V2.5 实施批次 → V2.7 验收。
+
+### V2.1 结论与本次验证边界
+
+**还有真实 bug，而且最优先的问题是“验证结论是否可信”，不是绘图原语不够多。** 当前链路既会误拒合法静态图，也能漏过空动画帧、丢失的动画和不可见 PNG；修图时还可能覆盖上一份有效产物。扩大 seed、重试次数、颜色数或全局放宽 bbox/帧差，会掩盖这些问题。
+
+画质改进则有更具体的方向：**满铺地块不要为了通过 sprite QA 留透明边，移动坦克不要只抖整张图，开火补丁应跟随炮口方向，UI 应按 UI 验收。** 这些先用现有矩阵、局部操作和显式关键帧做样板，不以复杂光照/噪声引擎为前置。
+
+本次完成的验证：
+
+- 七个 crate 的现有测试：**76 passed，0 failed**，其中 CLI 集成 15、黄金回归 1、core 13、export 4、gen 8、ops 24、QA 11；format 当前无独立单测。包含用户已有的 CLI 测试改动。
+- 执行命令：`cargo test --offline --manifest-path /Volumes/my/github/PixelGames/Cargo.toml -p pxl-core -p pxl-format -p pxl-gen -p pxl-ops -p pxl-export -p pxl-qa -p pxl-cli`。没有运行 `harness` 测试或声称全 workspace 通过。
+- 在 `target/quality-v2-probe-da91h196/` 内生成隔离最小样例，保存 `results.json`、`additional-results.json`。这只是本地诊断目录，不是正式 fixture，也不应被 Harness 扫为交付物；正式修复必须把对应断言纳入现有测试目录。
+- 当前环境无 `glance`、`pixel_diff`，图片读取未返回可分析的图像内容。因此改用 Pillow 读取 RGBA、还原整数放大和矩阵、比较平移关系。**本次没有进行完整视觉评分、GIF 播放或游戏场景审阅。**
+- v5 原运行完整输出目录未在工作区取得；13/13 是留存评审的停止后统计，不能说本次重新验证了全部原始 sheet。
+
+### V2.2 从多轮生成结果得到的证据
+
+#### V2.2.1 成功率、运行状态和视觉质量必须分开
+
+| 轮次 | 留存评审中的 required sheet 默认 QA 通过数 | 运行/最后 gate | 可以得出的结论 |
+|---|---|---|---|
+| v4 | 3/13 | gate failed，第二轮被停止 | 覆盖不足，爆炸及单帧规则有修复成本 |
+| v5a | 12/13 | gate failed，随后 `running -> running` 状态迁移失败 | 默认 QA 覆盖提升；自动检查的相对路径错误不等于画质失败 |
+| v5b | 13/13 | 最后写入的 gate 仍有 2 项失败；第三轮中止 | 模型输出目录默认 QA 通过，不等于发布成功或美术完成 |
+
+来源：`review/v5-pr5-battle-city-assets/comparison.md` 的 Stats、per asset、Harness bugs 小节，以及两轮 `assets.gates.json`。
+
+v5b gate 同时受到队列错误降级与旧指纹输出目录影响；其最后 gate 是事件 seq 722 的第二轮结果，不是在 SIGTERM 时重新计算。`345cc39` 虽在运行期间提交，但没有进入该运行进程。不要把历史缺陷直接写成“当前 Harness 仍未修复”，也不要让当前修改倒写历史通过率。
+
+v5a/v5b 的显式 `build_candidate` 成功/失败分别为 **12/14、21/18**；自动检查分别为 **0/12、0/2**，须分开统计。v5b 的数字包含额外 `probe_explosion` 的一次成功和一次失败，不能算第 14 个 required 资产。按 `tool-results` 与事件 `call_id` 对账，不能按“最近写入的素材”归属构建。v4 的旧失败次数表存在此归属问题，本文不沿用其逐素材次数。
+
+`review/README.md` 的 v1–v3 评分仅作历史趋势：v3 覆盖扩展至 100 项，但风格均分仍为 5.88；地形/UI 的历史描述还出现相对 v2 退化。**它支持“覆盖率不代表画质”的判断，不构成本次重新打分。**
+
+#### V2.2.2 图片与配方的直接证据
+
+以下尺寸均来自单项 `*.sheet.x8.png`，不是 contact sheet 的展示布局。按 8 倍最近邻逆采样后再放大，v4 的 3 张、v5b 的 14 张（含 probe）均与原 RGBA 字节完全一致；说明留存单项图没有额外缩放模糊，不能据此证明整条导出链无缺陷。
+
+| 观察 | 证据级别与结果 | 根因/改进方向 | 不能扩大的结论 |
+|---|---|---|---|
+| 地块为过 sprite bbox 留边 | P：v5b `b/x/w/h/g` 的首个 16×16 单元均只有 225 个不透明像素，bbox 为 `[0,0,15,15)`，右列/底行全透明；H：旧失败曾报 bbox 100% | 当前有效占比 87.89%；按 16px 原格拼接会留下透明带。地表、危险/目标标识应由冻结用途决定是否满铺 | 不能断言每个标识都必须满铺，也不能声称已经在游戏中观察到裂缝 |
+| 两种坦克的 move 是整图位移 | P：两张图前四个双帧行，第二帧分别严格等于第一帧平移 `(0,1)/(1,0)/(0,1)/(1,0)`；H：配方都使用 `idle_rumble(steps=2, amp=1)` | 无履带内部相位变化，属于动作语义不足。复用 tread ramp/cycle 或局部 patch，先稳定车体 | 不以“帧差非零”判定履带动画正确；不要求四方向平移向量本身代表游戏移动 |
+| fire 在四向复用相同画布补丁 | H/S：player 配方对所有 dirs 使用固定 `patch_pixels(x=5,y=4)`，随后 outer outline | 当前 op 按画布坐标执行，不会自动转到炮口局部坐标。样板必须逐方向检查闪光位置和车体外扩 | 这是配方/坐标契约问题，不把“不自动猜测炮口”定义成底层 op bug |
+| HUD 并非没有像素，但类别声明不符 | P：`hud_stage_label` 是 64×8，214 个不透明像素，3 种 RGBA 值，底部有 58px 连续色线；H：字形由显式 mask 构成，recipe 却写 `kind:"tiles"` | 字形/字距/基线按 UI 验收；冻结规格是 UI，不能靠改为 tiles 获得合格结论 | 不把图集 bbox、非空或默认 QA 当文字可读性得分 |
+| 子弹静态需求得到合理表达 | P：v4 表宽 17px，v5b 表宽 8px；H：v5b `mode:static`、单 noop 帧 | 支持单帧是正确修复，不应为满足动态 QA 强制增加位移帧 | 两轮表布局不同，不能直接做整图差分并称为画质提升 |
+| 爆炸受通用差分上限约束 | H：v4 曾报 42.96%/51.17%，v5b 曾报 38.28% 超 35%；P：v5b 留存表为 67×16、4 个帧槽、6 种 RGBA 值 | 按 burst/消散生命周期检查面积曲线、终态和锚点，粒子允许离散连通块 | 后一次构建通过不证明爆炸视觉合格，也不证明只需提高 35% |
+
+关键配方证据为 v5b `tool-results/01a1634245755192b0c4ed383891112e.txt`（player）、`01a1634245755192b0c4ed383891112f.txt`（enemy）、`01a1633831c8160a929d1e4891cc2403.txt`（HUD）。单字符 `b/x/w/h/g/t` 是冻结 ID，不是命名 bug；probe 不是 required 资产。
+
+### V2.3 仍存在的工程缺陷
+
+下列优先级是实施顺序。R 项均用独立小输入验证，不使用改写历史输出的方式证明问题。
+
+#### B01 / P0：static 在文档校验入口丢失（R）
+
+合法 `examples/static_bullet/static_bullet.recipe.json`：build 退出 0、sheet validate 退出 0，生成的 `bullet.pxl.json` validate 却退出 5，报 `anim.fly.N.frames` 要求至少两帧。
+
+```1317:1323:crates/pxl-cli/src/cmd.rs
+            anims.push(AnimSeq {
+                name: name.clone(),
+                dir: None,
+                looped: anim.looped,
+                frames: lookup_frames(doc, &names)?,
+                static_mode: false,
+            });
+```
+
+有方向分支也写死 false。**修复：** 共享动画语义转换，recipe/doc/sheet 不得分别解释 mode。**验收：** static 单帧三入口同通过；static 多帧、dynamic 单帧同失败；缺省 mode 继续为 dynamic。
+
+#### B02 / P0：透明终帧豁免泄漏到其他用途（R）
+
+最小样例：`die=[中心8×8实体, 空帧]` 非循环；`idle=[另一个空帧, 同样实体]` 循环。当前 default validate **退出 0**，循环中的空帧没有结构失败。
+
+```552:557:crates/pxl-qa/src/lib.rs
+fn is_terminal_empty(input: &ValidateInput, frame: &IndexFrame) -> bool {
+    frame.count_opaque() == 0
+        && input
+            .anims
+            .iter()
+            .any(|a| !a.looped && a.frames.last().map(|l| l == frame).unwrap_or(false))
+```
+
+按像素相等而非使用身份匹配，所有同尺寸空图可能共享豁免。**修复：** 索引安全按 frame 执行；终态许可按 `(asset, anim, dir, position, frame_id)` 执行，同一帧被其他动画复用也要校验每个用途。static 空图默认拒绝；确有空白状态时要求用途显式允许。**验收：** 合法 one-shot 终态保留，循环首帧/中间帧、无引用空帧、另一素材空图不能借用豁免。
+
+#### B03 / P0：多素材动画身份仍靠 tag 前缀猜测（R＋S）
+
+A 的 `idle.N` 为 static 单帧，B 的 `idle.E` 故意设置 dynamic 单帧。构建当前 **退出 0**；导出 `second_idle.dirs={}`，B 的错误动画完全不参与 QA。原因是完整 tag 不冲突时不改名，但动画名冲突时添加资产前缀：
+
+```904:908:crates/pxl-cli/src/cmd.rs
+            for row in &doc_rows {
+                if let Some(tag) = row.first().and_then(|c| c.tag.clone()) {
+                    if tag.starts_with(&format!("{key}_")) || tag == key {
+                        let names: Vec<_> = row.iter().map(|c| c.name.clone()).collect();
+                        let dir = tag.strip_prefix(&format!("{key}_")).unwrap_or("");
+```
+
+问题是用展示字符串反推身份，而不是格式串本身。
+
+另有 S：`tank` 只选裸名 `move`、`character` 只选裸名 `walk/idle`，facings 只保留第一套；即便 default 修好，第二个素材仍可能不受项目规则约束。
+
+**修复：** 导出结构化 asset/anim/dir/frame 映射，tag 只用于显示；拒绝空 dirs、无效引用、重复 identity；基础动画规则覆盖全部资产，专用规则逐资产叠加。**验收：** 同名同方向、同名不同方向、动画名前缀、含下划线 ID、第二辆坦克冻结履带、第二个角色坏 walk 均覆盖。
+
+#### B04 / P0：sheet QA 与真实 PNG 可以脱钩（R＋S）
+
+两项独立复现均 **退出 0**：
+
+1. 有效 sheet 保持 JSON 和像素索引不变，只把 PNG tRNS 所有颜色改为全透明。
+2. 有效 frame 的 `x` 改成 `4294967296`，读取时截断为 0。
+
+```1560:1564:crates/pxl-cli/src/cmd.rs
+fn json_u32(v: &Value, key: &str) -> CmdResult<u32> {
+    v.get(key)
+        .and_then(|n| n.as_u64())
+        .map(|n| n as u32)
+        .ok_or_else(|| PxlError::schema(format!("missing integer '{key}'")).into())
+```
+
+S：`crop_indexed` 未验证矩形范围，线性读取可能跨行或补 0；sheet palette 解析错误被回退掩盖，JSON palette 与 PNG PLTE/tRNS 不对账。
+
+**修复：** 先做结构/文件一致性验证，再运行质量规则：checked 整数转换、尺寸/矩形/引用检查、buffer 长度、PLTE/tRNS 与声明一致。字段缺失的旧格式兼容与字段损坏必须区分。**验收：** 改透明度、改 palette、超界 rect、截断坐标、缺 frame/dir、损坏声明均返回结构化非零错误，不允许默认补透明后通过。
+
+#### B05 / P0：失败构建覆盖已通过产物（R）
+
+先成功构建 static fixture，再移除 static 声明向同一输出目录构建，**没有传 `--overwrite`**。第二次退出 5，但 `bullet.pxl.json` 和 `static_bullet.sheet.json` 已改变；错误明确为 `build wrote outputs but 1 QA check(s) failed`。
+
+源码定位：`crates/pxl-cli/src/cmd.rs` 的 build 写盘/最终 QA；`util.rs` 的 `write_bytes`。另有 S：独立 sheet 命令对 PNG 与 JSON 的覆盖策略不一致。
+
+**修复：** 预检查整套路径，staging 中完成生成/编码/QA，成功后发布一个版本化 bundle/current manifest；失败诊断放 rejected 路径，不冒充 current。多文件逐一 rename 不能宣称整包事务，应以完整 bundle 和最后提交的索引保证一致性。**验收：** QA、strict、preview、I/O 失败及无 overwrite 冲突均不改变上一有效 bundle；中断不暴露半套产物。
+
+#### B06 / P0：合法低位深 PNG 可让预览 panic（R）
+
+生成 8×8、1-bit indexed PNG，`render` **退出 101**，在 `pxl-export/src/lib.rs` 的 `scale_rgba` 越界。`decode_rgba`/`decode_indexed` 未展开 packed 1/2/4-bit 像素，把压缩字节当作每像素索引。16-bit RGB/RGBA 的读取也缺少明确转换（S）。
+
+**修复：** RGBA 解码明确 EXPAND/16→8；索引路径正确解包或清楚拒绝不支持位深，不得静默误读。检查解码长度和像素/放大预算。**验收：** 1/2/4/8-bit indexed、透明 PNG、16-bit、截断输入及超限尺寸均有测试；合法输入正确返回，非法输入返回 `PxlError`，不得 panic/OOM。
+
+#### B07 / P0：小画布不能约束图元溢出与计算量（R＋S）
+
+8×8 shapes 输入 `rect=[2147483647,0,1,1]`，debug CLI 在 `shapes.rs` 的 `x+w` **panic，退出 101**。S：圆平方、线段差值及超大遍历存在类似风险；越界非法颜色若被裁掉或被覆盖，最终像素校验也发现不了。
+
+**修复：** 绘制前验证每条命令的颜色、算术和计算预算，先安全求画布交集再栅格化；明确允许裁切，不把底层 `set` 全局改成报错。**验收：** 极值坐标/半径、完全裁剪、覆盖掉的非法色、巨大但小交集图元均快速、可预测地返回；debug/release 不能一个 panic 一个静默空图。
+
+#### B08 / P1：tile 身份/ramp 丢失，合法满铺图被当 sprite（S）
+
+`make_sheet` 仅在无动画且 kind 为 tiles 时记录 tile 元数据；因此水面、破坏砖、static idle tile 均可能丢失类别。`tiles[]` 生成时使用的 ramp 未完整保存在 doc；`tile gen --variants 1` 还会标为 sprite。对应入口分别位于 `cmd.rs` 的 sheet 构建、tile 生成与文档构建。
+
+**修复：** category、tile ramp、是否覆盖层/无缝地表随资产传播，不从动画有无/variant 数量推断。分类输入支持外部冻结约束；CLI 无外部约束时只声明检查了自报类别，不能承诺符合游戏设计。**验收：** 满铺 static tile、动态水面、破坏砖、自定义 ramp、单/多 variant 跨入口等价；UI 改成 tiles 与冻结契约冲突时失败。
+
+#### B09 / P1：能力描述与实际宏/Schema 不一致（R＋S）
+
+R：`schema shapes`、`schema doc` 退出 2，`schema pxl` 成功；历史 Harness 允许查询前两者，v5a/v5b 分别重复失败 2/6 次。S：宏目录已经含参数元数据，但和执行默认值脱节：
+
+| 宏 | 目录声明 | 执行实现 |
+|---|---|---|
+| `tread_cycle` | bob 默认 0 | 默认 1 |
+| `idle_breathe` | 默认 2 帧 | 无参 4 帧 |
+| `bob` | 2 帧 | 4 帧 |
+| `walk_side/run_side` | stride 2/3 | 默认 1/2 |
+| `death_dissolve` | 4 帧、seed 0、pattern 含无效值 | 默认 6 帧、seed 7、bayer4 |
+| `blink` | 示例仅 lid | 实际要求 x/y/w/h |
+
+**修复：** 元数据与解析/默认值单一来源；补 shapes schema，明确 `doc` 别名或同步消费者使用 `pxl`；schema/list/build/validate 的错误码统一。**验收：** 每个目录示例可执行，“省略默认值＝显式默认值”，实际帧数一致或有参数化表达；不再立项“从零新增宏元数据”。
+
+#### B10 / P1：组合操作重复处理与非方形旋转损失（S）
+
+- parts 方向先 post，动画若只是 noop/shift 又追加 post，outer outline 二次扩张、ramp 二次移色；方向从已处理方向派生也类似。源码：`cmd.rs` 的 `build_sprite`。只在 compose 重建画布后重新 post，不能仅凭 parts_mode 无条件追加。
+- `spin_projectile` 通过重复 cw 得到 180/270 度，每次裁回原矩形。4×2 输入 `1234/5678` 两次 cw 得 `.76./.32.`，直接 180 应为 `8765/4321`。每个目标朝向应从未裁剪 source 一次生成。
+- `row_shift` 的有/无 region 两模式会忽略不同参数；`shear(axis="vertcial")` 静默按 x 执行。要校验值域及互斥组合，不只是未知字段名。
+
+**验收：** parts＋noop 的像素不变，非幂等 post 只生效一次；矩形旋转各目标与直接变换一致；不支持参数组合/拼错枚举明确失败。parts 多级姿态不继承属于尚需明确的 local/world 契约，不直接归为已证实 bug。
+
+#### B11 / P1：透明 palette 与着色约定不闭合（S）
+
+`Palette::validate` 允许 `special.transparent` 非 0、非零索引 alpha=0、ramp 含 0；几何/QA 却固定以 index 0 判断透明。结果可能是“QA 有实体、PNG 不可见”，或 shade 把实体移到透明产生孔洞。
+
+**修复：** 确定唯一透明约定并在输入层拒绝/显式规范化；区分着色 ramp 与有意擦除/闪烁操作，不禁止所有透明动画。文本格式只能表示 0–35，而 palette 允许 256 色，应在目标输出已知时早报范围错误，数组/RLE 另立格式版本。
+
+**验收：** 透明索引、alpha、PNG/QA 实体集合一致；shade 不意外改变 alpha；35/36 边界有端到端测试，错误落到具体字段而非最终序列化。
+
+#### B12 / P1：预览格式与时序入口不一致（R＋S）
+
+R：`render eightbit.png -o preview.gif` 返回成功，但文件 magic 为 PNG。S：recipe build 未共享独立 anim 命令的 fps/帧数范围校验，fps 0/极大值可能产生 sheet duration 与 GIF 最低 1cs 延迟不一致。
+
+**修复：** 按输出格式统一编码分派，不支持组合显式报错；fps/帧数上限进入公共语义校验层。**验收：** 扩展名、格式、返回元数据一致；0/1/60/61 fps 与边界帧数在各入口采用同一政策。保留已经修好的正常 fps 累积舍入和 loop 行为。
+
+### V2.4 不再重复立项的修复与优化边界
+
+| v1 项目 | v2 复核状态 | 后续动作 |
+|---|---|---|
+| Q2.1 显式/唯一 ramp | 已实现，shared index 不再按字典顺序误选 | 补 B11 的透明约定，不重写整个 hue 引擎 |
+| Q2.2 未知宏参数、blink 眼区、假八朝向 | 主要修复已有测试 | B09 修目录真实性，B10 修矩形旋转/参数组合 |
+| Q2.3 dissolve 首末帧与空间随机阈值 | 已实现并有单调性测试 | B02 修 QA 终态身份，不倒退终帧算法 |
+| Q2.4 GIF loop、正常时长累积、PNG 帧条尺寸 | 已实现且本次测试通过 | B06/B12 是解码/输出分派/非法时序的新缺口 |
+| Q2.5 同名动画 | 常规同方向场景已修，结构化身份未完成 | B03 继续，不沿用“全部完成” |
+| Q2.6 类别与空终态 | 仅部分场景可用 | B02/B08 及专用规则分层 |
+| static 支持 | recipe 与 sheet 已接通，doc 漏接 | B01，不从头设计 static |
+
+优化项不应先于正确性修复：
+
+- `shade` 仍是透明边缘邻域规则，outline 先执行会遮住主体边缘；四向旋转还旋转了烘焙高光。先显式材质/面/保护区与方向光约定，再评估距离场等启发式。
+- 默认 texture seed 与 frame name 相关会重新采样；需要稳定表面纹理时显式固定 seed，再设计时间相位，不能把可重复生成误认为跨帧稳定。
+- 单 tile 对边规则不保证不同 variants 相邻；先定义合法邻接/边界签名，再考虑完整 autotile。
+- parts 当前仅支持有限附着语义；先写明父子 local/world 姿态及多级继承合同，再决定是否扩展骨架。
+- 先把校验逻辑从巨大的 `cmd.rs` 中抽成可测试纯转换，按 B01/B03/B08 的边界逐步拆分；不为拆文件而大规模重构。
+- 不新增通用 AI 图片生成调用，不引入默认抖动/AA，不扩大 MAX_DIM 来掩盖造型缺陷。性能优化用本地固定 fixture 的 P50/P95、像素预算、批量 QA 计时驱动，而不是以模型端慢响应解释 Rust 引擎性能。
+
+### V2.5 分批实施计划
+
+各批均先补能暴露当前行为的回归测试，再修实现。下列 profile、manifest 字段是设计意图，不表示当前 API 已支持。
+
+#### V2.5.0 实施进度（2026-10-22）
+
+**V2-A 与 V2-B 已完成：B01–B07 均有先红后绿的回归测试。** 验证命令：`cargo test --offline -p pxl-core -p pxl-format -p pxl-gen -p pxl-ops -p pxl-export -p pxl-qa -p pxl-cli`，**102 项通过、0 失败**（CLI 集成 27、黄金 1、core 13、export 10、gen 13、ops 24、qa 14）；另跑 `pxl-harness` 的 `adapters::pxl` 7 项通过，用于确认 `pxl build` 行为变化未破坏适配器。未运行 Harness 全量测试，未复跑模型或游戏。**B08–B12（V2-C/D）与 V2-E/F 尚未实施。**
+
+| 项 | 状态 | 实际改动与偏离计划之处 |
+|---|---|---|
+| B01 | 已完成 | `doc_input` 传递 `anim.mode`；新增文档路径 static 单帧通过、static 多帧失败的测试 |
+| B02 | 已完成 | `AnimSeq` 新增 `frame_names`，终态豁免改按帧名判定：必须每处引用都是非循环、非 static 动画的末帧，且至少一处引用。`anim_diff` 的清空终态也要求帧名齐全。**这是 `pxl-qa` 公共结构的破坏性变更**，三处 CLI 构造点已同步 |
+| B03 | 已完成（部分） | 导出 `dirs` 改用 `row_identity` 由文档直接得到 `(动画, 方向)`，不再靠 tag 前缀；空 `dirs` 在构建和校验两侧均报错。**未完成：** `tank`/`character` 规则仍按裸名 `move`/`walk` 选动画，facings 仍只取第一套，属于 V2-C |
+| B04 | 已完成 | 帧矩形做非零、范围、`u32` 检查；整数字段区分缺失、类型错误、溢出；`pxl.*` 字段存在但损坏即报错，不再回退；`meta.pxl.colors` 与 PNG 调色板逐项对账（透明性与不透明颜色的 RGB）。无 `pxl` 块的普通 Aseprite 导出仍使用 PNG 调色板。**偏离：** 退出码为 E_SEMANTIC(4)/E_SCHEMA(3)，不是 QA(5) |
+| B05 | 已完成（部分） | `build` 先写 `<out>/.staging`，成功后逐文件 `rename` 覆盖到目标并清除 `.staging`/`.rejected`；失败则不碰目标，整个尝试移到 `<out>/.rejected` 并在错误 JSON 增加 `rejected` 路径。**偏离：** ① 计划写“无 overwrite 冲突应拒绝”，但 Harness 每轮修复都复用同一输出目录且不传 `--overwrite`，故保持“成功重建可替换”的既有契约，没有改为 E_EXISTS；② 多文件发布不是事务，崩溃时可能新旧混合；③ 独立 `sheet` 命令的 PNG/JSON 覆盖策略不一致问题**未处理** |
+| B06 | 已完成 | 公共 `read_png` 先限制 16M 像素再分配；`decode_png_rgba` 用 `EXPAND|STRIP_16` 并支持灰度+Alpha；`decode_indexed` 手动解包 1/2/4/8 位索引；新增 `scale_rgba_checked`（长度与 64M 输出像素预算）并替换 `render` 的调用。旧的无检查 `scale_rgba` 仍是公开函数 |
+| B07 | 已完成 | 每条绘制命令在写入前校验颜色；rect/circle 用 `i64` 与画布求交；line 用 `i64` 并限制 4096 步，超长报 E_SCHEMA；pixels 原点溢出时丢弃越界像素 |
+
+**对 Harness 的影响（需在其计划中同步）：** 失败的 `pxl build` 现在把产物放在 `<out>/.rejected/`，而不是 `<out>/`。Harness 的 `find_sheets` 会递归搜索所有 `*.sheet.json`，会把 `.rejected` 下的失败 sheet 当作当前交付物，**这正是 v5b gate 被旧失败目录污染的同一类问题**。本次没有修改 Harness 未提交的工作，后续应让 `find_sheets` 跳过名为 `.rejected` 与 `.staging` 的目录。
+
+**V2-C 已完成（B08、B09、B11、B12，及 B03 遗留的项目规则部分）。** 验证：七个 crate **122 项通过、0 失败、无编译告警**（CLI 集成 38、黄金 1、core 19、export 10、gen 13、ops 27、qa 14）；`pxl-harness` 的 `adapters::pxl` 7 项通过。未运行 Harness 全量测试。**B10（V2-D）与 V2-E/F 尚未实施。**
+
+| 项 | 状态 | 实际改动与偏离计划之处 |
+|---|---|---|
+| B12 | 已完成 | 共享 `check_anim_timing`（fps 1..=60、帧数 1..=16），`pxl anim` 与 recipe 构建共用；PNG 输入配 `.gif` 输出改为 E_USAGE 拒绝，不再写出 PNG 字节。**偏离：** 计划提到 GIF 最小 1cs 延迟与 sheet duration 不一致，因 fps 已限制在 60 以内（每帧 ≥16ms，GIF 取整后误差已有测试覆盖），未另改 |
+| B11 | 已完成 | `Palette::validate` 现在拒绝 `special.transparent != 0`、非零透明色、含索引 0 的 ramp；`shift_in_ramp`/`shift_on_ramp` 即使遇到手工构造的坏 ramp 也不会把可见像素变成 0；新增 `check_text_encodable`，`build` 在加载调色板后即报 E_SEMANTIC 并指出“36 色”上限（35/36 边界有端到端测试）。扫描仓库内全部调色板无受影响者。**未处理：** 文本矩阵仍是 0–35 单字符，256 色格式（数组/RLE）另立版本 |
+| B09 | 已完成 | `pxl list macros` 的默认值、帧数、示例改为与真实展开一致：`tread_cycle.bob=1`、`idle_breathe` 默认 4 帧、`bob` 4 帧、`walk_side.stride=1`、`run_side.stride=2`、`death_dissolve` 6 帧/seed 7/`bayer4`、`blink` 的 x/y/w/h 标为 `required`、`lid` 标为 `derived`。**选择改目录而非改实现**，故黄金哈希不变。新增“省略参数 ＝ 显式默认值”“目录帧数 ＝ 展开帧数”“目录示例可执行”三个测试。`pxl schema` 新增 `shapes`，并把 `doc` 作为 `pxl` 的别名，`SCHEMA_KINDS` 为错误提示与消费者共用的唯一列表 |
+| B08 | 已完成（部分） | recipe `tiles[]` 的 `ramp` 写入 `meta.tile_ramp`，不再回退到 `ground`；`tile gen` 不论变体数一律标 `tiles`；带动画的 `kind:"tiles"` 素材也会登记到 sheet 的 `tiles`，满铺水面等不再按 sprite 的 bbox 规则判定。**未做：** 计划中的“UI 自报 tiles 与冻结契约冲突时失败”需要冻结需求输入，属 Harness 职责；覆盖层/无缝地表等显式区分未设计 |
+| B03 遗留 | 已完成 | `AnimSeq` 新增 `asset` 与 `base_name`，sheet 的 `meta.pxl.anims.*` 新增 `asset`、`base` 字段（旧 sheet 缺字段时回退到显示键）。`tank` 规则的 move 检查、`tank_counts`，以及 `character` 规则的 walk/idle/hoe/脚线/镜像检查都按资产逐个执行，第二个资产的 check id 带 `<asset>_` 前缀，第一个资产的 id 保持不变。**契约选择：** 第一个角色须满足完整契约；后续重配色只要求有 walk，若声明了 idle/hoe 才检查，缺失不报错（farmer 示例的重配色就只带 walk）。`facings` 仍只取第一套 |
+
+**V2-D 已完成（B10）。** 验证：七个 crate **127 项通过、0 失败、无编译告警**（CLI 集成 40、黄金 1、core 19、export 10、gen 13、ops 30、qa 14）；`pxl-harness` 的 `adapters::pxl` 7 项通过。未运行 Harness 全量测试。**V2-E 见下方 2026-10-23 进度；V2-F（集成与推广）尚未实施。**
+
+| 项 | 状态 | 实际改动与偏离计划之处 |
+|---|---|---|
+| B10-a parts 重复 post | 已完成 | 抽出 `redraws_canvas`：只有方向/动画帧的 ops 含 `compose`（整幅重绘）时才追加 sprite 的 `post`。noop 动画帧与 `down_copy` 这类派生方向不再二次描边，且与来源帧逐字节相同（两个回归测试）。farmer 示例的 `doll` 宏每帧都带 `compose`，产物与黄金哈希不变。**未处理：** 一个只含 `part_transform` 而不含 `compose` 的帧不会重绘画布，也就不会补 post，这是有意选择；若日后需要“改姿态但不重排层”，要先定义 local/world 姿态契约（计划原文已注明属待明确，不归为 bug） |
+| B10-b spin_projectile | 已完成 | 四个姿态各为对未裁剪 source 的单次变换：`noop / cw / 180 / ccw`，不再链式叠加 cw。4×2 输入 `1234/5678` 的 180° 由 `.76./.32.` 改为 `8765/4321`。这会改变非方形精灵的 spin 帧像素；方形精灵与原先逐像素一致，仓库示例无 `spin_projectile` 使用，黄金哈希不变 |
+| B10-c 参数组合与枚举 | 已完成 | `row_shift`：带 region 时拒绝 `rows/pattern/phase`；无 region 时拒绝 `axis` 与非零 `dy`（原先静默忽略）。`shear`：轴只接受 `x/horizontal/y/vertical`，`vertcial` 等拼写错误报 E_SCHEMA 且路径为 `/axis`（原先静默按 x 剪切）。`tread_cycle` 宏生成的 `row_shift` 带 region 与 axis，仍合法。**这是可观察的行为变化：** 此前依赖被忽略参数的外部配方现在会明确失败 |
+
+**V2-E 已完成（工程侧）；V2-F 未实施。** 验证（2026-10-23）：七个 crate **138 项通过、0 失败**（CLI 集成 45、黄金 1、core 19、export 10、gen 13、ops 30、qa 20）；`pxl-harness` 的 `adapters::pxl` 7 项通过。六个 battle_city 样板（brick/steel/water/explosion/hud_stage_label/player_tank）在声明用途下构建与三入口校验一致，产物清单存于 `review/v2e-battle-city-samples/`。
+
+| 项 | 状态 | 实际改动与偏离计划之处 |
+|---|---|---|
+| 用途 profile（B08 余项） | 已完成 | `ValidateInput` 新增 `asset_kinds`/`frame_assets`；`sprite/tiles/effect/ui/overlay` 五种 kind 从 recipe 传播到 doc/sheet/QA，未知 kind 报 E_SCHEMA。`effect` 走 `effect_lifecycle`（生长→峰值→衰减、首帧锚点容差 1/8 画布），不再受通用 35% 帧差上限约束；`ui` 稀疏合法；`tiles` 增加 `full_bleed` 满铺检查。爆炸声明为 `effect`、HUD 声明为 `ui` 后通过 default QA；同一爆炸改回 `sprite` 仍撞帧差上限（回归测试）。**未做：** overlay/无缝地表的显式区分仅有入口、无样板 |
+| 爆炸样板 | 已完成 | 重画为画布中心对称的 5 帧生命周期（面积 36>60>156>164>70）：小核→扩张→峰值带四向火花→碎片环→余烬十字；`effect_anchor` 漂移 0px。此前版本第 2 帧主体偏左、第 4 帧碎片散乱，已被替换 |
+| tile 满铺 | 已完成 | 地块样板去透明边后 `full_bleed` 检查通过；此前 v5b 留存地块为过 sprite bbox 留边（87.89% 占比）的问题不再重现 |
+| HUD 样板 | 已完成 | `hud_stage_label` 声明 `ui` 后不再被 sprite 结构规则误判；字形可读性仍属人工评审范围 |
+| 视觉复核 | 部分 | 评审图 `review.png` 已生成并含全部样板帧条；爆炸对称性经图像工具复核确认。完整人工评审（两名审阅者、有锚点量表）未执行，`visual_review` 字段保持 `not_run`，不宣称美术验收通过 |
+
+| 批次 | 优先级/依赖 | 任务与负责模块 | 完成条件 |
+|---|---|---|---|
+| V2-A 可信 QA | **已完成** | B01/B02/B03/B04；format 定义身份，CLI 无损转换，QA 按帧/用途/资产分层 | 三入口等价；空帧/空 dirs/损坏引用/PNG 失配不能通过；所有资产均被检查（B03 项目规则部分留给 V2-C） |
+| V2-B 输入与发布安全 | **已完成** | B05/B06/B07；CLI staging/overwrite，export 安全解码，gen 图元限界 | 非零失败不污染 current；合法 PNG 无 panic；极值图元有限耗时且返回结构化错误 |
+| V2-C 能力与类别契约 | **已完成**（B08 部分） | B08/B09/B11/B12；共享类别、ramp、透明/索引、宏目录、时序校验 | 满铺 tile/稀疏 UI/合法终态不用伪装；目录示例可执行；输出格式/时序一致 |
+| V2-D 动作组合正确性 | **已完成**（局部/画布坐标语义未冻结） | B10；parts post、矩形 spin、参数互斥；冻结局部/画布坐标语义 | noop 不变、目标旋转不累计裁切、方向补丁有明确坐标合同 |
+| V2-E 原创质量样板 | **工程侧已完成**；人工视觉验收未执行 | 重做坦克、地块、爆炸、HUD 四组最小样板；优先现有 pixels/patch/parts | 1×和实际时序人工验收；改善有明确部位/帧证据，不以 QA 分数替代 |
+| V2-F 集成与推广 | P1，依赖 A–E | 输出受版本管理的交付身份/摘要，与 Harness current 索引联测；再推广到原十类 | 同输入可重现；历史失败目录不影响 current；工程与视觉状态分别记录 |
+
+建议 A/B 按 bug 独立小提交，不把所有修复绑成一次大重构。E 先保存旧图/规格，但不要基于错误 QA 来选最终样板。只有 E 证明手工规律可复用时，才启动 v1 Q3/Q4 的命名区域、面着色、结构化材质算法。
+
+#### V2-E 的四组样板及分类规则
+
+| 样板 | 先做的美术/配方修改 | 工程规则 | 必须保存的对照 |
+|---|---|---|---|
+| player/enemy 坦克 | 统一车体/炮塔/履带比例、敌我识别；move 仅履带相位变化；fire 按 N/E/S/W 炮口 patch；保留有意后坐力 | `tank-sprite` 与现有“坦克＋4地砖”整包规则分开；保护 hull/anchor，履带变化不能被整体位移替代 | 四向剪影、move/fire 帧条与播放；只改动作和只改配色分开比较 |
+| b/x/w 地块与 h/g/t 覆盖 | 首先确认 ground/marker/overlay 用途；砖缝错列、钢板亮暗有结构，水纹只改变水面；地表消除非预期透明边 | full-bleed 与 overlay 分开；单/跨 variant 接缝；破坏帧可按用途减少实体 | 无 padding 的 3×3 拼图、混排邻接图、深浅背景；不得把 sheet pad 当 tile 内透明边 |
+| explosion/HQ destroyed | 小核→扩张→碎片/衰减；HQ 完整与摧毁状态仍有辨识度 | one-shot 阶段、锚点和终态；粒子可多连通块，大变化不套运动上限；索引/引用始终严格 | 逐帧像素面积、bbox、帧差与时序；空末帧只在规定用途允许 |
+| HUD life/stage | 固定字号/字距/基线和前景对比，字形保护区不着色；底线是否需要由规格决定 | UI 允许稀疏，不承诺通用连通性；核对冻结 kind、目标文本/尺寸；不能改 tiles 逃逸 | 1×与整数放大、浅/深背景、嵌入目标 HUD 的排版；文字可读性人工确认 |
+
+先用显式 mask 表达 HUD 字形；只有多处重复排版需求成立，才扩展小型字体/stamp 布局，不直接建设通用字体引擎。对现有 `tank`/`character` 整包规则保留兼容入口，但内部通用安全项与逐素材动作检查必须始终运行。
+
+### V2.6 与现有 Harness 计划的责任边界
+
+配合 `plan/harness-v4-battle-city-asset-quality-plan.md`、`plan/harness-asset-feedback-repair-plan.md`，不重复建设两套队列、审核或重试系统。
+
+| 事项 | crates 负责 | Harness 负责 |
+|---|---|---|
+| 身份与交付 | asset/anim/dir/frame 身份，input/output/palette/规则/版本摘要，完整 bundle 输出 | current_deliverables 选择、队列幂等与发布权限；不能递归扫描一切历史 sheet 当 current |
+| 类别/动作合同 | 接受并验证约束，传播到 doc/sheet，列出执行/跳过规则及原因 | 提供冻结需求；不允许生成器自行降低 kind/mode/动作要求 |
+| 构建与诊断 | 明确成功/失败副作用，JSON error code/path/check/value/limit，可重现最小输入 | 落盘与修复提示注入、错误分类、有限重试、deadline/token 账本 |
+| 能力发现 | 真实 schema/list、版本、可执行示例和默认值 | 查询名称与别名映射、缓存，避免每轮重复无效查询 |
+| 视觉质量 | 原始像素统计、1×/放大/背景/拼图/时序预览及 digest | 实际看图/VLM/人工审批绑定 digest，未审保持 not_run，不伪称 approved |
+
+本次仅分析接口，不修改 Harness 的未提交工作。`task_wall_clock_secs`、provider 慢响应、状态迁移/队列修复不是 Rust 像素算法任务。后续同步旧文档时应勘误“宏元数据未做”和“Q2 全部完成”，而不是覆盖原始运行记录。
+
+### V2.7 回归、兼容与完成标准
+
+#### V2.7.1 测试矩阵
+
+| 层级 | 最少新增覆盖 | 首选位置 |
+|---|---|---|
+| 格式/契约 | 透明/ramp、35/36 索引、fps/帧数、类别/身份/引用、schema 示例 | `crates/pxl-format`、`crates/pxl-core` |
+| 像素/变换 | parts noop、非幂等 post、非方形旋转、参数组合、图元极值、纹理跨帧稳定 | `crates/pxl-ops`、`crates/pxl-gen` |
+| QA | 终态身份隔离、多素材全部检查、static/doc/sheet 等价、tile/UI/effect profile | `crates/pxl-qa`、CLI 集成测试 |
+| 编码/解码 | PNG 各位深、PLTE/tRNS 对账、输出 magic、边界缓冲、GIF 时长 | `crates/pxl-export`、CLI 集成测试 |
+| 发布/失败 | 无 overwrite、QA/preview/I/O 中途失败、bundle 一致性、旧产物哈希不变 | `crates/pxl-cli/tests/cli.rs` |
+| 质量样板 | 坦克四向及局部动作、地块混排、爆炸生命周期、HUD 1×可读性 | 配方 fixture＋人工评审记录，不用黄金 hash 代替审美 |
+
+优先把本次隔离探针转换为正常回归测试，避免依赖本机 `target` 路径。属性测试限制尺寸/预算，故障注入不写用户资产；先运行七个包，再在 Harness 接入时扩到 workspace。macOS/Linux 和 release 极值行为是后续验收项，本次没有执行。
+
+#### V2.7.2 兼容策略
+
+- 元数据增加版本与旧格式读取路径；旧数据缺少类别/身份时明确 legacy/inferred 状态，无法安全恢复则报错，不能静默跳过。
+- 宏默认值与 post 修复可能改变像素/帧数；先决定修实现还是修目录，按真实合同处理，必要时提升生成版本。不要为通过测试统一重写黄金 hash。
+- 严格输入拒绝、原子发布和 overwrite 行为属于可观察变化，随 CLI 契约说明；保留失败诊断能力，但拒绝把 invalid bundle 暴露为有效输出。
+- 性能预算与正确性分开：记录固定 fixture 的生成/QA 耗时和资源，图元/解码预算是硬约束；未取得稳定测量前不写虚构优化百分比。
+
+#### V2.7.3 v2 可以宣布完成的条件
+
+1. B01–B07 的最小失败样例纳入自动测试，修复后正常返回预期结果；没有 panic、空身份漏检或失败覆盖。**已完成（2026-10-22）。**
+2. B08–B12 的类别、目录、变换、透明/格式/时序合同有正反例，recipe/doc/sheet 验证一致；专用规则逐资产执行。**已完成（2026-10-22）。**
+3. 13 个 required 的覆盖、工程 QA、当前交付状态分别统计；probe 和历史失败目录不混入成功数，冻结 kind/mode 不被悄悄更改。**待 V2-F 与 Harness current 索引联测。**
+4. 四组样板完成实际人工视觉复核；保存规格、旧/新配方、有效 seed/版本、输入摘要、预览摘要及“改了哪里”。沿用 v1 第 8 节有锚点量表；只有一名审阅者时记录暂定接受，无审阅时只能宣布工程完成。**工程侧已完成（2026-10-23）：配方、manifest、review.png 已存 `review/v2e-battle-city-samples/`；人工视觉复核未执行，按本条口径只能宣布工程完成。**
+5. 原十类样板推广时逐项复核；没有视觉收益证据就停止扩展算法，回到造型/动作规格。**待 V2-F。**
+
+**v2 的目标是可信地产生和筛选好素材，而不是让更多错误输入得到绿色结果。**

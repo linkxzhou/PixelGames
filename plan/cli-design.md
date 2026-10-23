@@ -1,5 +1,7 @@
 # `pxl` CLI 设计
 
+> **状态（2026-10-22）：已实现。** 第 3 节全部子命令落地并有集成测试；`pxl mcp`（M2）未实现。第 2 节文件格式与实际实现一致（`*.pxl.json` / `*.recipe.json` 等）；新增能力（`AnimMode` static/dynamic、宏参数校验）见 pxl-quality-improvement-plan.md。
+
 ## 1. 原则
 1. **确定性**：相同的输入文件、`--seed` 和 `pxl` 版本，输出的字节完全一致（PNG 编码参数固定，JSON 键有序）。
 2. **对 agent 友好**：

@@ -1,0 +1,8 @@
+{
+  "w": 16,
+  "h": 16,
+  "palette": "palette.json",
+  "draw": [
+    {"rect": [7, 7, 2, 2], "c": 12}
+  ]
+}

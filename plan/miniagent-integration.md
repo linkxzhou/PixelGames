@@ -1,5 +1,7 @@
 # miniagent 集成与坦克演示
 
+> **状态（2026-10-22）：方案 A（bash + skill）已落地并实战使用；方案 B（`pxl mcp`）未实现**——但 harness 侧的 MCP 客户端已在 V3-B 就绪（`harness/src/agent/mcp/`），server 端落地后即可零成本挂载。第 1 节现状记录为 2026-10-21 只读检查结果，保留作历史依据。
+
 ## 1. miniagent 现状（2026-10-21 只读检查）
 - `/tmp/miniagent` 是一个 **157 字节的 bash 包装脚本**：设置环境变量 `MINIAGENT_MODEL_NAME`（默认 `glm-5.3-flash-external`），然后执行 `python3 /Volumes/my/github/miniagent/python/miniagent.py "$@"`。
 - 源码位于 `/Volumes/my/github/miniagent`：
@@ -19,14 +21,15 @@
 - **我没有读的部分**：工具函数的 schema 细节、bash 工具的超时和输出截断策略（有 `--bash-timeout` 参数）、模型是否支持图像输入。这些都【未验证】。
 
 ## 2. 集成方案
-**方案 A（M1 采用）：bash + skill**
+**方案 A（M1 采用）：bash + skill**【已落地】
 - 把 `pxl` 安装到 PATH（用 `cargo install --path crates/pxl-cli`）。
-- 在演示工作区写一个 skill：`.miniagent/skills/pxl.md`，用 frontmatter 声明 `name: pxl`、`description`、`temperature: 0.2`。正文写明：
+- skill 已写入仓库根 `.miniagent/skills/pxl.md`：frontmatter 声明 `name: pxl`、`description`、`temperature: 0.2`，正文包含：
   1. 永远加 `--json` 参数。
-  2. 先 `pxl list ...` 或 `pxl schema ...`，再写 JSON 文件。
+  2. 先 `pxl list ...` 或 `pxl schema ...`，再写 JSON 文件（优先文件而非行内 JSON）。
   3. 每一步检查退出码，非 0 时读 `error.hint` 修正后重试，最多 3 次。
   4. 最后必须执行 `pxl validate`，退出码为 0 才算完成。
   5. 禁止手写 PNG，禁止用 python 处理图像。
+  6. QA 阈值速查（anim_diff 2%–25% 区间带、hull ≤5%、tread 每帧变化）与修正方向指引。
 - 运行方式：`/tmp/miniagent --cwd ~/PixelGames/demo/tank --approval auto --skill pxl --json -p "生成一个坦克移动演示素材……"`
 
 **方案 B（M2）：`pxl mcp`**
@@ -45,24 +48,24 @@
 ```
 
 ### 3.2 车身形状 `tank_body.shapes.json`（朝上，即北，16×16）
+实际文件见 `examples/tank/tank_body.shapes.json`（早期示意中含 `circle`/`outline` 指令，最终实现用一组镜像 rect 表达同一车身：两侧履带条、中央车身、炮管与炮口标记）：
 ```json
 { "w":16, "h":16, "palette":"tank.palette.json", "mirror":"x",
   "draw":[
-    {"rect":[2,2,3,12],"c":6},
-    {"rect":[3,2,1,12],"c":7,"pattern":"stripe_y:2"},
-    {"rect":[5,4,3,8],"c":3},
-    {"rect":[6,6,2,4],"c":4},
-    {"circle":[8,8,3],"c":4,"mirror":false},
-    {"rect":[7,0,2,6],"c":5,"mirror":false},
-    {"outline":{"c":1,"mode":"outer"}} ] }
+    {"rect":[1,5,2,6],"c":6},
+    {"rect":[1,5,2,6],"c":7,"pattern":"stripe_y:4"},
+    {"rect":[3,6,5,6],"c":3},
+    {"rect":[6,7,2,2],"c":4,"mirror":false},
+    {"rect":[7,2,2,5],"c":5,"mirror":false},
+    {"rect":[7,2,2,1],"c":10,"mirror":false} ] }
 ```
 
 ### 3.3 调用序列（agent 执行的命令）
 ```bash
 pxl palette show tank.palette.json --json
 pxl gen shapes --spec tank_body.shapes.json --seed 1 -o tank.pxl.json --json
-# 可选：用 bollinger 给车身加一点随机纹理（只作用于车身区域的局部蒙版）
-pxl op tank.pxl.json --op '{"op":"texture","gen":"bollinger","template":"panel_4x8","region":[5,4,3,8],"ramp":"olive","seed":42}' -o tank.pxl.json --overwrite --json
+# 可选：用 bollinger 给车身加一点随机纹理（只作用于车身区域的局部蒙版；region 与实际示例同步为 [4,7,8,4]）
+pxl op tank.pxl.json --op '{"op":"texture","gen":"bollinger","template":"panel_4x8","region":[4,7,8,4],"ramp":"olive","seed":42}' -o tank.pxl.json --overwrite --json
 # 4 个方向：N 为原图，E = rotate90 cw，S = flip y，W = flip x(E)
 pxl op tank.pxl.json --frame base --as N --op '{"op":"noop"}' -o tank.pxl.json --overwrite --json
 pxl op tank.pxl.json --frame N --as E --op '{"op":"rotate90","dir":"cw"}' -o tank.pxl.json --overwrite --json
@@ -79,17 +82,18 @@ pxl render tank.pxl.json --anim move --dir E --scale 6 -o out/tank_move_E.gif --
 pxl render out/tank.sheet.png --scale 4 --grid -o out/preview.png --json
 pxl validate out/tank.sheet.json --rules tank --json
 ```
-> 以上全部步骤也可以写成一个 `tank.recipe.json`，用 `pxl build` 一条命令跑完。agent 首选逐步调用，便于纠错；最终把配方写入仓库，方便复现。
+> 以上全部步骤也可以写成一个 `tank.recipe.json`，用 `pxl build` 一条命令跑完。agent 首选逐步调用，便于纠错；最终把配方写入仓库，方便复现。仓库中 `examples/tank/tank.recipe.json` 就是等价配方（`pxl build examples/tank/tank.recipe.json -o out/`）。
+> 运行方式见 §2 方案 A：`/tmp/miniagent --cwd <workspace> --approval auto --skill pxl --json -p "<任务描述>"`；skill 正文已落地为仓库根 `.miniagent/skills/pxl.md`。
 
 ### 3.4 `tread_cycle` 宏展开（示意）
 ```json
-[ [{"op":"row_shift","region":"tread_l","axis":"along_heading","dx":0},{"op":"palette_cycle","cycle":"tread","step":0}],
-  [{"op":"row_shift","region":"tread_l","axis":"along_heading","dx":1},{"op":"palette_cycle","cycle":"tread","step":1},{"op":"shift","region":"hull","dy":1}],
-  [{"op":"row_shift","region":"tread_l","axis":"along_heading","dx":2},{"op":"palette_cycle","cycle":"tread","step":2}],
-  [{"op":"row_shift","region":"tread_l","axis":"along_heading","dx":3},{"op":"palette_cycle","cycle":"tread","step":0},{"op":"shift","region":"hull","dy":1}] ]
+[ [{"op":"row_shift","region":"tread_l","axis":"y","dx":0},{"op":"palette_cycle","cycle":"tread","step":0}],
+  [{"op":"row_shift","region":"tread_l","axis":"y","dx":1},{"op":"palette_cycle","cycle":"tread","step":1},{"op":"shift","region":"hull","dy":1}],
+  [{"op":"row_shift","region":"tread_l","axis":"y","dx":2},{"op":"palette_cycle","cycle":"tread","step":2}],
+  [{"op":"row_shift","region":"tread_l","axis":"y","dx":3},{"op":"palette_cycle","cycle":"tread","step":0},{"op":"shift","region":"hull","dy":1}] ]
 ```
 - `auto_tread`：取靠近左右边缘、颜色属于 `ramps.tread` 的列区域，并按方向旋转。做法是 N 方向先定义好 region，**再跟着方向变换一起旋转**，这样不用分别为每个方向推断。
-- `along_heading`：N/S 时沿 y 方向错位，E/W 时沿 x 方向错位；错位以 wrap 方式在 region 内循环。
+- `along_heading` 是宏参数层面的语义描述；宏内部按方向换算成真实的 `row_shift` 轴（N/S 时沿 y 方向错位，E/W 时沿 x 方向错位），错位以 wrap 方式在 region 内循环。手写 op 时必须直接使用 `"x"`/`"y"`，`along_heading` 不是合法 op 值。
 
 ### 3.5 输出 `out/tank.sheet.json`（片段）
 ```json

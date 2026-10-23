@@ -1,6 +1,8 @@
 # 路线图（v2：CLI 优先）
 
 > 当前：**只做规划，不写代码。** 下列里程碑在你确认后开始实施。前端和 WASM 都已推迟。
+>
+> **状态（2026-10-22）：** M0 完成（CLI 核心 + 黄金测试）；M1 完成（坦克演示 + skill 已落地）；**M2 部分**——parts 纸娃娃、cleanEdge 外宏已做，`pxl mcp` 未实现（MCP 客户端已在 harness V3-B 就绪）；M3/M4 未开始。质量改进见 pxl-quality-improvement-plan.md（Q0–Q2 已插入并执行 Q2）。
 
 ## M0：CLI 核心（约 1–1.5 周）
 - 内容：

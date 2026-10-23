@@ -4,6 +4,8 @@
 > 状态：待实施的工程设计；本次仅新增计划文档，不创建 Harness 实现。  
 > 实现位置：`harness/`；建议 Rust package / binary 均命名为 `pxl-harness`。  
 > 优先级：**游戏设计与关卡设计 → 素材生成闭环**为第一阶段交付；引擎装配、GM 自动试玩和完整游戏 QA 后续接入。
+>
+> **✅ 实施进度（2026-10-22）：H0–H2 已实现并可用**（design + assets 双阶段、provider/fake、预算账本、事件审计、候选目录、PxlAdapter、designer/artist 角色、审批冻结、原子发布均落地）。**H3 部分**：逐回合预算持久化与崩溃对账已做（P0-D），断点恢复/缓存失效传播/5 次试运行评估未做。**H4/H5 未开始。** 另：Agent 能力底座升级见 harness-v3-agent-capability-plan.md（已全部实施）。
 
 ## 1. 目标与关键决策
 

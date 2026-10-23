@@ -2,6 +2,8 @@
 
 > 日期：2026-10-21（UTC+8）｜作者：Grok Bot（调研稿，未改动仓库）
 > 目标：设计一套与品类无关、可由 miniagent 端到端驱动的像素游戏开发流水线（Harness），并映射到 PixelGames（pxl CLI / pxl-core/gen/ops/qa/format/export/cli、plan/、review/）。
+>
+> **状态（2026-10-22）：调研已完成，归档。** 第 0 节方案已由 pixelgames-harness-design-plan.md 收敛并实施（H0–H2 落地）；外部项目星数与工具清单仅作历史参考。本文不再更新。
 
 ## 0. 结论速览
 1. 业界成熟流程几乎都收敛为：**概念/GDD → 原型/灰盒 → 核心循环 → 内容/资产管线 → 关卡 → 系统(存档/UI/音频/输入) → QA/试玩/自动化 → 性能 → 构建/发布 → 运营**。

@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "pxl_version": "0.1.0",
+  "gen_version": 1,
+  "seed": 1213,
+  "inputs": {
+    "recipe": "sha256:04dd9af8c941fd250bbe0718681d290d485496ef32603c3dff060efcbc5e1ddf",
+    "palette": "sha256:bff1a40c22dff36009f3c32c7bf453586479afdc871bd0ba95e91804fbbaf28e",
+    "specs": {
+      "player_tank.shapes.json": "sha256:523835982695d975e1485074b4efb1f944952a08a7545a120f1547654a85db61"
+    }
+  },
+  "outputs": {
+    "palette.json": "sha256:bff1a40c22dff36009f3c32c7bf453586479afdc871bd0ba95e91804fbbaf28e",
+    "player_tank.pxl.json": "sha256:0b75c3c36ba1068c6ef659f89be14a2eb8734938be06742af1ae68bd2c9ffdd9",
+    "player_tank.sheet.png": "sha256:01d1871ea8d22b57898876b502144c09127c3213c30f6d8589dff3bec80a10a4",
+    "player_tank.sheet.json": "sha256:fea17503b9cb070bf86725ef15da97269196356b5aa336ad5fc4179c39c1a343",
+    "player_tank_move_N.gif": "sha256:6e0140ecec6d1bcd6fb771ff68c4811379f5da07b62f404365a3c7ace6c7a0fc",
+    "player_tank_sheet.png": "sha256:c7ca6792f0652ce0ab18c556748799828670f2671267c4ff7d3092c6665ea586"
+  },
+  "qa": {
+    "rules": "default",
+    "ok": true,
+    "checks": 165,
+    "failed": 0
+  },
+  "visual_review": "not_run"
+}

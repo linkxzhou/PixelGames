@@ -23,9 +23,11 @@ Rules:
 4. Every visible entity, logical tile and required UI element must map to
    an asset requirement.
 5. Every requirement must map to an acceptance item with a stage.
-6. When the validator reports failures, fix the pointed files; at most 3
+6. Only ask for assets the artist can produce (see "What pxl can produce").
+   Mark anything else `external` instead of hoping it gets drawn.
+7. When the validator reports failures, fix the pointed files; at most 3
    repair rounds. Do not rewrite the whole package each time.
-7. When done, call design.validate. If any check fails, fix the named
+8. When done, call design.validate. If any check fails, fix the named
    files and validate again. Only then call design.request_review with a
    short summary. Do not stop before design.request_review.
 
@@ -40,6 +42,8 @@ game-design.json:
 
 style-guide.json:
 {"schema_version":1,"logical_resolution":[320,240],"tile_size_px":16,"sprite_size_px":16,"palette":"palette.json","transparent_index":0,"outline":"always","directions":["N","E","S","W"],"anim_fps_min":2,"anim_fps_max":16,"nearest_filtering":true}
+- directions: top-down games use `N`, `E`, `S`, `W`; side or RPG-style
+  characters use `down`, `up`, `left`, `right`.
 
 levels/<id>.json — grid rows are strings of single-character tile ids.
 Each row's length is grid_w; the number of rows is grid_h. tile_id in
@@ -51,14 +55,62 @@ reachable from spawn by walking only on tiles that do not block.
 
 asset-requirements.json — every entity id and every non-floor, non-decor
 tile_id needs a requirement with that exact asset_id. kind is sprite,
-tile, ui, or effect. strategy is template, shapes, tile_gen, parts, or
+tile, ui, or effect. strategy is shapes, template, tile_gen, parts, or
 external. size_px is at most 64. directions must be listed in the style
-guide.
-{"schema_version":1,"requirements":[{"asset_id":"player_tank","kind":"sprite","required":true,"consumer_refs":["level_1"],"style_ref":"palette.json","size_px":[16,16],"directions":["N","E","S","W"],"anims":[{"name":"move","fps":8,"looped":true,"frames":2,"dirs":["N","E","S","W"]}],"semantics":"player","strategy":"template","seamless":false,"priority":1}]}
+guide. Each anim's `frames` must be a count the artist can produce (see the
+animation table).
+{"schema_version":1,"requirements":[{"asset_id":"player_tank","kind":"sprite","required":true,"consumer_refs":["level_1"],"style_ref":"palette.json","size_px":[16,16],"directions":["N","E","S","W"],"anims":[{"name":"move","fps":8,"looped":true,"frames":4,"dirs":["N","E","S","W"]}],"semantics":"player","strategy":"shapes","seamless":false,"priority":1}]}
 
 acceptance-plan.json — one item per required asset. stage is design,
 assets, engine, playtest, or human.
 {"schema_version":1,"items":[{"requirement_id":"player_tank","description":"delivered","gate_id":"assets.coverage","stage":"assets","evidence":"manifest"}]}
+
+## What pxl can produce
+
+Choose `strategy` by what the asset is:
+
+| strategy | pxl generator | use for |
+|---|---|---|
+| `shapes` | rect / circle / line / pixel shapes | vehicles, bullets, UI icons, effects, most hard-edged sprites |
+| `template` | bollinger mask template (built-in: slime, ship, robot, bug, gem, mushroom, tree, rock, dragon side/top, panel; or an authored one) | organic creatures, plants, rocks, gems, panels |
+| `tile_gen` | noise tile: dirt, grass, sand, ore (with variants) | floor, ground, and stone/ore wall tiles; set `seamless: true` |
+| `parts` | paper-doll rig with per-facing sprites | characters that walk/idle in four facings |
+| `external` | none | anything below that pxl cannot make |
+
+Brick walls, water, and other patterned tiles use `shapes` (kind `tile`,
+`seamless: true`); animated water uses a `glow` anim.
+
+Use `kind` `effect` for one-shot visuals (explosions, muzzle flash, hit
+sparks, pickups vanishing); they must grow then fade and stay anchored.
+Use `kind` `ui` for HUD glyphs and markers.
+
+Not producible today — mark `external` or redesign: autotile transition
+sets, arbitrary-angle rotation (only 90° steps and flips), sprites larger
+than 64 px, smooth gradients or anti-aliasing.
+
+Animation names and the frame counts the artist can deliver:
+
+| anim name | frames | typical asset |
+|---|---|---|
+| `move` | 4 | tanks and vehicles (tread cycle) |
+| `idle` | 2 (vehicle rumble) or 4 (creature breathe) | anything that waits |
+| `walk` | 4 | characters |
+| `run` | 4 | characters |
+| `float` / `bob` | 4 | pickups, floating props |
+| `hurt` | 2 | hit flash |
+| `death` | 6 | dissolve on death, `looped: false` |
+| `blink` | 2 | creatures with eyes |
+| `spin` / `fly` | 4 | projectiles |
+| `glow` | 2 | water, lights, UI pulses |
+
+Other counts are possible but need hand-authored frames; prefer the table.
+One-shot animations (`death`, effects, actions) set `looped: false`.
+
+Genre-specific checks the artist will run:
+- tank: four facings `N/E/S/W`, every facing has `move` with 4 frames and
+  `idle` with 2, plus at least 4 ground tiles.
+- character: facings `down/up/left/right` with `right` mirroring `left`,
+  `walk` ≥ 4 and `idle` ≥ 2 frames per facing.
 
 Produce three levels when the brief asks for three. Keep each level grid
 between 8 and 13 cells on a side.

@@ -290,12 +290,13 @@ pub enum AssetKind {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AssetStrategy {
-    /// Reuse an existing template sprite (e.g. tank body).
+    /// Bollinger mask template: a pxl built-in id or an authored
+    /// `{id}.template.json`.
     #[default]
     Template,
     /// Generate from a shapes spec.
     Shapes,
-    /// Noise tile generator (dirt/grass/sand/ore).
+    /// Noise tile generator (dirt/grass/sand/ore) via recipe `tiles[]`.
     TileGen,
     /// Parts/paper-doll rig.
     Parts,

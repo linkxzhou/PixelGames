@@ -1,0 +1,28 @@
+{
+  "v": 1,
+  "asset": "brick",
+  "gen_version": 1,
+  "seed": 23,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "brick",
+      "kind": "tiles",
+      "tile_ramp": "brick",
+      "base": {"gen": "shapes", "spec": "brick.shapes.json", "seed": 23},
+      "directions": [
+        {"id": "N", "from": "base", "ops": [{"op": "noop"}]}
+      ],
+      "anims": [
+        {"name": "idle", "fps": 2, "loop": true, "dirs": ["N"], "mode": "static", "frames": [[{"op": "noop"}]]},
+        {"name": "break", "fps": 12, "loop": false, "dirs": ["N"], "frames": [
+          [{"op": "noop"}],
+          [{"op": "mask_fill", "color": 1, "x": 2, "y": 1, "mask": ["##.", "#.."]}, {"op": "mask_fill", "color": 1, "x": 10, "y": 11, "mask": [".##", "..#"]}],
+          [{"op": "mask_fill", "color": 1, "x": 2, "y": 1, "mask": ["####", "###.", "##.."]}, {"op": "mask_fill", "color": 1, "x": 9, "y": 10, "mask": ["..###", ".####", ".####"]}, {"op": "mask_fill", "color": 1, "x": 6, "y": 6, "mask": ["#.#", ".#.", "#.#"]}]
+        ]}
+      ]
+    }
+  ],
+  "sheet": {"sources": ["brick"], "layout": "rows-by-anim", "pad": 1, "file": "brick.sheet.png"},
+  "validate": {"rules": "default"}
+}

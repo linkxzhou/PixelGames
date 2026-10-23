@@ -1,0 +1,23 @@
+{
+  "v": 1,
+  "asset": "steel",
+  "gen_version": 1,
+  "seed": 29,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "steel",
+      "kind": "tiles",
+      "tile_ramp": "steel",
+      "base": {"gen": "shapes", "spec": "steel.shapes.json", "seed": 29},
+      "directions": [
+        {"id": "N", "from": "base", "ops": [{"op": "noop"}]}
+      ],
+      "anims": [
+        {"name": "idle", "fps": 2, "loop": true, "dirs": ["N"], "mode": "static", "frames": [[{"op": "noop"}]]}
+      ]
+    }
+  ],
+  "sheet": {"sources": ["steel"], "layout": "rows-by-anim", "pad": 1, "file": "steel.sheet.png"},
+  "validate": {"rules": "default"}
+}

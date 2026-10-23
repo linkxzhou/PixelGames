@@ -9,6 +9,7 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
+use crate::agent::role::PromptLang;
 use crate::error::{HarnessError, Result};
 
 pub const CONFIG_FILE: &str = "harness.config.json";
@@ -47,6 +48,8 @@ pub struct Config {
     pub require_design_approval: bool,
     /// Gate rules used by asset verification.
     pub visual_review: bool,
+    /// Role prompt language: `en` (default) or `zh` (`roles/*_zh.md`).
+    pub prompt_lang: PromptLang,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -79,6 +82,7 @@ impl Default for Config {
             gate_version: 1,
             require_design_approval: true,
             visual_review: false,
+            prompt_lang: PromptLang::En,
         }
     }
 }
@@ -127,5 +131,13 @@ mod tests {
         let v = serde_json::json!({"pxl_bin": "x", "nope": 1});
         let e = serde_json::from_value::<Config>(v).unwrap_err();
         assert!(e.to_string().contains("nope"));
+    }
+
+    #[test]
+    fn prompt_lang_parses_and_defaults_to_en() {
+        assert_eq!(Config::default().prompt_lang, PromptLang::En);
+        let c: Config = serde_json::from_value(serde_json::json!({"prompt_lang": "zh"})).unwrap();
+        assert_eq!(c.prompt_lang, PromptLang::Zh);
+        assert!(serde_json::from_value::<Config>(serde_json::json!({"prompt_lang": "fr"})).is_err());
     }
 }

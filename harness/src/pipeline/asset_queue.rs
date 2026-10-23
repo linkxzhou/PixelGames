@@ -19,6 +19,9 @@ use crate::adapters::pxl::{PxlAdapter, PxlResult_};
 use crate::digest::{digest_bytes, digest_file};
 use crate::error::{HarnessError, Result};
 
+/// Authored file suffixes the artist may write. Each maps back to `{id}`.
+pub const SPEC_SUFFIXES: &[&str] = &[".recipe.json", ".shapes.json", ".parts.json", ".template.json"];
+
 pub const QUEUE_FILE: &str = "asset-queue.json";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -129,13 +132,14 @@ impl AssetQueue {
         self.entries.iter_mut().find(|e| e.asset_id == asset_id)
     }
 
-    /// Which assets depend on a written file: `{id}.recipe.json` /
-    /// `{id}.shapes.json` affect `{id}`; `palette.json` affects everything.
+    /// Which assets depend on a written file by naming convention:
+    /// `{id}.recipe.json` / `{id}.shapes.json` / `{id}.parts.json` /
+    /// `{id}.template.json` affect `{id}`; `palette.json` affects everything.
     pub fn affected_ids(file_name: &str, required: &[String]) -> Vec<String> {
         if file_name == "palette.json" {
             return required.to_vec();
         }
-        for suffix in [".recipe.json", ".shapes.json"] {
+        for suffix in SPEC_SUFFIXES {
             if let Some(stem) = file_name.strip_suffix(suffix) {
                 if required.iter().any(|r| r == stem) {
                     return vec![stem.to_string()];
@@ -143,6 +147,33 @@ impl AssetQueue {
             }
         }
         Vec::new()
+    }
+
+    /// `affected_ids` plus every required asset whose recipe references the
+    /// written file (`rel` is the attempt-relative path), so a shared or
+    /// unconventionally named spec still marks its consumers dirty.
+    pub fn affected_ids_in(attempt_dir: &Path, rel: &str, required: &[String]) -> Vec<String> {
+        let file_name = Path::new(rel)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or(rel);
+        let mut ids = Self::affected_ids(file_name, required);
+        if file_name == "palette.json" {
+            return ids;
+        }
+        for id in required {
+            if ids.contains(id) {
+                continue;
+            }
+            let recipe = format!("{id}.recipe.json");
+            if recipe_spec_files(attempt_dir, &recipe)
+                .iter()
+                .any(|s| s == rel || s.trim_start_matches("./") == rel)
+            {
+                ids.push(id.clone());
+            }
+        }
+        ids
     }
 
     /// Recompute state for the affected assets after a successful write.
@@ -395,22 +426,26 @@ pub struct AutoCheckOutcome {
     pub report_rel: Option<String>,
 }
 
-/// Full state of one asset's inputs on disk.
+/// Full state of one asset's inputs on disk. Spec dependencies come from the
+/// recipe itself (`base.spec`, file-based `base.template`), so a tile-only or
+/// built-in-template recipe needs no shapes file.
 fn probe_inputs(attempt_dir: &Path, asset_id: &str) -> (AssetState, String, Vec<String>, String) {
     let recipe = format!("{asset_id}.recipe.json");
-    let shapes = format!("{asset_id}.shapes.json");
     let mut missing = Vec::new();
     if !attempt_dir.join(&recipe).is_file() {
         missing.push(recipe.clone());
+        if !attempt_dir.join("palette.json").is_file() {
+            missing.push("palette.json".into());
+        }
+        return (AssetState::MissingSpecs, String::new(), missing, String::new());
     }
-    if !attempt_dir.join(&shapes).is_file() {
-        missing.push(shapes);
+    for spec in recipe_spec_files(attempt_dir, &recipe) {
+        if !attempt_dir.join(&spec).is_file() {
+            missing.push(spec);
+        }
     }
     if !attempt_dir.join("palette.json").is_file() {
         missing.push("palette.json".into());
-    }
-    if !attempt_dir.join(&recipe).is_file() {
-        return (AssetState::MissingSpecs, String::new(), missing, String::new());
     }
     if !missing.is_empty() {
         return (AssetState::PendingDependencies, String::new(), missing, recipe);
@@ -419,16 +454,45 @@ fn probe_inputs(attempt_dir: &Path, asset_id: &str) -> (AssetState, String, Vec<
     (AssetState::PendingBuild, fingerprint, Vec::new(), recipe)
 }
 
-/// Fingerprint = recipe digest + shapes digest + palette digest. Old outputs
-/// produced for a different fingerprint can never back a new recipe.
-pub fn input_fingerprint(attempt_dir: &Path, asset_id: &str, recipe: &str) -> String {
-    let mut parts = vec![recipe.to_string()];
-    for name in [
-        format!("{asset_id}.shapes.json"),
-        "palette.json".to_string(),
-    ] {
-        parts.push(name);
+/// Spec files a recipe reads, relative to the attempt: every sprite's
+/// `base.spec` (shapes or parts) and every `base.template` that is a JSON
+/// file (bare ids such as `slime_8x8` are pxl built-ins). Sorted, deduped.
+pub fn recipe_spec_files(attempt_dir: &Path, recipe: &str) -> Vec<String> {
+    let Ok(text) = fs::read_to_string(attempt_dir.join(recipe)) else {
+        return Vec::new();
+    };
+    let Ok(value) = serde_json::from_str::<serde_json::Value>(&text) else {
+        return Vec::new();
+    };
+    let mut specs: Vec<String> = Vec::new();
+    if let Some(sprites) = value.get("sprites").and_then(|s| s.as_array()) {
+        for sprite in sprites {
+            let Some(base) = sprite.get("base") else {
+                continue;
+            };
+            if let Some(spec) = base.get("spec").and_then(|s| s.as_str()) {
+                specs.push(spec.to_string());
+            }
+            if let Some(t) = base.get("template").and_then(|s| s.as_str()) {
+                if t.ends_with(".json") {
+                    specs.push(t.to_string());
+                }
+            }
+        }
     }
+    specs.sort();
+    specs.dedup();
+    specs
+}
+
+/// Fingerprint = recipe digest + every referenced spec digest + palette
+/// digest. Old outputs produced for a different fingerprint can never back a
+/// new recipe.
+pub fn input_fingerprint(attempt_dir: &Path, asset_id: &str, recipe: &str) -> String {
+    let _ = asset_id;
+    let mut parts = vec![recipe.to_string()];
+    parts.extend(recipe_spec_files(attempt_dir, recipe));
+    parts.push("palette.json".to_string());
     let mut fp = String::new();
     for name in parts {
         let digest = digest_file(&attempt_dir.join(&name)).unwrap_or_else(|_| "missing".into());
@@ -662,7 +726,11 @@ mod tests {
         let mut q = AssetQueue { entries: Vec::new() };
         q.seed(&["w".into(), "explosion".into()]);
         // Only w's recipe exists: explosion stays missing_specs, w is dirty.
-        fs::write(d.join("w.recipe.json"), r#"{"v":1,"asset":"w"}"#).unwrap();
+        fs::write(
+            d.join("w.recipe.json"),
+            r#"{"v":1,"asset":"w","sprites":[{"id":"w","base":{"gen":"shapes","spec":"w.shapes.json"}}]}"#,
+        )
+        .unwrap();
         q.mark_dirty("w", &d);
         assert_eq!(q.entry("w").unwrap().state, AssetState::PendingDependencies);
         assert!(q.entry("w").unwrap().missing.iter().any(|m| m == "w.shapes.json"));
@@ -698,6 +766,50 @@ mod tests {
         assert_eq!(AssetQueue::affected_ids("explosion.shapes.json", &required), vec!["explosion"]);
         assert_eq!(AssetQueue::affected_ids("palette.json", &required).len(), 2);
         assert!(AssetQueue::affected_ids("other.json", &required).is_empty());
+        assert_eq!(AssetQueue::affected_ids("w.parts.json", &required), vec!["w"]);
+        assert_eq!(AssetQueue::affected_ids("w.template.json", &required), vec!["w"]);
+    }
+
+    #[test]
+    fn spec_dependencies_follow_the_recipe() {
+        let d = dir("specdeps");
+        let mut q = AssetQueue { entries: Vec::new() };
+        q.seed(&["grass".into(), "slime".into(), "hero".into()]);
+        fs::write(d.join("palette.json"), r##"{"v":1,"colors":["#00000000"]}"##).unwrap();
+        // Tile-only recipe: no shapes file is needed.
+        fs::write(
+            d.join("grass.recipe.json"),
+            r#"{"v":1,"asset":"grass","palette":"palette.json","tiles":[{"id":"grass","kind":"grass","seed":1}],"sheet":{}}"#,
+        )
+        .unwrap();
+        q.mark_dirty("grass", &d);
+        assert_eq!(q.entry("grass").unwrap().state, AssetState::PendingBuild);
+        // Built-in bollinger template id: no spec file.
+        fs::write(
+            d.join("slime.recipe.json"),
+            r#"{"v":1,"asset":"slime","palette":"palette.json","sprites":[{"id":"slime","base":{"gen":"bollinger","template":"slime_8x8"}}],"sheet":{}}"#,
+        )
+        .unwrap();
+        q.mark_dirty("slime", &d);
+        assert_eq!(q.entry("slime").unwrap().state, AssetState::PendingBuild);
+        // Parts rig with a shared spec name: the referenced file is required
+        // and writing it marks the consumer dirty.
+        fs::write(
+            d.join("hero.recipe.json"),
+            r#"{"v":1,"asset":"hero","palette":"palette.json","sprites":[{"id":"hero","base":{"gen":"parts","spec":"rig.parts.json"}}],"sheet":{}}"#,
+        )
+        .unwrap();
+        q.mark_dirty("hero", &d);
+        assert_eq!(q.entry("hero").unwrap().state, AssetState::PendingDependencies);
+        assert!(q.entry("hero").unwrap().missing.iter().any(|m| m == "rig.parts.json"));
+        let required = vec!["grass".to_string(), "slime".to_string(), "hero".to_string()];
+        assert_eq!(AssetQueue::affected_ids_in(&d, "rig.parts.json", &required), vec!["hero"]);
+        fs::write(d.join("rig.parts.json"), r#"{"v":1}"#).unwrap();
+        let before = input_fingerprint(&d, "hero", "hero.recipe.json");
+        q.mark_dirty("hero", &d);
+        assert_eq!(q.entry("hero").unwrap().state, AssetState::PendingBuild);
+        fs::write(d.join("rig.parts.json"), r#"{"v":1,"w":8}"#).unwrap();
+        assert_ne!(before, input_fingerprint(&d, "hero", "hero.recipe.json"));
     }
 
     #[test]

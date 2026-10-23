@@ -1,0 +1,46 @@
+{
+  "v": 1,
+  "asset": "player_tank",
+  "gen_version": 1,
+  "seed": 1213,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "player_tank",
+      "base": {"gen": "shapes", "spec": "player_tank.shapes.json", "seed": 1213},
+      "post": [{"op": "outline", "color": 1, "mode": "outer", "brush": "square", "width": 1}],
+      "directions": [
+        {"id": "N", "from": "base", "ops": [{"op": "noop"}]},
+        {"id": "E", "from": "N", "ops": [{"op": "rotate90", "dir": "cw"}]},
+        {"id": "S", "from": "N", "ops": [{"op": "flip", "axis": "y"}]},
+        {"id": "W", "from": "E", "ops": [{"op": "flip", "axis": "x"}]}
+      ],
+      "anims": [
+        {"name": "idle", "fps": 2, "loop": true, "dirs": ["N", "E", "S", "W"], "mode": "static", "frames": [[{"op": "noop"}]]},
+        {"name": "move", "fps": 8, "loop": true, "dirs": ["N", "E", "S", "W"], "macro": "tread_cycle(steps=4, region=auto_tread, cycle=tread_still, bob=0)"},
+        {"name": "fire_N", "fps": 12, "loop": false, "dirs": ["N"], "frames": [
+          [{"op": "noop"}],
+          [{"op": "patch_pixels", "x": 6, "y": 0, "rows": ["1ef1", "1cc1"]}]
+        ]},
+        {"name": "fire_E", "fps": 12, "loop": false, "dirs": ["E"], "frames": [
+          [{"op": "noop"}],
+          [{"op": "patch_pixels", "x": 14, "y": 6, "rows": ["11", "cf", "ce", "11"]}]
+        ]},
+        {"name": "fire_S", "fps": 12, "loop": false, "dirs": ["S"], "frames": [
+          [{"op": "noop"}],
+          [{"op": "patch_pixels", "x": 6, "y": 14, "rows": ["1cc1", "1fe1"]}]
+        ]},
+        {"name": "fire_W", "fps": 12, "loop": false, "dirs": ["W"], "frames": [
+          [{"op": "noop"}],
+          [{"op": "patch_pixels", "x": 0, "y": 6, "rows": ["11", "fc", "ec", "11"]}]
+        ]}
+      ]
+    }
+  ],
+  "sheet": {"sources": ["player_tank"], "layout": "rows-by-anim", "pad": 1, "file": "player_tank.sheet.png"},
+  "preview": [
+    {"source": "player_tank", "anim": "move", "dir": "N", "scale": 8, "file": "player_tank_move_N.gif"},
+    {"sheet": true, "scale": 6, "grid": true, "file": "player_tank_sheet.png"}
+  ],
+  "validate": {"rules": "default"}
+}

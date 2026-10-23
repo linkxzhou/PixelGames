@@ -19,6 +19,16 @@ pub enum Permission {
     Pxl,
     /// Reserved for the future engine stage.
     Engine,
+    /// Manage the structured todo list (v3; granted to every role by the
+    /// runner so it defaults to available but stays revocable by host policy).
+    Todo,
+    /// Call tools bridged from MCP servers (v3). Host policy must list the
+    /// server explicitly; read-only remote tools additionally map onto
+    /// ReadProject before dispatch.
+    Mcp,
+    /// Create/inspect goals (v3; only the generic agent mode, never pipeline
+    /// roles — the frozen contract owns acceptance criteria there).
+    Goal,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

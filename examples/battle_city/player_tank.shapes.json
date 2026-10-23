@@ -1,0 +1,17 @@
+{
+  "w": 16,
+  "h": 16,
+  "palette": "palette.json",
+  "mirror": "x",
+  "draw": [
+    {"rect": [3, 3, 3, 10], "c": 6},
+    {"rect": [3, 3, 3, 10], "c": 7, "pattern": "stripe_y:4"},
+    {"rect": [6, 4, 2, 9], "c": 3},
+    {"rect": [6, 4, 2, 1], "c": 5},
+    {"rect": [6, 5, 1, 7], "c": 4},
+    {"rect": [6, 6, 2, 3], "c": 2, "mirror": false},
+    {"rect": [7, 7, 1, 1], "c": 5, "mirror": false},
+    {"rect": [7, 2, 2, 5], "c": 5, "mirror": false},
+    {"rect": [7, 2, 2, 1], "c": 14, "mirror": false}
+  ]
+}

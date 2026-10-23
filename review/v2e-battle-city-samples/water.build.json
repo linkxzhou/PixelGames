@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "pxl_version": "0.1.0",
+  "gen_version": 1,
+  "seed": 31,
+  "inputs": {
+    "recipe": "sha256:ab77dd827e9ac39a5ef46ef01ce9f30b22c5aa8c873ee104f083f61896383964",
+    "palette": "sha256:bff1a40c22dff36009f3c32c7bf453586479afdc871bd0ba95e91804fbbaf28e",
+    "specs": {
+      "water.shapes.json": "sha256:590eed679f8fc218e9b48244106ed09599a3f92435aea9a140f59977577f6be8"
+    }
+  },
+  "outputs": {
+    "palette.json": "sha256:bff1a40c22dff36009f3c32c7bf453586479afdc871bd0ba95e91804fbbaf28e",
+    "water.pxl.json": "sha256:2cc397c2e10e8465ff27a0fe0db8c76c58eb4cfe9918686194d2f79ac0cf880f",
+    "water.sheet.png": "sha256:7c468f0d84396bff019d1abcd0d02dbf7822df9366f8b92c710acfc42d0e2464",
+    "water.sheet.json": "sha256:17f9a9c4f2b67ad43ad3208ea3f02ebf6fdee6b8486a3d855e5101db50e3a5a8"
+  },
+  "qa": {
+    "rules": "default",
+    "ok": true,
+    "checks": 17,
+    "failed": 0
+  },
+  "visual_review": "not_run"
+}

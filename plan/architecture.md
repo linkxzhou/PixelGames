@@ -1,6 +1,8 @@
 # 架构设计（architecture，v2：CLI 优先）
 
 > v2：先做 `pxl-core`（库）和 `pxl-cli`（二进制 `pxl`）。WASM 和 Web 编辑器**推迟**，以后复用 `pxl-core`。
+>
+> **状态（2026-10-22）：已实现。** 第 1 节 crates 布局落地（`pxl-wasm` 仍 deferred）；harness 作为独立 package 加入 workspace（见 pixelgames-harness-design-plan.md）。第 4 节许可约束继续有效。
 
 ## 1. Cargo workspace 布局（v2）
 ```

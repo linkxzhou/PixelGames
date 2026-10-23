@@ -1,0 +1,367 @@
+{
+  "v": 1,
+  "asset": "explosion",
+  "gen_version": 1,
+  "seed": 557,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "explosion",
+      "kind": "effect",
+      "base": {
+        "gen": "shapes",
+        "spec": "explosion.shapes.json",
+        "seed": 557
+      },
+      "directions": [
+        {
+          "id": "N",
+          "from": "base",
+          "ops": [
+            {
+              "op": "noop"
+            }
+          ]
+        }
+      ],
+      "anims": [
+        {
+          "name": "burst",
+          "fps": 14,
+          "loop": false,
+          "dirs": [
+            "N"
+          ],
+          "frames": [
+            [
+              {
+                "op": "mask_fill",
+                "color": 15,
+                "x": 6,
+                "y": 6,
+                "mask": [
+                  "####",
+                  "####",
+                  "####",
+                  "####"
+                ]
+              },
+              {
+                "op": "mask_fill",
+                "color": 12,
+                "x": 7,
+                "y": 7,
+                "mask": [
+                  "##",
+                  "##"
+                ]
+              },
+              {
+                "op": "outline",
+                "color": 1,
+                "mode": "outer",
+                "brush": "square",
+                "width": 1
+              }
+            ],
+            [
+              {
+                "op": "mask_fill",
+                "color": 14,
+                "x": 5,
+                "y": 5,
+                "mask": [
+                  ".####.",
+                  "######",
+                  "######",
+                  "######",
+                  "######",
+                  ".####."
+                ]
+              },
+              {
+                "op": "mask_fill",
+                "color": 15,
+                "x": 6,
+                "y": 6,
+                "mask": [
+                  "####",
+                  "####",
+                  "####",
+                  "####"
+                ]
+              },
+              {
+                "op": "mask_fill",
+                "color": 12,
+                "x": 7,
+                "y": 7,
+                "mask": [
+                  "##",
+                  "##"
+                ]
+              },
+              {
+                "op": "outline",
+                "color": 1,
+                "mode": "outer",
+                "brush": "square",
+                "width": 1
+              }
+            ],
+            [
+              {
+                "op": "mask_fill",
+                "color": 14,
+                "x": 3,
+                "y": 3,
+                "mask": [
+                  "..######..",
+                  ".########.",
+                  "##########",
+                  "##########",
+                  "##########",
+                  "##########",
+                  "##########",
+                  "##########",
+                  ".########.",
+                  "..######.."
+                ]
+              },
+              {
+                "op": "mask_fill",
+                "color": 15,
+                "x": 5,
+                "y": 5,
+                "mask": [
+                  ".####.",
+                  "######",
+                  "######",
+                  "######",
+                  "######",
+                  ".####."
+                ]
+              },
+              {
+                "op": "mask_fill",
+                "color": 12,
+                "x": 6,
+                "y": 6,
+                "mask": [
+                  ".##.",
+                  "####",
+                  "####",
+                  ".##."
+                ]
+              },
+              {
+                "op": "mask_fill",
+                "color": 15,
+                "x": 1,
+                "y": 7,
+                "mask": [
+                  "#"
+                ]
+              },
+              {
+                "op": "mask_fill",
+                "color": 15,
+                "x": 14,
+                "y": 8,
+                "mask": [
+                  "#"
+                ]
+              },
+              {
+                "op": "mask_fill",
+                "color": 15,
+                "x": 7,
+                "y": 1,
+                "mask": [
+                  "#"
+                ]
+              },
+              {
+                "op": "mask_fill",
+                "color": 15,
+                "x": 8,
+                "y": 14,
+                "mask": [
+                  "#"
+                ]
+              },
+              {
+                "op": "outline",
+                "color": 1,
+                "mode": "outer",
+                "brush": "square",
+                "width": 1
+              }
+            ],
+            [
+              {
+                "op": "mask_fill",
+                "color": 14,
+                "x": 3,
+                "y": 3,
+                "mask": [
+                  "..######..",
+                  ".########.",
+                  "##......##",
+                  "##......##",
+                  "##......##",
+                  "##......##",
+                  "##......##",
+                  "##......##",
+                  ".########.",
+                  "..######.."
+                ]
+              },
+              {
+                "op": "mask_fill",
+                "color": 15,
+                "x": 4,
+                "y": 4,
+                "mask": [
+                  "#......#",
+                  "........",
+                  "........",
+                  "........",
+                  "........",
+                  "........",
+                  "........",
+                  "#......#"
+                ]
+              },
+              {
+                "op": "mask_fill",
+                "color": 6,
+                "x": 7,
+                "y": 7,
+                "mask": [
+                  "##",
+                  "##"
+                ]
+              },
+              {
+                "op": "mask_fill",
+                "color": 14,
+                "x": 2,
+                "y": 2,
+                "mask": [
+                  "#"
+                ]
+              },
+              {
+                "op": "mask_fill",
+                "color": 14,
+                "x": 13,
+                "y": 13,
+                "mask": [
+                  "#"
+                ]
+              },
+              {
+                "op": "mask_fill",
+                "color": 14,
+                "x": 13,
+                "y": 2,
+                "mask": [
+                  "#"
+                ]
+              },
+              {
+                "op": "mask_fill",
+                "color": 14,
+                "x": 2,
+                "y": 13,
+                "mask": [
+                  "#"
+                ]
+              },
+              {
+                "op": "outline",
+                "color": 1,
+                "mode": "outer",
+                "brush": "square",
+                "width": 1
+              }
+            ],
+            [
+              {
+                "op": "mask_fill",
+                "color": 7,
+                "x": 4,
+                "y": 4,
+                "mask": [
+                  "#......#",
+                  "........",
+                  "........",
+                  "...##...",
+                  "...##...",
+                  "........",
+                  "........",
+                  "#......#"
+                ]
+              },
+              {
+                "op": "mask_fill",
+                "color": 15,
+                "x": 7,
+                "y": 7,
+                "mask": [
+                  "#."
+                ]
+              },
+              {
+                "op": "mask_fill",
+                "color": 14,
+                "x": 2,
+                "y": 7,
+                "mask": [
+                  "#"
+                ]
+              },
+              {
+                "op": "mask_fill",
+                "color": 14,
+                "x": 13,
+                "y": 8,
+                "mask": [
+                  "#"
+                ]
+              },
+              {
+                "op": "outline",
+                "color": 1,
+                "mode": "outer",
+                "brush": "square",
+                "width": 1
+              }
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "sheet": {
+    "sources": [
+      "explosion"
+    ],
+    "layout": "rows-by-anim",
+    "pad": 1,
+    "file": "explosion.sheet.png"
+  },
+  "preview": [
+    {
+      "source": "explosion",
+      "anim": "burst",
+      "dir": "N",
+      "scale": 8,
+      "file": "explosion_burst.gif"
+    }
+  ],
+  "validate": {
+    "rules": "default"
+  }
+}

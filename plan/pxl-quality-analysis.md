@@ -1,5 +1,7 @@
 # pxl 出图质量分析（基于 PR #1 分支 `cursor/reference-art-recipes-874a`）
 
+> **状态（2026-10-22）：已完成，归档。** R1–R10 根因分析为改进计划的输入；其中 R6（调色板）、R10（cleanEdge）等部分缺口已在后续版本修复，确定性缺陷复核见 pxl-quality-improvement-plan.md Q2。本文不再更新。
+
 只读分析，没有改仓库。代码在 `/workspace/PixelGames`，上游参考仓库浅克隆在 `/tmp`。
 
 ## 1. 质量差的根本原因

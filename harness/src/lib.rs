@@ -3,6 +3,7 @@
 pub mod adapters;
 pub mod agent;
 pub mod cli;
+pub mod cli_agent;
 pub mod config;
 pub mod contracts;
 pub mod digest;
