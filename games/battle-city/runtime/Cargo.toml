@@ -1,0 +1,25 @@
+[package]
+name = "battle-city"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Battle City slice: macroquad window plus a headless fixed-step replay"
+
+[lib]
+name = "battle_city"
+path = "src/lib.rs"
+
+[[bin]]
+name = "battle-city"
+path = "src/main.rs"
+
+[dependencies]
+png = { workspace = true }
+serde = { workspace = true, features = ["std"] }
+serde_json = { workspace = true }
+macroquad = { version = "=0.4.13", default-features = false, optional = true }
+
+[features]
+default = ["window"]
+window = ["dep:macroquad"]

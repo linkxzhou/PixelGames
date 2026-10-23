@@ -35,9 +35,13 @@ pub enum Command {
     Run {
         #[arg(long)]
         project: PathBuf,
-        /// End point: design | assets.
+        /// End point: design | assets | build | playtest.
         #[arg(long, default_value = "design")]
         until: String,
+        /// First stage to execute. Earlier stages are reused when approved,
+        /// or left not_requested. design | assets | build | playtest.
+        #[arg(long, default_value = "design")]
+        from: String,
     },
     /// Approve a stage revision, binding game_id + revision + digest.
     Approve {
@@ -118,9 +122,17 @@ fn dispatch(cli: Cli) -> Result<i32> {
             }))?;
             Ok(exit::OK)
         }
-        Command::Run { project, until } => {
+        Command::Run { project, until, from } => {
             let until = UntilStage::parse(&until)?;
-            let mut runner = PipelineRunner::start(project.clone(), until)?;
+            let from = UntilStage::parse(&from)?;
+            if from.ord() > until.ord() {
+                return Err(crate::error::HarnessError::usage(format!(
+                    "--from {} is after --until {}",
+                    from.as_str(),
+                    until.as_str()
+                )));
+            }
+            let mut runner = PipelineRunner::start(project.clone(), until, from)?;
             let cfg = runner.cfg().clone();
             let mut provider = provider_from_config(&cfg)?;
             let summary = runner.run(provider.as_mut())?;
@@ -140,7 +152,7 @@ fn dispatch(cli: Cli) -> Result<i32> {
                 return Err(HarnessError::usage(format!(
                     "unknown stage '{stage}'"
                 ))
-                .with_hint("valid stages: design, assets"));
+                .with_hint("approval stages: design, assets"));
             }
             // Approve binds the manifest digest; an explicit mismatch is a
             // hard error, an empty digest means "trust the manifest".

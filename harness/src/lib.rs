@@ -10,6 +10,7 @@ pub mod digest;
 pub mod error;
 pub mod pipeline;
 pub mod policy;
+pub mod skills;
 pub mod storage;
 pub mod qa;
 

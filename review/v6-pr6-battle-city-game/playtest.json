@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "panicked": false,
+  "frames": 120,
+  "level": 2,
+  "seed": 202,
+  "player_moved": true,
+  "shots": 6,
+  "bricks_destroyed": 5,
+  "enemies_destroyed": 0,
+  "palette_mismatches": 0,
+  "player_start": [
+    1,
+    10
+  ],
+  "player_end": [
+    1,
+    1
+  ],
+  "outcome": "playing",
+  "state_hash": "0916cae25a8e0c31",
+  "screenshots": [
+    "frame_0000.png",
+    "frame_0060.png",
+    "frame_0119.png"
+  ],
+  "fixed_dt_hz": 60
+}

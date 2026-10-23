@@ -1,0 +1,40 @@
+{
+  "v": 1,
+  "id": "battle_city",
+  "colors": [
+    "#00000000",
+    "#0d0f0a",
+    "#232a1a",
+    "#46552a",
+    "#6f8a3a",
+    "#a8bf5c",
+    "#565b4e",
+    "#8b9084",
+    "#1d3646",
+    "#3d6d8e",
+    "#8a3d26",
+    "#bf6a41",
+    "#efe5c2",
+    "#8d8a60",
+    "#c9482f",
+    "#e8a33a"
+  ],
+  "ramps": {
+    "olive": [2, 3, 4, 5],
+    "steel": [6, 7],
+    "water": [8, 9],
+    "brick": [10, 11],
+    "bone": [12],
+    "grass": [3, 5],
+    "hazard": [10, 12],
+    "goal": [13, 12],
+    "tread": [2, 6, 7],
+    "fire": [14, 15, 12]
+  },
+  "cycles": {
+    "water": {"indices": [8, 9], "period": 4},
+    "tread": {"indices": [6, 7], "period": 2},
+    "tread_still": {"indices": [6], "period": 1}
+  },
+  "special": {"transparent": 0, "outline": 1, "flash": 12}
+}

@@ -1,0 +1,10 @@
+{
+  "level": 2,
+  "seed": 202,
+  "frames": 120,
+  "script": [
+    { "until": 24, "dir": "E", "shoot": false },
+    { "until": 48, "dir": "W", "shoot": false },
+    { "until": 120, "dir": "N", "shoot": true }
+  ]
+}

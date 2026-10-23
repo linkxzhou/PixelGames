@@ -20,6 +20,8 @@ use crate::storage::{
 pub enum UntilStage {
     Design,
     Assets,
+    Build,
+    Playtest,
 }
 
 impl UntilStage {
@@ -27,10 +29,12 @@ impl UntilStage {
         match s {
             "design" => Ok(Self::Design),
             "assets" => Ok(Self::Assets),
+            "build" => Ok(Self::Build),
+            "playtest" => Ok(Self::Playtest),
             other => Err(HarnessError::usage(format!(
-                "unknown --until stage '{other}'"
+                "unknown stage '{other}'"
             ))
-            .with_hint("valid stages: design, assets")),
+            .with_hint("valid stages: design, assets, build, playtest")),
         }
     }
 
@@ -38,7 +42,16 @@ impl UntilStage {
         match self {
             UntilStage::Design => "design",
             UntilStage::Assets => "assets",
+            UntilStage::Build => "build",
+            UntilStage::Playtest => "playtest",
         }
+    }
+
+    pub fn ord(self) -> usize {
+        STAGES
+            .iter()
+            .position(|s| *s == self.as_str())
+            .unwrap_or(0)
     }
 }
 
@@ -46,6 +59,7 @@ impl UntilStage {
 pub struct PipelineRunner {
     pub project: PathBuf,
     pub until: UntilStage,
+    pub from: UntilStage,
     pub cfg: Config,
     artifacts: ArtifactStore,
     run: RunStore,
@@ -58,7 +72,7 @@ pub struct PipelineRunner {
 impl PipelineRunner {
     /// Acquire the project lock, create (or open) the run directory and
     /// persist the run state before any model call.
-    pub fn start(project: PathBuf, until: UntilStage) -> Result<Self> {
+    pub fn start(project: PathBuf, until: UntilStage, from: UntilStage) -> Result<Self> {
         let lock = ProjectLock::acquire(&project)?;
         let cfg = Config::load(&project)?;
         let artifacts = ArtifactStore::open(project.clone())?;
@@ -74,12 +88,13 @@ impl PipelineRunner {
             serde_json::to_string(&cfg)?.as_bytes(),
         );
         let run_id = format!("r{}", timestamp_id());
-        let state = RunState::new(
+        let mut state = RunState::new(
             run_id.clone(),
             brief_digest,
             config_digest,
             until.as_str(),
         );
+        state.from_stage = Some(from.as_str().to_string());
         let run_dir = artifacts.runs_dir().join(&run_id);
         let run = RunStore::create(run_dir, &state)?;
         let mut events = EventLog::open(run.dir())?;
@@ -99,6 +114,7 @@ impl PipelineRunner {
             ledger,
             events,
             _lock: lock,
+            from,
         })
     }
 
@@ -133,8 +149,13 @@ impl PipelineRunner {
 
     fn run_stages(&mut self, provider: &mut dyn ModelProvider) -> Result<RunSummary> {
         let stages = stages_up_to(self.until);
+        let mut assets_failed = false;
         for stage in &stages {
             if self.state.stages[stage] == StageStatus::Succeeded {
+                continue;
+            }
+            if stage_ord(stage) < self.from.ord() {
+                self.skip_before_from(stage)?;
                 continue;
             }
             // When an approved design exists, `run --until assets` reuses it
@@ -157,9 +178,39 @@ impl PipelineRunner {
                     .with_hint("pxl-harness approve --stage design --revision <rev>"));
                 }
             }
+            if stage == "assets" {
+                if let Some(rev) = self.artifacts.identity()?.assets_revision.clone() {
+                    if self.artifacts.approval_valid("assets", &rev)? {
+                        self.state.assets_revision = Some(rev.clone());
+                        self.state.stages.insert(stage.clone(), StageStatus::Succeeded);
+                        self.run.save(&self.state)?;
+                        self.events.append(Event::StageStatus {
+                            stage: stage.clone(),
+                            status: "succeeded".into(),
+                        })?;
+                        continue;
+                    }
+                    return Err(HarnessError::blocked(
+                        "assets revision exists but its approval is invalid",
+                    )
+                    .with_hint("pxl-harness approve --stage assets --revision <rev>"));
+                }
+            }
             let status = match stage.as_str() {
                 "design" => self.run_design(provider)?,
                 "assets" => self.run_assets(provider)?,
+                "build" => crate::pipeline::build_stage::run_build_stage(
+                    &self.project,
+                    &self.run,
+                    &mut self.state,
+                    &mut self.events,
+                )?,
+                "playtest" => crate::pipeline::playtest_stage::run_playtest_stage(
+                    &self.project,
+                    &self.run,
+                    &mut self.state,
+                    &mut self.events,
+                )?,
                 other => {
                     return Err(HarnessError::semantic(format!(
                         "unknown stage '{other}'"
@@ -180,6 +231,13 @@ impl PipelineRunner {
                     })
                 }
                 StageStatus::Failed => {
+                    // Asset authoring can fail its gate without erasing a
+                    // playable runtime. Later stages still run; the run stays
+                    // failed so a red asset gate is not reported as success.
+                    if stage == "assets" && stage_ord(stage) < self.until.ord() {
+                        assets_failed = true;
+                        continue;
+                    }
                     return Ok(RunSummary {
                         run_id: self.state.run_id.clone(),
                         status: "failed".into(),
@@ -202,11 +260,64 @@ impl PipelineRunner {
                 }
             }
         }
+        if assets_failed {
+            return Ok(RunSummary {
+                run_id: self.state.run_id.clone(),
+                status: "failed".into(),
+                exit_code: exit::FAILED,
+            });
+        }
         Ok(RunSummary {
             run_id: self.state.run_id.clone(),
             status: "succeeded".into(),
             exit_code: exit::OK,
         })
+    }
+
+    /// Stages before `--from` are not executed. An approved revision is
+    /// reused. An assets stage that was simply not selected stays
+    /// `not_requested` so a build/playtest invocation does not pretend the
+    /// artist ran.
+    fn skip_before_from(&mut self, stage: &str) -> Result<()> {
+        if stage == "design" {
+            if let Some(rev) = self.artifacts.identity()?.design_revision.clone() {
+                if self.artifacts.approval_valid("design", &rev)? {
+                    self.state.design_revision = Some(rev);
+                    self.state.stages.insert(stage.to_string(), StageStatus::Succeeded);
+                    self.run.save(&self.state)?;
+                    self.events.append(Event::StageStatus {
+                        stage: stage.to_string(),
+                        status: "succeeded".into(),
+                    })?;
+                    return Ok(());
+                }
+            }
+            return Err(HarnessError::blocked(
+                "build/playtest needs an approved design revision",
+            )
+            .with_hint("pxl-harness approve --stage design --revision <rev>"));
+        }
+        if stage == "assets" {
+            if let Some(rev) = self.artifacts.identity()?.assets_revision.clone() {
+                if self.artifacts.approval_valid("assets", &rev)? {
+                    self.state.assets_revision = Some(rev);
+                    self.state.stages.insert(stage.to_string(), StageStatus::Succeeded);
+                    self.run.save(&self.state)?;
+                    self.events.append(Event::StageStatus {
+                        stage: stage.to_string(),
+                        status: "succeeded".into(),
+                    })?;
+                    return Ok(());
+                }
+            }
+        }
+        self.state.stages.insert(stage.to_string(), StageStatus::NotRequested);
+        self.run.save(&self.state)?;
+        self.events.append(Event::StageStatus {
+            stage: stage.to_string(),
+            status: "not_requested".into(),
+        })?;
+        Ok(())
     }
 
     fn run_design(&mut self, provider: &mut dyn ModelProvider) -> Result<StageStatus> {
@@ -309,6 +420,10 @@ pub fn provider_from_config(cfg: &Config) -> Result<Box<dyn ModelProvider>> {
     }
 }
 
+fn stage_ord(stage: &str) -> usize {
+    STAGES.iter().position(|s| *s == stage).unwrap_or(0)
+}
+
 fn stages_up_to(until: UntilStage) -> Vec<String> {
     let stop = STAGES
         .iter()
@@ -343,7 +458,10 @@ mod tests {
     fn until_parsing_and_stage_order() {
         assert!(UntilStage::parse("design").is_ok());
         assert!(UntilStage::parse("assets").is_ok());
+        assert!(UntilStage::parse("build").is_ok());
+        assert!(UntilStage::parse("playtest").is_ok());
         assert!(UntilStage::parse("nope").is_err());
+        assert!(UntilStage::Build.ord() < UntilStage::Playtest.ord());
         assert_eq!(
             stages_up_to(UntilStage::Design),
             vec!["design".to_string()]
@@ -351,6 +469,15 @@ mod tests {
         assert_eq!(
             stages_up_to(UntilStage::Assets),
             vec!["design".to_string(), "assets".to_string()]
+        );
+        assert_eq!(
+            stages_up_to(UntilStage::Playtest),
+            vec![
+                "design".to_string(),
+                "assets".to_string(),
+                "build".to_string(),
+                "playtest".to_string()
+            ]
         );
     }
 }
