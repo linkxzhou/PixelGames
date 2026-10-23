@@ -32,3 +32,9 @@ pxl-gen = { path = "crates/pxl-gen" }
 pxl-ops = { path = "crates/pxl-ops" }
 pxl-qa = { path = "crates/pxl-qa" }
 pxl-export = { path = "crates/pxl-export" }
+
+# macroquad 0.4.13 pins miniquad =0.4.6. That release calls center() before the
+# NSView exists; AppKit then messages a nil view and Apple Silicon panics.
+# This path is 0.4.6 plus that init-order fix. See vendor/miniquad/src/native/macos.rs.
+[patch.crates-io]
+miniquad = { path = "vendor/miniquad" }
