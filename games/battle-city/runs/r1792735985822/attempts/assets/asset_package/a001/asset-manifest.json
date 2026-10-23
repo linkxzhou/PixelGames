@@ -1,0 +1,714 @@
+{
+  "schema_version": 1,
+  "design_revision": "d1792638056510",
+  "assets_revision": "a1792735985822",
+  "pxl_version": "0.1.0",
+  "pxl_binary_digest": "sha256:0f319a11526eb5f63b7cbf0892228f702c14517e5cfc11da0db6a1f8c41f8e55",
+  "entries": [
+    {
+      "asset_id": "player_tank",
+      "status": "delivered",
+      "required": true,
+      "recipe_path": "player_tank.recipe.json",
+      "recipe_digest": "sha256:65f5671ee235277dcd0389e4f319718478ba5abd9d0b9fdc241d7a1d39eb022e",
+      "spec_paths": [
+        [
+          "player_tank.shapes.json",
+          "sha256:753c765d10d0af349e270b90440c9d0156e836a5b9aa96523b26065724e05797"
+        ]
+      ],
+      "palette_path": "palette.json",
+      "palette_digest": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+      "seed": 17,
+      "outputs": [
+        [
+          "out/player_tank/player_tank.sheet.png",
+          "sha256:b2af20764aa1788bf9c7b51d20d9a856ec1575ece01de91bc4df4493514b30b7"
+        ]
+      ],
+      "animations": [
+        {
+          "name": "idle",
+          "fps": 2,
+          "looped": true,
+          "dirs": [
+            [
+              "N",
+              [
+                "player_tank_idle_N_0"
+              ]
+            ],
+            [
+              "E",
+              [
+                "player_tank_idle_E_0"
+              ]
+            ],
+            [
+              "S",
+              [
+                "player_tank_idle_S_0"
+              ]
+            ],
+            [
+              "W",
+              [
+                "player_tank_idle_W_0"
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "move",
+          "fps": 8,
+          "looped": true,
+          "dirs": [
+            [
+              "N",
+              [
+                "player_tank_move_N_0",
+                "player_tank_move_N_1"
+              ]
+            ],
+            [
+              "E",
+              [
+                "player_tank_move_E_0",
+                "player_tank_move_E_1"
+              ]
+            ],
+            [
+              "S",
+              [
+                "player_tank_move_S_0",
+                "player_tank_move_S_1"
+              ]
+            ],
+            [
+              "W",
+              [
+                "player_tank_move_W_0",
+                "player_tank_move_W_1"
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "fire",
+          "fps": 12,
+          "looped": false,
+          "dirs": [
+            [
+              "N",
+              [
+                "player_tank_fire_N_0",
+                "player_tank_fire_N_1"
+              ]
+            ],
+            [
+              "E",
+              [
+                "player_tank_fire_E_0",
+                "player_tank_fire_E_1"
+              ]
+            ],
+            [
+              "S",
+              [
+                "player_tank_fire_S_0",
+                "player_tank_fire_S_1"
+              ]
+            ],
+            [
+              "W",
+              [
+                "player_tank_fire_W_0",
+                "player_tank_fire_W_1"
+              ]
+            ]
+          ]
+        }
+      ],
+      "size_px": [
+        16,
+        16
+      ]
+    },
+    {
+      "asset_id": "enemy_tank",
+      "status": "delivered",
+      "required": true,
+      "recipe_path": "enemy_tank.recipe.json",
+      "recipe_digest": "sha256:ee668f42e36b9b0712fa0c34af514b31f8b46ea2749c200c53ead8bf3a7bccfb",
+      "spec_paths": [
+        [
+          "enemy_tank.shapes.json",
+          "sha256:180d59114040746133df24667345d4932ce6bc7463b27e1fad9e0ff90d376c3f"
+        ]
+      ],
+      "palette_path": "palette.json",
+      "palette_digest": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+      "seed": 29,
+      "outputs": [
+        [
+          "out/enemy_tank/enemy_tank.sheet.png",
+          "sha256:41dd578e3412ab263daef1cad56ec44ab52ab205fbfaf4ad6c76767151af0c81"
+        ]
+      ],
+      "animations": [
+        {
+          "name": "idle",
+          "fps": 2,
+          "looped": true,
+          "dirs": [
+            [
+              "N",
+              [
+                "enemy_tank_idle_N_0"
+              ]
+            ],
+            [
+              "E",
+              [
+                "enemy_tank_idle_E_0"
+              ]
+            ],
+            [
+              "S",
+              [
+                "enemy_tank_idle_S_0"
+              ]
+            ],
+            [
+              "W",
+              [
+                "enemy_tank_idle_W_0"
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "move",
+          "fps": 8,
+          "looped": true,
+          "dirs": [
+            [
+              "N",
+              [
+                "enemy_tank_move_N_0",
+                "enemy_tank_move_N_1"
+              ]
+            ],
+            [
+              "E",
+              [
+                "enemy_tank_move_E_0",
+                "enemy_tank_move_E_1"
+              ]
+            ],
+            [
+              "S",
+              [
+                "enemy_tank_move_S_0",
+                "enemy_tank_move_S_1"
+              ]
+            ],
+            [
+              "W",
+              [
+                "enemy_tank_move_W_0",
+                "enemy_tank_move_W_1"
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "fire",
+          "fps": 12,
+          "looped": false,
+          "dirs": [
+            [
+              "N",
+              [
+                "enemy_tank_fire_N_0",
+                "enemy_tank_fire_N_1"
+              ]
+            ],
+            [
+              "E",
+              [
+                "enemy_tank_fire_E_0",
+                "enemy_tank_fire_E_1"
+              ]
+            ],
+            [
+              "S",
+              [
+                "enemy_tank_fire_S_0",
+                "enemy_tank_fire_S_1"
+              ]
+            ],
+            [
+              "W",
+              [
+                "enemy_tank_fire_W_0",
+                "enemy_tank_fire_W_1"
+              ]
+            ]
+          ]
+        }
+      ],
+      "size_px": [
+        16,
+        16
+      ]
+    },
+    {
+      "asset_id": "bullet",
+      "status": "delivered",
+      "required": true,
+      "recipe_path": "bullet.recipe.json",
+      "recipe_digest": "sha256:695a8b45b74808b379d8ac59939e4689e1ac2c97e591493dfc21febbdc2beb5f",
+      "spec_paths": [
+        [
+          "bullet.shapes.json",
+          "sha256:10617d719e22749ed3d5a0ef8c7c03c6944b2b26f9cd50ba98b030ce4b1e1f14"
+        ]
+      ],
+      "palette_path": "palette.json",
+      "palette_digest": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+      "seed": 13,
+      "outputs": [
+        [
+          "out/bullet/bullet.sheet.png",
+          "sha256:e1ec9da0b0591f08319bb855102a9b8b281a536046a665481bbec098907578a8"
+        ]
+      ],
+      "animations": [
+        {
+          "name": "fly",
+          "fps": 12,
+          "looped": true,
+          "dirs": [
+            [
+              "N",
+              [
+                "bullet_fly_N_0"
+              ]
+            ],
+            [
+              "E",
+              [
+                "bullet_fly_E_0"
+              ]
+            ],
+            [
+              "S",
+              [
+                "bullet_fly_S_0"
+              ]
+            ],
+            [
+              "W",
+              [
+                "bullet_fly_W_0"
+              ]
+            ]
+          ]
+        }
+      ],
+      "size_px": [
+        8,
+        8
+      ]
+    },
+    {
+      "asset_id": "explosion",
+      "status": "delivered",
+      "required": true,
+      "recipe_path": "explosion.recipe.json",
+      "recipe_digest": "sha256:55aac0f97525e99182dfeb787dc3d9515147eb3a5cd337053ea9e561e8dd02ae",
+      "spec_paths": [
+        [
+          "explosion.shapes.json",
+          "sha256:53460dfa8e57adbb6128fb1fcb0151c3182290720b06d06b720d49763df5e97a"
+        ]
+      ],
+      "palette_path": "palette.json",
+      "palette_digest": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+      "seed": 41,
+      "outputs": [
+        [
+          "out/explosion/explosion.sheet.png",
+          "sha256:f59096e63ccd31dfb4770593e1680909e0f03c06527580299ca5a00699a845e4"
+        ]
+      ],
+      "animations": [
+        {
+          "name": "burst",
+          "fps": 16,
+          "looped": false,
+          "dirs": [
+            [
+              "N",
+              [
+                "explosion_burst_N_0",
+                "explosion_burst_N_1",
+                "explosion_burst_N_2",
+                "explosion_burst_N_3"
+              ]
+            ]
+          ]
+        }
+      ],
+      "size_px": [
+        16,
+        16
+      ]
+    },
+    {
+      "asset_id": "hq_base",
+      "status": "delivered",
+      "required": true,
+      "recipe_path": "hq_base.recipe.json",
+      "recipe_digest": "sha256:c97076d52971da1aa958da487bf3c46b8a4007a2a80b37fc53ed91b1be6c1f11",
+      "spec_paths": [
+        [
+          "hq_base.shapes.json",
+          "sha256:fd8081cf2fe221db7af42800ce8486145c5fa6b8d6398939dc56ac7ea55a6845"
+        ]
+      ],
+      "palette_path": "palette.json",
+      "palette_digest": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+      "seed": 53,
+      "outputs": [
+        [
+          "out/hq_base/hq_base.sheet.png",
+          "sha256:b955019b0f6dd52273526e6eb483a1535f210b64b3737f8fc8325fea084de171"
+        ]
+      ],
+      "animations": [
+        {
+          "name": "idle",
+          "fps": 2,
+          "looped": true,
+          "dirs": [
+            [
+              "N",
+              [
+                "hq_base_idle_N_0"
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "destroyed",
+          "fps": 4,
+          "looped": false,
+          "dirs": [
+            [
+              "N",
+              [
+                "hq_base_destroyed_N_0",
+                "hq_base_destroyed_N_1"
+              ]
+            ]
+          ]
+        }
+      ],
+      "size_px": [
+        16,
+        16
+      ]
+    },
+    {
+      "asset_id": "hud_life_icon",
+      "status": "delivered",
+      "required": true,
+      "recipe_path": "hud_life_icon.recipe.json",
+      "recipe_digest": "sha256:09e5de2b317e3c730d6b3334c21d347314194a2ebea8850034e3cd58329987eb",
+      "spec_paths": [
+        [
+          "hud_life_icon.template.json",
+          "sha256:5c0295669d7b963dc80518767a8452752f9ff8af31ad36ff954a9101d7fbd288"
+        ]
+      ],
+      "palette_path": "palette.json",
+      "palette_digest": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+      "seed": 5,
+      "outputs": [
+        [
+          "out/hud_life_icon.e521f67d21e2/hud_life_icon.sheet.png",
+          "sha256:c5b69f242dc42a8b1d2ede936c09de58df1ce78bbdd9b5a3fb410fa1cb98bf5c"
+        ],
+        [
+          "out/hud_life_icon/hud_life_icon.sheet.png",
+          "sha256:d1b4f30ed0090f938f8bf947b4f781ccd4d07a67d50aabf749820bbba9515e7c"
+        ]
+      ],
+      "animations": [
+        {
+          "name": "idle",
+          "fps": 2,
+          "looped": true,
+          "dirs": []
+        }
+      ],
+      "size_px": [
+        8,
+        8
+      ]
+    },
+    {
+      "asset_id": "hud_stage_label",
+      "status": "delivered",
+      "required": true,
+      "recipe_path": "hud_stage_label.recipe.json",
+      "recipe_digest": "sha256:2f8d8df06c3fee694f4377a4961be6a3b43675a6f8735ec48d7bbe43b9aa8b83",
+      "spec_paths": [
+        [
+          "hud_stage_label.shapes.json",
+          "sha256:27e3c10ad9aedffc1f5740c4380c49131e147d0ca1eb4ca7204c65c53ef74d9e"
+        ]
+      ],
+      "palette_path": "palette.json",
+      "palette_digest": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+      "seed": 61,
+      "outputs": [
+        [
+          "out/hud_stage_label/hud_stage_label.sheet.png",
+          "sha256:0c4f81a2fd0283e1ec9749539d1da194e093064dde9b7418c16f51e605a43701"
+        ]
+      ],
+      "animations": [
+        {
+          "name": "idle",
+          "fps": 2,
+          "looped": true,
+          "dirs": [
+            [
+              "N",
+              [
+                "hud_stage_label_idle_N_0"
+              ]
+            ]
+          ]
+        }
+      ],
+      "size_px": [
+        64,
+        8
+      ]
+    },
+    {
+      "asset_id": "b",
+      "status": "delivered",
+      "required": true,
+      "recipe_path": "b.recipe.json",
+      "recipe_digest": "sha256:4732394e02f5a715d2821e06e8801113c6156a7bf65b99ba68e3028effe2b437",
+      "spec_paths": [
+        [
+          "b.shapes.json",
+          "sha256:2395321b273843a4195d1c48752bb999854a3da8575504434619aa9c33a501d1"
+        ]
+      ],
+      "palette_path": "palette.json",
+      "palette_digest": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+      "seed": 31,
+      "outputs": [
+        [
+          "out/b.86ac9a31bed4/b.sheet.png",
+          "sha256:d79c8d13d2f6180892adcbef785c65c1f9b6b71e289a049a37c1fa481b307314"
+        ],
+        [
+          "out/b/b.sheet.png",
+          "sha256:e10509c4a9ae3cace5de13ed904478813f2c2abca45868834e06ffa92f6dcea2"
+        ]
+      ],
+      "animations": [
+        {
+          "name": "idle",
+          "fps": 2,
+          "looped": true,
+          "dirs": []
+        },
+        {
+          "name": "break",
+          "fps": 12,
+          "looped": false,
+          "dirs": []
+        }
+      ],
+      "size_px": [
+        16,
+        16
+      ]
+    },
+    {
+      "asset_id": "x",
+      "status": "delivered",
+      "required": true,
+      "recipe_path": "b.recipe.json",
+      "recipe_digest": "sha256:4732394e02f5a715d2821e06e8801113c6156a7bf65b99ba68e3028effe2b437",
+      "spec_paths": [
+        [
+          "b.shapes.json",
+          "sha256:2395321b273843a4195d1c48752bb999854a3da8575504434619aa9c33a501d1"
+        ]
+      ],
+      "palette_path": "palette.json",
+      "palette_digest": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+      "seed": 31,
+      "outputs": [
+        [
+          "out/x/x.sheet.png",
+          "sha256:5faee43e4e43304c4cb4bed7c8d0782703764887bc6148cbbe86c5aa8b01dd86"
+        ]
+      ],
+      "animations": [],
+      "size_px": [
+        16,
+        16
+      ]
+    },
+    {
+      "asset_id": "w",
+      "status": "delivered",
+      "required": true,
+      "recipe_path": "enemy_tank.recipe.json",
+      "recipe_digest": "sha256:ee668f42e36b9b0712fa0c34af514b31f8b46ea2749c200c53ead8bf3a7bccfb",
+      "spec_paths": [
+        [
+          "enemy_tank.shapes.json",
+          "sha256:180d59114040746133df24667345d4932ce6bc7463b27e1fad9e0ff90d376c3f"
+        ]
+      ],
+      "palette_path": "palette.json",
+      "palette_digest": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+      "seed": 29,
+      "outputs": [
+        [
+          "out/w/w.sheet.png",
+          "sha256:c217ac339dab021aa371dd077e564de0a8ce9f75f640c7d805cb246c1b2d91f7"
+        ]
+      ],
+      "animations": [],
+      "size_px": [
+        16,
+        16
+      ]
+    },
+    {
+      "asset_id": "h",
+      "status": "delivered",
+      "required": true,
+      "recipe_path": "enemy_tank.recipe.json",
+      "recipe_digest": "sha256:ee668f42e36b9b0712fa0c34af514b31f8b46ea2749c200c53ead8bf3a7bccfb",
+      "spec_paths": [
+        [
+          "enemy_tank.shapes.json",
+          "sha256:180d59114040746133df24667345d4932ce6bc7463b27e1fad9e0ff90d376c3f"
+        ]
+      ],
+      "palette_path": "palette.json",
+      "palette_digest": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+      "seed": 29,
+      "outputs": [
+        [
+          "out/h/h.sheet.png",
+          "sha256:84b64a8ed1a18a214eea4ee032539eeae997f70a638c9edf854b7ed1a143695f"
+        ]
+      ],
+      "animations": [],
+      "size_px": [
+        16,
+        16
+      ]
+    },
+    {
+      "asset_id": "g",
+      "status": "delivered",
+      "required": true,
+      "recipe_path": "g.recipe.json",
+      "recipe_digest": "sha256:4ed56db063073f9ca0bc3ce8c7c621d6c5e22aa5707bfdc56630d17c8e4bb024",
+      "spec_paths": [
+        [
+          "g.shapes.json",
+          "sha256:177918ed512b36386685ba19b5fc08dd956ad1cacc1f9161aee9fd451d22bee8"
+        ]
+      ],
+      "palette_path": "palette.json",
+      "palette_digest": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+      "seed": 103,
+      "outputs": [
+        [
+          "out/g/g.sheet.png",
+          "sha256:cd77dcc6bf15ec66da75acaa154d560ad38b73e3d9386b30b1bfce30fd13af33"
+        ]
+      ],
+      "animations": [
+        {
+          "name": "idle",
+          "fps": 2,
+          "looped": true,
+          "dirs": []
+        },
+        {
+          "name": "sway",
+          "fps": 5,
+          "looped": true,
+          "dirs": []
+        }
+      ],
+      "size_px": [
+        16,
+        16
+      ]
+    },
+    {
+      "asset_id": "t",
+      "status": "delivered",
+      "required": true,
+      "recipe_path": "t.recipe.json",
+      "recipe_digest": "sha256:ba35dbe0483034266054ac66fdb420576702cd4f8919dd898b0be61b1e1b7f64",
+      "spec_paths": [
+        [
+          "t.shapes.json",
+          "sha256:062d758ee03fdcbf77d0b47c7b2ce3a41f574bc40eb2e4ee59eb9d9163aae1c4"
+        ]
+      ],
+      "palette_path": "palette.json",
+      "palette_digest": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+      "seed": 113,
+      "outputs": [
+        [
+          "out/t/t.sheet.png",
+          "sha256:6b2d99ebf82d3bec828d13c2cde89f756c538e30f464484bc3093841987e308b"
+        ]
+      ],
+      "animations": [
+        {
+          "name": "idle",
+          "fps": 2,
+          "looped": true,
+          "dirs": []
+        },
+        {
+          "name": "grow",
+          "fps": 6,
+          "looped": false,
+          "dirs": []
+        }
+      ],
+      "size_px": [
+        16,
+        16
+      ]
+    }
+  ],
+  "gates_passed": [
+    "assets.gates"
+  ],
+  "warnings": [],
+  "visual_review": "not_run"
+}

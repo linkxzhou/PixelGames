@@ -1,0 +1,27 @@
+{
+  "v": 1,
+  "asset": "x",
+  "seed": 71,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "x",
+      "kind": "tiles",
+      "tile_ramp": "steel",
+      "base": {"gen": "shapes", "spec": "x.shapes.json"},
+      "anims": [
+        {"name": "idle", "fps": 2, "loop": true, "mode": "static", "frames": [[{"op": "noop"}]]},
+        {"name": "spark", "fps": 12, "loop": false, "frames": [
+          [{"op": "noop"}],
+          [
+            {"op": "mask_fill", "color": 4, "region": {"x": 6, "y": 6, "w": 4, "h": 1}},
+            {"op": "mask_fill", "color": 4, "region": {"x": 7, "y": 5, "w": 2, "h": 3}},
+            {"op": "mask_fill", "color": 1, "region": {"x": 9, "y": 8, "w": 2, "h": 1}}
+          ]
+        ]}
+      ]
+    }
+  ],
+  "sheet": {"sources": ["x"], "layout": "grid", "pad": 1, "file": "x.sheet.png"},
+  "validate": {"rules": "default"}
+}

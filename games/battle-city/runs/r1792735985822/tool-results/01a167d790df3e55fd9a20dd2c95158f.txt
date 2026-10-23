@@ -1,0 +1,2 @@
+[failed] pxl build failed for b.recipe.json (E_SCHEMA) anim 'idle' has no macro or frames
+{"ok":false,"out_dir":"out/b","outputs":[],"message":"anim 'idle' has no macro or frames","error_code":"E_SCHEMA","hint":null,"failed_checks":[]}

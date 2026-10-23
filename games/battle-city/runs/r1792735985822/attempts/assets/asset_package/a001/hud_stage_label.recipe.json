@@ -1,0 +1,21 @@
+{
+  "v": 1,
+  "asset": "hud_stage_label",
+  "seed": 61,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "hud_stage_label",
+      "kind": "ui",
+      "base": {"gen": "shapes", "spec": "hud_stage_label.shapes.json"},
+      "directions": [
+        {"id": "N", "from": "base", "ops": [{"op": "noop"}]}
+      ],
+      "anims": [
+        {"name": "idle", "fps": 2, "loop": true, "dirs": ["N"], "mode": "static", "frames": [[{"op": "noop"}]]}
+      ]
+    }
+  ],
+  "sheet": {"sources": ["hud_stage_label"], "layout": "grid", "pad": 1, "file": "hud_stage_label.sheet.png"},
+  "validate": {"rules": "default"}
+}

@@ -1,0 +1,4 @@
+[failed] '    "hud": [3, 4]
+  },
+ },
+  "cycles"' not found in palette.json

@@ -1,0 +1,28 @@
+{
+  "v": 1,
+  "asset": "hq_base",
+  "seed": 53,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "hq_base",
+      "kind": "sprite",
+      "base": {"gen": "shapes", "spec": "hq_base.shapes.json"},
+      "directions": [
+        {"id": "N", "from": "base", "ops": [{"op": "noop"}]}
+      ],
+      "anims": [
+        {"name": "idle", "fps": 2, "loop": true, "dirs": ["N"], "mode": "static", "frames": [[{"op": "noop"}]]},
+        {"name": "destroyed", "fps": 4, "loop": false, "dirs": ["N"], "frames": [
+          [{"op": "palette_swap", "map": "4->2"}],
+          [
+            {"op": "dissolve", "seed": 53, "steps": 4, "step": 1, "pattern": "bayer4"},
+            {"op": "outline", "color": 1, "mode": "outer", "brush": "square", "width": 1}
+          ]
+        ]}
+      ]
+    }
+  ],
+  "sheet": {"sources": ["hq_base"], "layout": "rows-by-anim", "pad": 1, "file": "hq_base.sheet.png"},
+  "validate": {"rules": "default"}
+}

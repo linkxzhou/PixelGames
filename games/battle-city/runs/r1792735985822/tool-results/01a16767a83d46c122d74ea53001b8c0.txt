@@ -1,0 +1,1 @@
+[failed] no such file templates/slime_8x8.template.json

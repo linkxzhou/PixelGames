@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "pxl_version": "0.1.0",
+  "gen_version": 1,
+  "seed": 17,
+  "inputs": {
+    "recipe": "sha256:65f5671ee235277dcd0389e4f319718478ba5abd9d0b9fdc241d7a1d39eb022e",
+    "palette": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+    "specs": {
+      "player_tank.shapes.json": "sha256:753c765d10d0af349e270b90440c9d0156e836a5b9aa96523b26065724e05797"
+    }
+  },
+  "outputs": {
+    "palette.json": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+    "player_tank.pxl.json": "sha256:b73e5546d3c1ee8da6f757e83e07770c87027c10a401f45011e9b22b3045a84c",
+    "player_tank.sheet.png": "sha256:b2af20764aa1788bf9c7b51d20d9a856ec1575ece01de91bc4df4493514b30b7",
+    "player_tank.sheet.json": "sha256:b288b2963f2ffd9d4917a5afb6abc2a7bea957fa0c27be7c22bcbf3151fc40d4"
+  },
+  "qa": {
+    "rules": "default",
+    "ok": true,
+    "checks": 117,
+    "failed": 0
+  },
+  "visual_review": "not_run"
+}

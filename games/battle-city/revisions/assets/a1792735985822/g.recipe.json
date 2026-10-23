@@ -1,0 +1,26 @@
+{
+  "v": 1,
+  "asset": "g",
+  "seed": 103,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "g",
+      "kind": "tiles",
+      "tile_ramp": "grass",
+      "base": {"gen": "shapes", "spec": "g.shapes.json"},
+      "anims": [
+        {"name": "idle", "fps": 2, "loop": true, "mode": "static", "frames": [[{"op": "noop"}]]},
+        {"name": "sway", "fps": 5, "loop": true, "frames": [
+          [{"op": "noop"}],
+          [
+            {"op": "palette_swap", "map": "4->3", "region": {"x": 1, "y": 1, "w": 14, "h": 5}},
+            {"op": "palette_swap", "map": "3->4", "region": {"x": 1, "y": 10, "w": 14, "h": 5}}
+          ]
+        ]}
+      ]
+    }
+  ],
+  "sheet": {"sources": ["g"], "layout": "grid", "pad": 1, "file": "g.sheet.png"},
+  "validate": {"rules": "default"}
+}

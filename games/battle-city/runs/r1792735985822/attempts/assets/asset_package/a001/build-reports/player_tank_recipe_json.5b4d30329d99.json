@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "recipe": "player_tank.recipe.json",
+  "input_fingerprint": "sha256:4c8a33421236efde98721c773446c46fe3c67cc3b67b052372d1906871200940|sha256:e110228e6e6a34ddf2ab578bfc89bd0f74518021af133de9c3abb61307939075|sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4|",
+  "ok": false,
+  "exit_code": 4,
+  "error_code": "E_SEMANTIC",
+  "message": "unknown palette cycle 'tread'",
+  "hint": "cycles are declared on the palette; try `pxl palette show`",
+  "error_path": null,
+  "elapsed_ms": 20,
+  "checks": [],
+  "output_digests": [],
+  "out_dir": "out/player_tank.5b4d30329d99"
+}

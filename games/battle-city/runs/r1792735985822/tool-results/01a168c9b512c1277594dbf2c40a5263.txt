@@ -1,0 +1,2 @@
+[ok] wrote explosion.shapes.json
+{"path":"explosion.shapes.json","digest":"sha256:53460dfa8e57adbb6128fb1fcb0151c3182290720b06d06b720d49763df5e97a"}

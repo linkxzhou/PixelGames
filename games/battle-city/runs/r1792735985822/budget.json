@@ -1,0 +1,16 @@
+{
+  "usage": {
+    "prompt_tokens": 3872461,
+    "completion_tokens": 302055,
+    "requests": 111,
+    "tool_calls": 208,
+    "elapsed_ms": 17932651
+  },
+  "token_limit": 0,
+  "request_limit": 0,
+  "wall_clock_limit_ms": 0,
+  "spent_usd_cents": null,
+  "limit_usd_cents": null,
+  "settled_seq": 706,
+  "has_unknown_usage": false
+}

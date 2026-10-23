@@ -1,0 +1,2 @@
+[ok] wrote player_tank.recipe.json
+{"path":"player_tank.recipe.json","digest":"sha256:4c8a33421236efde98721c773446c46fe3c67cc3b67b052372d1906871200940"}

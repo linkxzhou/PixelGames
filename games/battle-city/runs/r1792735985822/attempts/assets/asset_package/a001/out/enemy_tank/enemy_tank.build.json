@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "pxl_version": "0.1.0",
+  "gen_version": 1,
+  "seed": 29,
+  "inputs": {
+    "recipe": "sha256:ee668f42e36b9b0712fa0c34af514b31f8b46ea2749c200c53ead8bf3a7bccfb",
+    "palette": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+    "specs": {
+      "enemy_tank.shapes.json": "sha256:180d59114040746133df24667345d4932ce6bc7463b27e1fad9e0ff90d376c3f"
+    }
+  },
+  "outputs": {
+    "palette.json": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+    "enemy_tank.pxl.json": "sha256:89ddc17fd6ca85d0750e6845954ed8dd29b368b11556c0e0ed57d07771ba0f29",
+    "enemy_tank.sheet.png": "sha256:41dd578e3412ab263daef1cad56ec44ab52ab205fbfaf4ad6c76767151af0c81",
+    "enemy_tank.sheet.json": "sha256:e8c2d646c106f543b8ffa565c7cb9fbcafdeb8a54c6dba8cf728328da9bf5509"
+  },
+  "qa": {
+    "rules": "default",
+    "ok": true,
+    "checks": 117,
+    "failed": 0
+  },
+  "visual_review": "not_run"
+}

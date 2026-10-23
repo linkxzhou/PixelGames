@@ -1,0 +1,213 @@
+{
+  "frames": {
+    "x_idle_0": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 500
+    },
+    "x_spark_0": {
+      "frame": {
+        "x": 17,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 83
+    },
+    "x_spark_1": {
+      "frame": {
+        "x": 0,
+        "y": 17,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "duration": 83
+    }
+  },
+  "meta": {
+    "app": "pxl",
+    "version": "0.1.0",
+    "image": "x.sheet.png",
+    "format": "indexed8",
+    "size": {
+      "w": 33,
+      "h": 33
+    },
+    "scale": "1",
+    "frameTags": [
+      {
+        "name": "idle",
+        "from": 0,
+        "to": 0,
+        "direction": "forward"
+      },
+      {
+        "name": "spark",
+        "from": 1,
+        "to": 2,
+        "direction": "forward"
+      }
+    ],
+    "pxl": {
+      "version": "0.1.0",
+      "gen_version": 1,
+      "palette": "palette.json",
+      "colors": [
+        "#00000000",
+        "#0d1417",
+        "#3c4f47",
+        "#83a189",
+        "#e2efc8"
+      ],
+      "ramps": {
+        "brick": [
+          1,
+          2,
+          3
+        ],
+        "goal": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "grass": [
+          1,
+          2,
+          3
+        ],
+        "ground": [
+          2,
+          3
+        ],
+        "hazard": [
+          1,
+          3,
+          4
+        ],
+        "mono": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "steel": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "water": [
+          1,
+          2,
+          3
+        ]
+      },
+      "cycles": {},
+      "special": {
+        "transparent": 0,
+        "outline": 1,
+        "flash": 4
+      },
+      "pivot": [
+        8,
+        8
+      ],
+      "dirs": [],
+      "fps": {
+        "idle": 2,
+        "spark": 12
+      },
+      "facings": {},
+      "anims": {
+        "idle": {
+          "fps": 2,
+          "loop": true,
+          "mode": "static",
+          "asset": "x",
+          "base": "idle",
+          "dirs": {
+            "_": [
+              "x_idle_0"
+            ]
+          }
+        },
+        "spark": {
+          "fps": 12,
+          "loop": false,
+          "mode": "dynamic",
+          "asset": "x",
+          "base": "spark",
+          "dirs": {
+            "_": [
+              "x_spark_0",
+              "x_spark_1"
+            ]
+          }
+        }
+      },
+      "tiles": {
+        "x": {
+          "from": 0,
+          "to": 2,
+          "ramp": "steel",
+          "frames": [
+            "x_idle_0",
+            "x_spark_0",
+            "x_spark_1"
+          ]
+        }
+      },
+      "assets": {
+        "x": {
+          "kind": "tiles",
+          "frames": [
+            "x_idle_0",
+            "x_spark_0",
+            "x_spark_1"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,2 @@
+[ok] built tankprobe.recipe.json -> out/tankprobe
+{"ok":true,"out_dir":"out/tankprobe","outputs":["palette.json","tankprobe.pxl.json","tankprobe.sheet.png","tankprobe.sheet.json"],"message":"","error_code":"","hint":null,"failed_checks":[]}

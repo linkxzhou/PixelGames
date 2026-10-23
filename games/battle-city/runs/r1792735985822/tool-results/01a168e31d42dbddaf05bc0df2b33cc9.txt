@@ -1,0 +1,2 @@
+[ok] wrote hud_stage_label.shapes.json
+{"path":"hud_stage_label.shapes.json","digest":"sha256:27e3c10ad9aedffc1f5740c4380c49131e147d0ca1eb4ca7204c65c53ef74d9e"}

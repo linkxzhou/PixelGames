@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "pxl_version": "0.1.0",
+  "gen_version": 1,
+  "seed": 61,
+  "inputs": {
+    "recipe": "sha256:2f8d8df06c3fee694f4377a4961be6a3b43675a6f8735ec48d7bbe43b9aa8b83",
+    "palette": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+    "specs": {
+      "hud_stage_label.shapes.json": "sha256:27e3c10ad9aedffc1f5740c4380c49131e147d0ca1eb4ca7204c65c53ef74d9e"
+    }
+  },
+  "outputs": {
+    "palette.json": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+    "hud_stage_label.pxl.json": "sha256:a40607b2b36a4a10c6324c1d90c1753e04781b37bd851b303c4b5e2797a99641",
+    "hud_stage_label.sheet.png": "sha256:0c4f81a2fd0283e1ec9749539d1da194e093064dde9b7418c16f51e605a43701",
+    "hud_stage_label.sheet.json": "sha256:c1e228857473533b0987d8d9fb16c30bca2d4d13cbd6eb6d8165d35f1c5aebd5"
+  },
+  "qa": {
+    "rules": "default",
+    "ok": true,
+    "checks": 4,
+    "failed": 0
+  },
+  "visual_review": "not_run"
+}

@@ -1,0 +1,24 @@
+{
+  "v": 1,
+  "asset": "bullet",
+  "seed": 13,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "bullet",
+      "kind": "sprite",
+      "base": {"gen": "shapes", "spec": "bullet.shapes.json"},
+      "directions": [
+        {"id": "N", "from": "base", "ops": [{"op": "noop"}]},
+        {"id": "E", "from": "N", "ops": [{"op": "rotate90", "dir": "cw"}]},
+        {"id": "S", "from": "N", "ops": [{"op": "flip", "axis": "y"}]},
+        {"id": "W", "from": "E", "ops": [{"op": "flip", "axis": "x"}]}
+      ],
+      "anims": [
+        {"name": "fly", "fps": 12, "loop": true, "dirs": ["N", "E", "S", "W"], "mode": "static", "frames": [[{"op": "noop"}]]}
+      ]
+    }
+  ],
+  "sheet": {"sources": ["bullet"], "layout": "rows-by-anim", "pad": 1, "file": "bullet.sheet.png"},
+  "validate": {"rules": "default"}
+}

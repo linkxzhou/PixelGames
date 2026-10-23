@@ -1,0 +1,29 @@
+{
+  "v": 1,
+  "asset": "t",
+  "seed": 113,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "t",
+      "kind": "tiles",
+      "tile_ramp": "ground",
+      "base": {"gen": "shapes", "spec": "t.shapes.json"},
+      "anims": [
+        {"name": "idle", "fps": 2, "loop": true, "mode": "static", "frames": [[{"op": "noop"}]]},
+        {"name": "grow", "fps": 6, "loop": false, "frames": [
+          [
+            {"op": "mask_fill", "color": 3, "region": {"x": 5, "y": 5, "w": 6, "h": 6}},
+            {"op": "outline", "color": 1, "mode": "outer", "brush": "square", "width": 1}
+          ],
+          [
+            {"op": "mask_fill", "color": 4, "region": {"x": 6, "y": 6, "w": 4, "h": 4}},
+            {"op": "outline", "color": 1, "mode": "outer", "brush": "square", "width": 1}
+          ]
+        ]}
+      ]
+    }
+  ],
+  "sheet": {"sources": ["t"], "layout": "grid", "pad": 1, "file": "t.sheet.png"},
+  "validate": {"rules": "default"}
+}

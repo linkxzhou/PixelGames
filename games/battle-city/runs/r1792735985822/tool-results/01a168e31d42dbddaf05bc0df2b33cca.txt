@@ -1,0 +1,2 @@
+[ok] wrote hud_stage_label.recipe.json
+{"path":"hud_stage_label.recipe.json","digest":"sha256:2f8d8df06c3fee694f4377a4961be6a3b43675a6f8735ec48d7bbe43b9aa8b83"}

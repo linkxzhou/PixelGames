@@ -1,0 +1,25 @@
+{
+  "v": 1,
+  "asset": "h",
+  "seed": 97,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "h",
+      "kind": "tiles",
+      "tile_ramp": "hazard",
+      "base": {"gen": "shapes", "spec": "h.shapes.json"},
+      "anims": [
+        {"name": "idle", "fps": 8, "loop": true, "frames": [
+          [{"op": "noop"}],
+          [
+            {"op": "palette_swap", "map": "3->2", "region": {"x": 1, "y": 1, "w": 14, "h": 6}},
+            {"op": "palette_swap", "map": "4->3", "region": {"x": 1, "y": 9, "w": 14, "h": 6}}
+          ]
+        ]}
+      ]
+    }
+  ],
+  "sheet": {"sources": ["h"], "layout": "grid", "pad": 1, "file": "h.sheet.png"},
+  "validate": {"rules": "default"}
+}

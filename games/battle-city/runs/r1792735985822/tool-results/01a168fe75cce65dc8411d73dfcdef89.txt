@@ -1,0 +1,2 @@
+[ok] wrote w.shapes.json
+{"path":"w.shapes.json","digest":"sha256:32eaea36e82f804f1410976241cbfea4dd68a0914cc4fff8ddf38e12af0d0786"}
