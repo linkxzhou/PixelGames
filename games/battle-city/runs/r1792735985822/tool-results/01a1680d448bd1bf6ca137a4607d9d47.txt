@@ -1,0 +1,2 @@
+[ok] wrote tankprobe.recipe.json
+{"path":"tankprobe.recipe.json","digest":"sha256:9d50a6e545311288b41977bdcac6daaf2c49e6d97a0223b2aeb35722a20ff299"}

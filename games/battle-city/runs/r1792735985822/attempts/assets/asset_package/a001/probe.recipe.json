@@ -1,0 +1,28 @@
+{
+  "v": 1,
+  "asset": "probe",
+  "seed": 2,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "probe",
+      "base": {"gen": "shapes", "spec": "probe.shapes.json"},
+      "anims": [
+        {"name": "a", "fps": 8, "loop": true, "frames": [
+          [{"op": "noop"}],
+          [{"op": "palette_cycle", "cycle": "tread", "step": 1, "region": [2, 5, 2, 8]}]
+        ]},
+        {"name": "d", "fps": 8, "loop": true, "frames": [
+          [{"op": "noop"}],
+          [{"op": "mask_fill", "color": 4, "region": [7, 1, 2, 1]}]
+        ]},
+        {"name": "e", "fps": 8, "loop": true, "frames": [
+          [{"op": "noop"}],
+          [{"op": "shift", "dx": 0, "dy": 1, "region": [4, 6, 8, 7]}]
+        ]}
+      ]
+    }
+  ],
+  "sheet": {"sources": ["probe"], "layout": "grid", "pad": 1, "file": "probe.sheet.png"},
+  "validate": {"rules": "default"}
+}

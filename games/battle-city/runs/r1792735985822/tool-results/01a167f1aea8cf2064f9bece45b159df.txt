@@ -1,0 +1,2 @@
+[failed] pxl build failed for b.recipe.json (E_QA) build wrote outputs but 1 QA check(s) failed -- hint: read checks and adjust the recipe
+{"ok":false,"out_dir":"out/b","outputs":[],"message":"build wrote outputs but 1 QA check(s) failed","error_code":"E_QA","hint":"read checks and adjust the recipe","failed_checks":["tile.b_idle_0.seam: value=30 pairs, 6 over one step, worst 1, limit=opposite edge pixels on 'brick' match within one step"]}

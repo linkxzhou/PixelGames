@@ -1,0 +1,2 @@
+[ok] wrote tankprobe.template.json
+{"path":"tankprobe.template.json","digest":"sha256:97a68c7882c5c4d5be6359dd13f62772d7475236f035bbb8907ff661bcdf57f3"}

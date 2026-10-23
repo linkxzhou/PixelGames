@@ -1,0 +1,2 @@
+[ok] wrote b.recipe.json
+{"path":"b.recipe.json","digest":"sha256:7871aa27e231fc5bc7d8010cc45bf55cae2e5447d0d7f15b4678c7890f36b5f5"}

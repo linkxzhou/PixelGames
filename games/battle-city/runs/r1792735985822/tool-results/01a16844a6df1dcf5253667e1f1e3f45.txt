@@ -1,0 +1,2 @@
+[ok] wrote probe.recipe.json
+{"path":"probe.recipe.json","digest":"sha256:df941d8267febcfd852fd7e3ce160cc505e82a8085dbbe09533e5bbd9ca58a70"}

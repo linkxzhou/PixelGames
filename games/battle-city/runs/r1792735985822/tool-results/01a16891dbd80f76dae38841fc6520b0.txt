@@ -1,0 +1,2 @@
+[ok] read hud_life_icon.template.json (303 bytes)
+{"path":"hud_life_icon.template.json","content":"{\n  \"v\": 1,\n  \"id\": \"hud_life_icon\",\n  \"mirror\": \"x\",\n  \"cells\": [\n    \"011111\",\n    \"112211\",\n    \"123321\",\n    \"112211\",\n    \"111111\"\n  ],\n  \"legend\": {\n    \"0\": \"empty\",\n    \"1\": \"maybe_body\",\n    \"2\": \"body_or_border\",\n    \"3\": \"body\",\n    \"4\": \"highlight\"\n  },\n  \"color\": {\"ramp_pool\": [\"mono\"]}\n}\n"}

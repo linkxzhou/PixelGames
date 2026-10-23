@@ -1,0 +1,2 @@
+[ok] wrote palette.json
+{"path":"palette.json","digest":"sha256:66df103a3d19ea0547365467b8644ae04e8dfc8c5eb559df045fa5367ec69105"}

@@ -1,0 +1,2 @@
+[ok] read palette.json (426 bytes)
+{"path":"palette.json","content":"{\n  \"v\": 1,\n  \"id\": \"battle_mono_d179\",\n  \"colors\": [\n    \"#00000000\",\n    \"#0d1417\",\n    \"#3c4f47\",\n    \"#83a189\",\n    \"#e2efc8\"\n  ],\n  \"ramps\": {\n    \"mono\": [1, 2, 3, 4],\n    \"ground\": [2, 3],\n    \"brick\": [1, 2, 3],\n    \"steel\": [1, 2, 3, 4],\n    \"water\": [1, 2, 3],\n    \"hazard\": [1, 3, 4],\n    \"goal\": [1, 2, 3, 4],\n    \"grass\": [1, 2, 3]\n  },\n  \"cycles\": {},\n  \"special\": {\"transparent\": 0, \"outline\": 1, \"flash\": 4}\n}\n"}

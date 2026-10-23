@@ -1,0 +1,2 @@
+[ok] wrote probe.shapes.json
+{"path":"probe.shapes.json","digest":"sha256:b15575a0cb79c35cb89c8006facfeed3f2dd876a7d336b968883eae03e2e3371"}

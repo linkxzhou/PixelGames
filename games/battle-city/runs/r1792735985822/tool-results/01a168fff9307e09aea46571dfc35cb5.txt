@@ -1,0 +1,2 @@
+[failed] pxl build failed for explosion.recipe.json (E_QA) build wrote outputs but 1 QA check(s) failed -- hint: read checks and adjust the recipe
+{"ok":false,"out_dir":"out/explosion","outputs":[],"message":"build wrote outputs but 1 QA check(s) failed","error_code":"E_QA","hint":"read checks and adjust the recipe","failed_checks":["anim.burst.N.diff_1_2: value=0.00%, limit=at least 1.00%, and at most 100.00% unless a 1px shift explains it"]}

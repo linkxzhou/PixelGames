@@ -1,0 +1,72 @@
+{
+  "report_version": 1,
+  "gate_version": 1,
+  "stage": "assets",
+  "gate_id": "assets.gates",
+  "status": "passed",
+  "input_digest": "sha256:bfadfaf2a762e9603cd5de3e898d6d423adc2097076d6469b67564f350a57723",
+  "checks": [
+    {
+      "id": "files.requirements",
+      "passed": true,
+      "value": "13",
+      "limit": "frozen requirements list at least one required asset"
+    },
+    {
+      "id": "files.manifest",
+      "passed": true,
+      "value": "parsed",
+      "limit": "asset-manifest.json parses"
+    },
+    {
+      "id": "coverage.frames",
+      "passed": true,
+      "value": "covered",
+      "limit": "every required asset_id has a `{id}_*` frame on a sheet"
+    },
+    {
+      "id": "coverage.png",
+      "passed": true,
+      "value": "png",
+      "limit": "every sheet png that exists is a non-empty PNG"
+    },
+    {
+      "id": "coverage.queue",
+      "passed": true,
+      "value": "0 gaps",
+      "limit": "every required asset has a successful build for its current inputs"
+    },
+    {
+      "id": "coverage.manifest",
+      "passed": true,
+      "value": "0 gaps",
+      "limit": "manifest lists every required asset as delivered with outputs"
+    },
+    {
+      "id": "provenance.authored_specs",
+      "passed": true,
+      "value": "authored",
+      "limit": "palette.json plus {asset_id}.recipe.json for every required asset, and every spec file each recipe reads"
+    },
+    {
+      "id": "provenance.not_template",
+      "passed": true,
+      "value": "original",
+      "limit": "no authored spec is the same JSON document as a bundled template file"
+    },
+    {
+      "id": "pxl.validate",
+      "passed": true,
+      "value": "passed",
+      "limit": "pxl validate passes using the rules declared in the recipe"
+    }
+  ],
+  "metrics": {
+    "required": 13
+  },
+  "tool_versions": {
+    "harness": "0.1.0",
+    "pxl": "0.1.0"
+  },
+  "executed_ms": 0
+}

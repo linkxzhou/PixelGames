@@ -1,0 +1,15 @@
+{
+  "v": 1,
+  "asset": "tankprobe",
+  "seed": 3,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "tankprobe",
+      "base": {"gen": "bollinger", "template": "tankprobe.template.json", "ramp": "mono", "seed": 3},
+      "anims": [{"name": "idle", "fps": 2, "loop": true, "mode": "static", "frames": [[{"op": "noop"}]]}]
+    }
+  ],
+  "sheet": {"sources": ["tankprobe"], "layout": "grid", "pad": 1, "file": "tankprobe.sheet.png"},
+  "validate": {"rules": "default"}
+}

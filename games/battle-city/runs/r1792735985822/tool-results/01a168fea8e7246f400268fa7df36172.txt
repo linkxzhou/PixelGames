@@ -1,0 +1,2 @@
+[ok] 6 matches for 'hq_base'
+{"matches":["asset-queue.json:67:       \"asset_id\": \"hq_base\",","asset-queue.json:76:       \"recipe\": \"hq_base.recipe.json\",","hq_base.recipe.json:3:   \"asset\": \"hq_base\",","hq_base.recipe.json:8:       \"id\": \"hq_base\",","hq_base.recipe.json:10:       \"base\": {\"gen\": \"shapes\", \"spec\": \"hq_base.shapes.json\"},","hq_base.recipe.json:26:   \"sheet\": {\"sources\": [\"hq_base\"], \"layout\": \"rows-by-anim\", \"pad\": 1, \"file\": \"hq_base.sheet.png\"},"]}

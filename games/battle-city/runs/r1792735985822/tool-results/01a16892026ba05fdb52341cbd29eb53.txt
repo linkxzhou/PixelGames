@@ -1,0 +1,2 @@
+[ok] listed templates
+{"stdout":"{\"ok\":true,\"cmd\":\"list\",\"warnings\":[],\"kind\":\"templates\",\"items\":[\"slime_8x8\",\"ship_8x12\",\"robot_6x10\",\"bug_8x8\",\"gem_6x6\",\"mushroom_8x8\",\"tree_8x12\",\"rock_6x6\",\"dragon_side_8x10\",\"dragon_top_8x8\",\"panel_4x8\"]}\n"}

@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "recipe": "hud_life_icon.recipe.json",
+  "input_fingerprint": "sha256:09e5de2b317e3c730d6b3334c21d347314194a2ebea8850034e3cd58329987eb|sha256:5c0295669d7b963dc80518767a8452752f9ff8af31ad36ff954a9101d7fbd288|sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4|",
+  "ok": true,
+  "exit_code": 0,
+  "error_code": "",
+  "message": "",
+  "hint": null,
+  "error_path": null,
+  "elapsed_ms": 20,
+  "checks": [
+    {
+      "id": "palette.alpha",
+      "pass": true,
+      "value": "opaque-or-clear",
+      "limit": "alpha 0 or 255, index 0 clear"
+    },
+    {
+      "id": "frame.hud_life_icon_idle_0.palette",
+      "pass": true,
+      "value": "0",
+      "limit": "0 out-of-palette pixels"
+    },
+    {
+      "id": "frame.hud_life_icon_idle_0.visible",
+      "pass": true,
+      "value": "58",
+      "limit": ">= 1 opaque pixel"
+    },
+    {
+      "id": "anim.idle.static_single_frame",
+      "pass": true,
+      "value": "1",
+      "limit": "declared static: exactly 1 frame"
+    }
+  ],
+  "output_digests": [
+    {
+      "path": "out/hud_life_icon.e521f67d21e2/palette.json",
+      "digest": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4"
+    },
+    {
+      "path": "out/hud_life_icon.e521f67d21e2/hud_life_icon.pxl.json",
+      "digest": "sha256:9dabbf95c948e0c78a86d1500716c01196df4890746a8ff9647c5c16d2e83ba2"
+    },
+    {
+      "path": "out/hud_life_icon.e521f67d21e2/hud_life_icon.sheet.png",
+      "digest": "sha256:c5b69f242dc42a8b1d2ede936c09de58df1ce78bbdd9b5a3fb410fa1cb98bf5c"
+    },
+    {
+      "path": "out/hud_life_icon.e521f67d21e2/hud_life_icon.sheet.json",
+      "digest": "sha256:f72468191560a9aa2bf2340a3a64a92fb542b019d296f3221206c3747afc915b"
+    }
+  ],
+  "out_dir": "out/hud_life_icon.e521f67d21e2"
+}

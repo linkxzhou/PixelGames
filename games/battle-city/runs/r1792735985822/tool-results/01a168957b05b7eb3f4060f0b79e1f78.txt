@@ -1,0 +1,2 @@
+[ok] 1 matches for '"size"'
+{"matches":["out/hud_life_icon/hud_life_icon.sheet.json:30:     \"size\": {"]}

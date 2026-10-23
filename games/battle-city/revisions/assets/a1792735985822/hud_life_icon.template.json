@@ -1,0 +1,20 @@
+{
+  "v": 1,
+  "id": "hud_life_icon",
+  "mirror": "x",
+  "cells": [
+    "011111",
+    "112211",
+    "123321",
+    "112211",
+    "111111"
+  ],
+  "legend": {
+    "0": "empty",
+    "1": "maybe_body",
+    "2": "body_or_border",
+    "3": "body",
+    "4": "highlight"
+  },
+  "color": {"ramp_pool": ["mono"]}
+}

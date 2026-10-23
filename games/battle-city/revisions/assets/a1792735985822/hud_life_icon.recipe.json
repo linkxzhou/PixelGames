@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "asset": "hud_life_icon",
+  "seed": 5,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "hud_life_icon",
+      "kind": "ui",
+      "base": {"gen": "bollinger", "template": "hud_life_icon.template.json", "ramp": "mono", "seed": 5},
+      "anims": [
+        {"name": "idle", "fps": 2, "loop": true, "mode": "static", "frames": [[{"op": "noop"}]]}
+      ]
+    }
+  ],
+  "sheet": {"sources": ["hud_life_icon"], "layout": "grid", "pad": 1, "file": "hud_life_icon.sheet.png"},
+  "validate": {"rules": "default"}
+}

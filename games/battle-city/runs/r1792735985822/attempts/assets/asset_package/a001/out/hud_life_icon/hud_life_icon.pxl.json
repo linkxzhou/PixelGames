@@ -1,0 +1,41 @@
+{
+  "v": 1,
+  "palette": "palette.json",
+  "w": 12,
+  "h": 5,
+  "frames": {
+    "base": [
+      "111111111111",
+      "133133331331",
+      "144441144441",
+      "331313313133",
+      "11.111111.11"
+    ],
+    "idle_0": [
+      "111111111111",
+      "133133331331",
+      "144441144441",
+      "331313313133",
+      "11.111111.11"
+    ]
+  },
+  "anims": {
+    "idle": {
+      "fps": 2,
+      "loop": true,
+      "dirs": [],
+      "frames": [
+        "idle_0"
+      ],
+      "mode": "static"
+    }
+  },
+  "meta": {
+    "seed": 5,
+    "recipe": "hud_life_icon.recipe.json",
+    "pxl_version": "0.1.0",
+    "gen_version": 1,
+    "asset": "hud_life_icon",
+    "kind": "ui"
+  }
+}

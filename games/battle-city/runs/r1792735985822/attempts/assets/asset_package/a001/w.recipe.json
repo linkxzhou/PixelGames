@@ -1,0 +1,24 @@
+{
+  "v": 1,
+  "asset": "w",
+  "seed": 83,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "w",
+      "kind": "tiles",
+      "tile_ramp": "water",
+      "base": {"gen": "shapes", "spec": "w.shapes.json"},
+      "anims": [
+        {"name": "idle", "fps": 4, "loop": true, "frames": [
+          [{"op": "noop"}],
+          [
+            {"op": "palette_swap", "map": "3->4,1->2", "region": {"x": 1, "y": 1, "w": 14, "h": 14}}
+          ]
+        ]}
+      ]
+    }
+  ],
+  "sheet": {"sources": ["w"], "layout": "grid", "pad": 1, "file": "w.sheet.png"},
+  "validate": {"rules": "default"}
+}

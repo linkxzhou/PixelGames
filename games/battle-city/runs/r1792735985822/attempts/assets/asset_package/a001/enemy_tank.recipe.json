@@ -1,0 +1,39 @@
+{
+  "v": 1,
+  "asset": "enemy_tank",
+  "seed": 29,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "enemy_tank",
+      "kind": "sprite",
+      "base": {"gen": "shapes", "spec": "enemy_tank.shapes.json"},
+      "directions": [
+        {"id": "N", "from": "base", "ops": [{"op": "noop"}]},
+        {"id": "E", "from": "N", "ops": [{"op": "rotate90", "dir": "cw"}]},
+        {"id": "S", "from": "N", "ops": [{"op": "flip", "axis": "y"}]},
+        {"id": "W", "from": "E", "ops": [{"op": "flip", "axis": "x"}]}
+      ],
+      "anims": [
+        {"name": "idle", "fps": 2, "loop": true, "dirs": ["N", "E", "S", "W"], "mode": "static", "frames": [[{"op": "noop"}]]},
+        {"name": "move", "fps": 8, "loop": true, "dirs": ["N", "E", "S", "W"], "frames": [
+          [{"op": "noop"}],
+          [
+            {"op": "palette_swap", "map": "2->3", "region": {"x": 1, "y": 8, "w": 2, "h": 4}},
+            {"op": "palette_swap", "map": "2->3", "region": {"x": 13, "y": 8, "w": 2, "h": 4}},
+            {"op": "palette_swap", "map": "3->4", "region": {"x": 0, "y": 0, "w": 16, "h": 16}}
+          ]
+        ]},
+        {"name": "fire", "fps": 12, "loop": false, "dirs": ["N", "E", "S", "W"], "frames": [
+          [{"op": "noop"}],
+          [
+            {"op": "squash", "sx": -1, "sy": -1, "anchor": "center"},
+            {"op": "palette_swap", "map": "3->4", "region": {"x": 0, "y": 0, "w": 16, "h": 16}}
+          ]
+        ]}
+      ]
+    }
+  ],
+  "sheet": {"sources": ["enemy_tank"], "layout": "rows-by-anim", "pad": 1, "file": "enemy_tank.sheet.png"},
+  "validate": {"rules": "default"}
+}

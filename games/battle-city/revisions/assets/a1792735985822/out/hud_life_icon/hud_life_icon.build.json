@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "pxl_version": "0.1.0",
+  "gen_version": 1,
+  "seed": 5,
+  "inputs": {
+    "recipe": "sha256:09e5de2b317e3c730d6b3334c21d347314194a2ebea8850034e3cd58329987eb",
+    "palette": "sha256:c501c213618c9bc757d322a05a57d59745bb79baa4fd6ec0d3d39d430537b89f",
+    "specs": {}
+  },
+  "outputs": {
+    "palette.json": "sha256:c501c213618c9bc757d322a05a57d59745bb79baa4fd6ec0d3d39d430537b89f",
+    "hud_life_icon.pxl.json": "sha256:9dabbf95c948e0c78a86d1500716c01196df4890746a8ff9647c5c16d2e83ba2",
+    "hud_life_icon.sheet.png": "sha256:d1b4f30ed0090f938f8bf947b4f781ccd4d07a67d50aabf749820bbba9515e7c",
+    "hud_life_icon.sheet.json": "sha256:e9b85f207e59349c751ad2a0d42e2076bb63757f2ac9cc2f98aa6488ac2f8820"
+  },
+  "qa": {
+    "rules": "default",
+    "ok": true,
+    "checks": 4,
+    "failed": 0
+  },
+  "visual_review": "not_run"
+}

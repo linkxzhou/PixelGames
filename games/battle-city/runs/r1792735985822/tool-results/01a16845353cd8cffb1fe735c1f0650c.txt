@@ -1,0 +1,2 @@
+[ok] built player_tank.recipe.json -> out/player_tank
+{"ok":true,"out_dir":"out/player_tank","outputs":["palette.json","player_tank.pxl.json","player_tank.sheet.png","player_tank.sheet.json"],"message":"","error_code":"","hint":null,"failed_checks":[]}

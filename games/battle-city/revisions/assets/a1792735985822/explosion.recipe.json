@@ -1,0 +1,29 @@
+{
+  "v": 1,
+  "asset": "explosion",
+  "seed": 41,
+  "palette": "palette.json",
+  "sprites": [
+    {
+      "id": "explosion",
+      "kind": "effect",
+      "base": {"gen": "shapes", "spec": "explosion.shapes.json"},
+      "directions": [
+        {"id": "N", "from": "base", "ops": [{"op": "noop"}]}
+      ],
+      "anims": [
+        {"name": "burst", "fps": 16, "loop": false, "dirs": ["N"], "frames": [
+          [{"op": "squash", "sx": -4, "sy": -4, "anchor": "center"}],
+          [{"op": "squash", "sx": -2, "sy": -2, "anchor": "center"}],
+          [{"op": "noop"}],
+          [
+            {"op": "palette_swap", "map": "3->2"},
+            {"op": "dissolve", "seed": 41, "steps": 3, "step": 2, "pattern": "bayer4"}
+          ]
+        ]}
+      ]
+    }
+  ],
+  "sheet": {"sources": ["explosion"], "layout": "rows-by-anim", "pad": 1, "file": "explosion.sheet.png"},
+  "validate": {"rules": "default"}
+}

@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "pxl_version": "0.1.0",
+  "gen_version": 1,
+  "seed": 97,
+  "inputs": {
+    "recipe": "sha256:d875003ab64989827f161e46686a69f5ce84fd0439913b8b98657b013582a26c",
+    "palette": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+    "specs": {
+      "h.shapes.json": "sha256:545bc1eba5363d2fb0b114fff382f2d172886e3332bc09f4eb3370c959fc3f28"
+    }
+  },
+  "outputs": {
+    "palette.json": "sha256:866d412d394a8babf633cf47b6e3ced09947aa337feaf9210d214d44350766b4",
+    "h.pxl.json": "sha256:82809b59153947cff506f5a2ee475de09c9bd73af522f120dfa109ed38538ce7",
+    "h.sheet.png": "sha256:84b64a8ed1a18a214eea4ee032539eeae997f70a638c9edf854b7ed1a143695f",
+    "h.sheet.json": "sha256:fa5a79b3a5aac4cb65f7c7ffe4de43d79c42a05e30f62988c5222562dcf18493"
+  },
+  "qa": {
+    "rules": "default",
+    "ok": true,
+    "checks": 9,
+    "failed": 0
+  },
+  "visual_review": "not_run"
+}
