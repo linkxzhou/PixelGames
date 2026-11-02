@@ -1,0 +1,539 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pxl/asset-package/v4",
+  "title": "asset-package.json",
+  "description": "Engine-facing visual and audio package. Audio files live below assets/audio and are covered by package, revision and approval digests. v4 adds compiled scenes, the resource map (scene->asset->sheet->PNG closure), palette family summaries and package-level required capabilities.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "package_id",
+    "engine",
+    "palette",
+    "palettes",
+    "sheets",
+    "assets",
+    "visual",
+    "required_capabilities",
+    "release_status"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 4
+    },
+    "package_id": {
+      "type": "string"
+    },
+    "engine": {
+      "type": "object",
+      "required": [
+        "contract"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "contract": {
+          "const": "engine/v4"
+        },
+        "frame_max": {
+          "type": "integer",
+          "minimum": 16
+        },
+        "palette_max": {
+          "type": "integer",
+          "minimum": 4
+        }
+      }
+    },
+    "palette": {
+      "$ref": "#/definitions/digest_entry"
+    },
+    "palettes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/digest_entry"
+      }
+    },
+    "families": {
+      "type": "array",
+      "description": "Palette family summaries frozen by the intent, ordered by family id.",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "digest",
+          "semantic_digest",
+          "colors",
+          "transparent_index"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "digest": {
+            "$ref": "#/definitions/digest"
+          },
+          "semantic_digest": {
+            "$ref": "#/definitions/digest"
+          },
+          "colors": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "transparent_index": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "resources": {
+      "type": "array",
+      "description": "Stable resource map: every compiled resource id with the sheet/frame placement that realises it. Scenes address pixels through these ids only.",
+      "items": {
+        "type": "object",
+        "required": [
+          "resource_id",
+          "palette_family",
+          "sheet",
+          "sheet_json",
+          "document",
+          "source_digest"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "resource_id": {
+            "type": "string",
+            "pattern": "^res-[A-Za-z0-9_-]+$"
+          },
+          "palette_family": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "asset_id": {
+            "type": "string"
+          },
+          "sheet": {
+            "type": "string"
+          },
+          "sheet_json": {
+            "type": "string"
+          },
+          "document": {
+            "type": "string"
+          },
+          "source_digest": {
+            "$ref": "#/definitions/digest"
+          },
+          "frames": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "index"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "index": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "scenes": {
+      "type": "array",
+      "description": "Compiled scenes copied into the package (self-contained: path is inside the package root).",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "path",
+          "digest",
+          "bounds",
+          "instances",
+          "depends",
+          "review"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "digest": {
+            "$ref": "#/definitions/digest"
+          },
+          "bounds": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "instances": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "depends": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/definitions/digest"
+            }
+          },
+          "review": {
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ]
+          }
+        }
+      }
+    },
+    "required_capabilities": {
+      "type": "array",
+      "description": "Capabilities the consuming engine must provide for this whole package (union of visual channels and scene demands).",
+      "items": {
+        "type": "string"
+      }
+    },
+    "release_status": {
+      "enum": [
+        "experimental",
+        "publishable"
+      ],
+      "description": "experimental until a human approval is bound to the current revision; approve never writes publishable by itself."
+    },
+    "visual": {
+      "type": "object",
+      "required": [
+        "report",
+        "metadata",
+        "preview_manifest",
+        "effective_style",
+        "required_capabilities",
+        "builds"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "report": {
+          "$ref": "#/definitions/digest_entry"
+        },
+        "metadata": {
+          "$ref": "#/definitions/digest_entry"
+        },
+        "preview_manifest": {
+          "$ref": "#/definitions/digest_entry"
+        },
+        "effective_style": {
+          "$ref": "#/definitions/digest_entry"
+        },
+        "required_capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "builds": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "recipe",
+              "report",
+              "metadata",
+              "preview_manifest",
+              "effective_style"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "recipe": {
+                "type": "string"
+              },
+              "report": {
+                "$ref": "#/definitions/digest_entry"
+              },
+              "metadata": {
+                "$ref": "#/definitions/digest_entry"
+              },
+              "preview_manifest": {
+                "$ref": "#/definitions/digest_entry"
+              },
+              "effective_style": {
+                "$ref": "#/definitions/digest_entry"
+              }
+            }
+          }
+        }
+      }
+    },
+    "sheets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "path",
+          "digest",
+          "frames",
+          "palette"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "digest": {
+            "$ref": "#/definitions/digest"
+          },
+          "frames": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "frame_tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "palette": {
+            "$ref": "#/definitions/digest_entry"
+          }
+        }
+      }
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "sheet"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "static",
+              "animated",
+              "tile"
+            ]
+          },
+          "sheet": {
+            "type": "string"
+          },
+          "anims": {
+            "type": "object"
+          },
+          "role": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pivot": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer"
+            }
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "document",
+                "sheet",
+                "image",
+                "palette"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "document": {
+                  "$ref": "#/definitions/digest_entry"
+                },
+                "sheet": {
+                  "$ref": "#/definitions/digest_entry"
+                },
+                "image": {
+                  "$ref": "#/definitions/digest_entry"
+                },
+                "palette": {
+                  "$ref": "#/definitions/digest_entry"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "levels": {
+      "$ref": "#/definitions/digest_entry"
+    },
+    "audio_manifest": {
+      "$ref": "#/definitions/digest_entry"
+    },
+    "audio": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "required",
+          "path",
+          "digest",
+          "pcm_sha256",
+          "deps_sha256",
+          "sample_rate",
+          "channels",
+          "frames",
+          "qa"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "sfx",
+              "bgm"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "path": {
+            "type": "string"
+          },
+          "digest": {
+            "$ref": "#/definitions/digest"
+          },
+          "pcm_sha256": {
+            "$ref": "#/definitions/digest"
+          },
+          "deps_sha256": {
+            "$ref": "#/definitions/digest"
+          },
+          "sample_rate": {
+            "const": 44100
+          },
+          "channels": {
+            "enum": [
+              1,
+              2
+            ]
+          },
+          "frames": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "loop": {
+            "type": "object",
+            "required": [
+              "start_frame",
+              "end_frame_exclusive"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "start_frame": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "end_frame_exclusive": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          },
+          "qa": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "catalog_lock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "digest",
+        "entries",
+        "lock_digest"
+      ],
+      "properties": {
+        "path": {
+          "const": "catalog.lock.json"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "entries": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lock_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "digest_entry": {
+      "type": "object",
+      "required": [
+        "path",
+        "digest"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "digest": {
+          "$ref": "#/definitions/digest"
+        }
+      }
+    }
+  }
+}

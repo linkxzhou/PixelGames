@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "game_id": "fixture-game",
+  "genre": "top_down_tank",
+  "display": { "width": 320, "height": 240, "scale": 3 },
+  "art": { "profile": "32", "palette": "p16" },
+  "slice": { "assets": ["player_tank"], "levels": [0] },
+  "budget": { "max_assets": 8, "max_model_turns": 24 },
+  "notes": "make a small tank slice, keep it original"
+}

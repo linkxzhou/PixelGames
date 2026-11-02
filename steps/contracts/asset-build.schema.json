@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pxl/asset-build/v4",
+  "title": "index.json",
+  "description": "Step-300 plan output under the single visual production contract; optional audio points to one complete audio-manifest/v1 render.",
+  "type": "object",
+  "required": ["schema_version", "scope", "recipes"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 4 },
+    "scope": { "enum": ["all", "slice"] },
+    "recipes": { "type": "array", "items": { "$ref": "#/definitions/entry" } },
+    "audio": { "$ref": "#/definitions/audio" }
+  },
+  "definitions": {
+    "entry": {
+      "type": "object",
+      "required": ["id", "recipe", "status", "out"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "recipe": { "type": "string" },
+        "status": { "enum": ["ok", "parse_error", "qa_failed"] },
+        "out": { "type": "string" },
+        "manifest": { "type": "string" },
+        "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "sprites": { "type": "array", "items": { "type": "string" } },
+        "error": { "type": "string" }
+      }
+    },
+    "audio": {
+      "type": "object",
+      "required": ["contract", "status", "out"],
+      "additionalProperties": false,
+      "properties": {
+        "contract": { "const": "audio-spec/v1" },
+        "status": { "enum": ["ok", "failed"] },
+        "out": { "const": "audio/" },
+        "manifest": { "const": "audio-manifest.json" },
+        "entries": { "type": "integer", "minimum": 1 },
+        "warnings": { "type": "array", "items": { "type": "string" } },
+        "error": { "type": "string" },
+        "audio_error": { "type": "string" }
+      }
+    }
+  }
+}

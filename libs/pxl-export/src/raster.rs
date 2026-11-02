@@ -1,0 +1,232 @@
+use pxl_core::{IndexFrame, Palette, PxlError, PxlResult, Rgba};
+
+/// Output size of a `w x h` image copied up by an integer `scale`, computed in
+/// 64-bit so a hostile `scale` cannot wrap. Refuses a result over
+/// [`MAX_SCALED_PIXELS`] or a side that no longer fits a `u32`.
+pub fn scaled_dims(w: u32, h: u32, scale: u32) -> PxlResult<(u32, u32)> {
+    let scale = scale.max(1);
+    let ow = w as u64 * scale as u64;
+    let oh = h as u64 * scale as u64;
+    if ow > u32::MAX as u64 || oh > u32::MAX as u64 || ow * oh > MAX_SCALED_PIXELS {
+        return Err(PxlError::semantic(format!(
+            "scaled output {ow}x{oh} is over the {MAX_SCALED_PIXELS} pixel limit"
+        ))
+        .with_hint("use a smaller --scale"));
+    }
+    Ok((ow as u32, oh as u32))
+}
+
+pub fn scale_nearest(frame: &IndexFrame, scale: u32) -> PxlResult<IndexFrame> {
+    let scale = scale.max(1);
+    let (w, h) = scaled_dims(frame.w as u32, frame.h as u32, scale)?;
+    if w > 2048 || h > 2048 {
+        return Err(
+            PxlError::semantic(format!("scaled size {w}x{h} exceeds 2048"))
+                .with_hint("use a smaller --scale"),
+        );
+    }
+    let mut out = IndexFrame::canvas(w as u16, h as u16)?;
+    for y in 0..frame.h as u32 {
+        for x in 0..frame.w as u32 {
+            let c = frame.get(x as i32, y as i32);
+            for dy in 0..scale {
+                for dx in 0..scale {
+                    out.set((x * scale + dx) as i32, (y * scale + dy) as i32, c);
+                }
+            }
+        }
+    }
+    Ok(out)
+}
+
+/// [`composite`] with the output size checked first.
+pub fn composite_checked(
+    frame: &IndexFrame,
+    palette: &Palette,
+    scale: u32,
+    grid: bool,
+) -> PxlResult<(u32, u32, Vec<u8>)> {
+    scaled_dims(frame.w as u32, frame.h as u32, scale)?;
+    Ok(composite(frame, palette, scale, grid))
+}
+
+/// Unchecked: prefer [`composite_checked`] for caller-supplied `scale`.
+pub fn composite(
+    frame: &IndexFrame,
+    palette: &Palette,
+    scale: u32,
+    grid: bool,
+) -> (u32, u32, Vec<u8>) {
+    let scale = scale.max(1);
+    let w = frame.w as u32 * scale;
+    let h = frame.h as u32 * scale;
+    let mut rgba = vec![0u8; (w as usize) * (h as usize) * 4];
+    for y in 0..frame.h as u32 {
+        for x in 0..frame.w as u32 {
+            let idx = frame.get(x as i32, y as i32);
+            let col = palette
+                .colors
+                .get(idx as usize)
+                .copied()
+                .unwrap_or(Rgba::TRANSPARENT);
+            for dy in 0..scale {
+                for dx in 0..scale {
+                    let lattice = grid && scale >= 2 && (dx + 1 == scale || dy + 1 == scale);
+                    let (r, g, b, a) = if lattice {
+                        (20u8, 18, 16, 255)
+                    } else if col.a == 0 {
+                        (28, 26, 24, 255)
+                    } else {
+                        (col.r, col.g, col.b, 255)
+                    };
+                    let i = (((y * scale + dy) * w + (x * scale + dx)) * 4) as usize;
+                    rgba[i] = r;
+                    rgba[i + 1] = g;
+                    rgba[i + 2] = b;
+                    rgba[i + 3] = a;
+                }
+            }
+        }
+    }
+    (w, h, rgba)
+}
+
+/// Nearest-neighbour preview scaling over a validated RGBA buffer. Refuses a
+/// buffer whose length does not match `w * h * 4` and an output over the pixel
+/// budget, so neither can index out of range or exhaust memory.
+pub fn scale_rgba_checked(
+    w: u32,
+    h: u32,
+    rgba: &[u8],
+    scale: u32,
+    grid: bool,
+) -> PxlResult<(u32, u32, Vec<u8>)> {
+    let scale = scale.max(1);
+    if rgba.len() as u64 != w as u64 * h as u64 * 4 {
+        return Err(PxlError::semantic(format!(
+            "rgba buffer has {} bytes, expected {} for {w}x{h}",
+            rgba.len(),
+            w as u64 * h as u64 * 4
+        )));
+    }
+    scaled_dims(w, h, scale)?;
+    Ok(scale_rgba(w, h, rgba, scale, grid))
+}
+
+pub fn scale_rgba(w: u32, h: u32, rgba: &[u8], scale: u32, grid: bool) -> (u32, u32, Vec<u8>) {
+    let scale = scale.max(1);
+    let ow = w * scale;
+    let oh = h * scale;
+    let mut out = vec![0u8; (ow as usize) * (oh as usize) * 4];
+    for y in 0..h {
+        for x in 0..w {
+            let s = ((y * w + x) * 4) as usize;
+            let px = [rgba[s], rgba[s + 1], rgba[s + 2], rgba[s + 3]];
+            for dy in 0..scale {
+                for dx in 0..scale {
+                    let lattice = grid && scale >= 2 && (dx + 1 == scale || dy + 1 == scale);
+                    let i = (((y * scale + dy) * ow + (x * scale + dx)) * 4) as usize;
+                    if lattice {
+                        out[i] = 20;
+                        out[i + 1] = 18;
+                        out[i + 2] = 16;
+                        out[i + 3] = 255;
+                    } else if px[3] == 0 {
+                        out[i] = 28;
+                        out[i + 1] = 26;
+                        out[i + 2] = 24;
+                        out[i + 3] = 255;
+                    } else {
+                        out[i..i + 4].copy_from_slice(&px);
+                        out[i + 3] = 255;
+                    }
+                }
+            }
+        }
+    }
+    (ow, oh, out)
+}
+
+/// Preview scaling output cap, in pixels.
+const MAX_SCALED_PIXELS: u64 = 64 * 1024 * 1024;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::tests::support::palette;
+
+    #[test]
+    fn scale_rgba_rejects_a_short_buffer() {
+        assert!(scale_rgba_checked(8, 1, &[0u8; 8], 2, false).is_err());
+    }
+
+    #[test]
+    fn scaled_dims_rejects_overflow_and_over_budget() {
+        assert_eq!(scaled_dims(24, 24, 16).unwrap(), (384, 384));
+        assert_eq!(scaled_dims(24, 24, 0).unwrap(), (24, 24), "0 means 1");
+        assert!(scaled_dims(64, 64, u32::MAX).is_err(), "u32 overflow");
+        assert!(scaled_dims(2048, 2048, 64).is_err(), "over pixel budget");
+    }
+
+    fn sample() -> IndexFrame {
+        let mut f = IndexFrame::new(3, 2).unwrap();
+        f.set(0, 0, 2);
+        f.set(1, 0, 3);
+        f.set(2, 1, 4);
+        f
+    }
+
+    /// Scaling copies source pixels: sampling the scaled image at the centre of
+    /// every block gives the source back, for every factor.
+    #[test]
+    fn nearest_scaling_never_changes_content() {
+        let src = sample();
+        for scale in [1u32, 2, 4, 8, 16] {
+            let big = scale_nearest(&src, scale).unwrap();
+            assert_eq!((big.w as u32, big.h as u32), (3 * scale, 2 * scale));
+            for y in 0..src.h as i32 {
+                for x in 0..src.w as i32 {
+                    for dy in 0..scale as i32 {
+                        for dx in 0..scale as i32 {
+                            assert_eq!(
+                                big.get(x * scale as i32 + dx, y * scale as i32 + dy),
+                                src.get(x, y),
+                                "scale {scale} at {x},{y}+{dx},{dy}"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// Without `grid` the preview is a pure block copy; `grid` only recolours
+    /// the last row and column of each block.
+    #[test]
+    fn composite_without_grid_is_a_pure_block_copy_and_grid_only_marks_edges() {
+        let pal = palette();
+        let src = sample();
+        let (w, _h, plain) = composite_checked(&src, &pal, 4, false).unwrap();
+        let (_, _, gridded) = composite_checked(&src, &pal, 4, true).unwrap();
+        let px = |buf: &[u8], x: u32, y: u32| {
+            let i = ((y * w + x) * 4) as usize;
+            [buf[i], buf[i + 1], buf[i + 2], buf[i + 3]]
+        };
+        for y in 0..8u32 {
+            for x in 0..12u32 {
+                let (bx, by) = (x % 4, y % 4);
+                let edge = bx == 3 || by == 3;
+                if edge {
+                    assert_eq!(px(&gridded, x, y), [20, 18, 16, 255]);
+                } else {
+                    assert_eq!(px(&gridded, x, y), px(&plain, x, y));
+                }
+                assert_eq!(
+                    px(&plain, x, y),
+                    px(&plain, x / 4 * 4, y / 4 * 4),
+                    "plain block {x},{y} is uniform"
+                );
+            }
+        }
+    }
+}

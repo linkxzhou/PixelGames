@@ -1,0 +1,94 @@
+[
+ [
+  [
+   "design.read_brief",
+   {}
+  ]
+ ],
+ [
+  [
+   "design.write_candidate",
+   {
+    "path": "game-design.json",
+    "content": "{\"schema_version\":3,\"game_id\":\"fixture-game\",\"genre\":\"top_down_tank\",\"core_loop\":\"move, shoot, reach exit\",\"actions\":[{\"id\":\"move\",\"name\":\"Move\",\"input\":\"wasd\",\"desc\":\"\"},{\"id\":\"shoot\",\"name\":\"Shoot\",\"input\":\"space\",\"desc\":\"\"}],\"entities\":[{\"id\":\"player_tank\",\"kind\":\"player\",\"desc\":\"\",\"actions\":[\"move\",\"shoot\"],\"speed\":3.0},{\"id\":\"enemy_tank\",\"kind\":\"enemy\",\"desc\":\"\",\"actions\":[\"move\",\"shoot\"],\"speed\":2.0}],\"rules\":[{\"id\":\"r1\",\"statement\":\"player moves\",\"entities\":[\"player_tank\"],\"actions\":[\"move\"]},{\"id\":\"r2\",\"statement\":\"bullets destroy\",\"entities\":[\"enemy_tank\"],\"actions\":[\"shoot\"]}],\"win_condition\":{\"id\":\"win\",\"statement\":\"reach exit\",\"refs\":[\"player_tank\"]},\"lose_condition\":{\"id\":\"lose\",\"statement\":\"hit by bullet\",\"refs\":[\"player_tank\"]},\"requirement_ids\":[],\"scope\":{}}"
+   }
+  ]
+ ],
+ [
+  [
+   "design.write_candidate",
+   {
+    "path": "style-guide.json",
+    "content": "{\"schema_version\":3,\"logical_resolution\":[320,240],\"tile_size_px\":16,\"sprite_size_px\":16,\"palette\":\"palette.json\",\"transparent_index\":0,\"outline\":\"always\",\"directions\":[\"N\",\"E\",\"S\",\"W\"],\"anim_fps_min\":2,\"anim_fps_max\":16,\"nearest_filtering\":true}"
+   }
+  ]
+ ],
+ [
+  [
+   "design.read_visual_profile",
+   {
+    "id": "strict_retro"
+   }
+  ]
+ ],
+ [
+  [
+   "design.write_candidate",
+   {
+    "path": "visual-intent.json",
+    "content": "{\"contract\":\"visual-intent/v1\",\"profile\":{\"id\":\"strict_retro\",\"digest\":\"sha256:ac4891d29b55ea5bce356d462ce331849ca4fa7d185c3d3e12525ad1876e3d46\"},\"pixel_grid\":{\"native_size\":[16,16],\"display_scale\":4,\"snap\":true},\"palette_policy\":{\"mode\":\"strict\",\"palette\":\"palette.json\",\"allowed_indices\":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],\"ui_palette\":null,\"runtime_grade\":false,\"extension_budget\":0},\"roles\":{\"background\":{\"value\":[0,100],\"saturation\":[0,140],\"relative_contrast\":-1},\"actor\":{\"value\":[60,220],\"saturation\":[20,220],\"relative_contrast\":1}},\"value_script\":{\"focal_roles\":[\"actor\"],\"rest_roles\":[\"background\"]},\"materials\":{\"metal\":{\"ramp\":\"main\",\"finish\":\"hard_edge\",\"response\":\"hard_edge\",\"regions\":[\"body\",\"track\",\"eye\"]},\"stone\":{\"ramp\":\"main\",\"finish\":\"volume\",\"response\":\"hard_edge\",\"regions\":[\"brick\",\"surface\"]},\"water\":{\"ramp\":\"main\",\"finish\":\"flat\",\"response\":\"planar\",\"regions\":[\"surface\"]}},\"asset_policies\":[{\"asset_id\":\"player_tank\",\"kind\":\"sprite\",\"role\":\"actor\",\"native_size\":[16,16],\"material_ids\":[\"metal\"],\"protected_regions\":[\"eye\"],\"finish\":\"hard_edge\",\"lighting\":\"baked\"},{\"asset_id\":\"enemy_tank\",\"kind\":\"sprite\",\"role\":\"actor\",\"native_size\":[16,16],\"material_ids\":[\"metal\"],\"protected_regions\":[\"eye\"],\"finish\":\"hard_edge\",\"lighting\":\"baked\"},{\"asset_id\":\"b\",\"kind\":\"tile\",\"role\":\"background\",\"native_size\":[16,16],\"material_ids\":[\"stone\"],\"protected_regions\":[],\"finish\":\"volume\",\"lighting\":\"baked\"},{\"asset_id\":\"w\",\"kind\":\"tile\",\"role\":\"background\",\"native_size\":[16,16],\"material_ids\":[\"water\"],\"protected_regions\":[],\"finish\":\"flat\",\"lighting\":\"hybrid\"}],\"animation_policy\":{\"max_frames\":16,\"hold_terminal\":true,\"allow_squash\":false,\"allow_smear\":false,\"required_phases\":[\"contact\"],\"contact_tolerance\":1},\"scene_previews\":[{\"id\":\"main\",\"size\":[128,128],\"background\":\"dark\",\"scale\":4,\"tick\":0,\"instances\":[{\"asset_id\":\"player_tank\",\"position\":[16,16],\"layer\":\"world\",\"frame\":null},{\"asset_id\":\"enemy_tank\",\"position\":[80,16],\"layer\":\"world\",\"frame\":null},{\"asset_id\":\"b\",\"position\":[16,48],\"layer\":\"stage\",\"frame\":null},{\"asset_id\":\"w\",\"position\":[48,48],\"layer\":\"stage\",\"frame\":null}],\"rois\":[{\"id\":\"actors\",\"layer\":\"world\",\"rect\":[0,0,128,40]}]}],\"review_policy\":{\"required_dimensions\":[\"silhouette\",\"colour_value\",\"material_form\",\"animation\",\"tile_scene\"],\"min_reviewers\":2},\"sources\":{\"pixel_grid\":\"profile\",\"palette_policy\":\"project\",\"asset_policies.finish\":\"default\"},\"risks\":[{\"risk_id\":\"actor-background-contrast\",\"target\":\"scene:main\",\"check\":\"figure_ground\",\"evidence_required\":\"visual-report.json#main.roi.actors\",\"status\":\"open\",\"resolved_by\":null}]}"
+   }
+  ]
+ ],
+ [
+  [
+   "design.write_candidate",
+   {
+    "path": "levels/level_1.json",
+    "content": "{\"schema_version\":3,\"id\":\"level_1\",\"name\":\"First Steps\",\"tile_size_px\":16,\"grid_w\":8,\"grid_h\":8,\"grid\":[\"ffffffff\",\"ffbbbbff\",\"ffffffff\",\"ffwbbwff\",\"ffffffff\",\"fbbfffff\",\"ffffffff\",\"ffffffff\"],\"tile_semantics\":[{\"tile_id\":\"f\",\"behaviour\":\"floor\",\"blocks\":false},{\"tile_id\":\"b\",\"behaviour\":\"wall\",\"blocks\":true},{\"tile_id\":\"w\",\"behaviour\":\"water\",\"blocks\":true}],\"placements\":[{\"entity_id\":\"enemy_tank\",\"pos\":[6,1],\"dir\":\"W\"}],\"spawn\":[1,1],\"exit\":[6,6],\"objective\":\"reach the exit\",\"difficulty\":1,\"seed\":1,\"notes\":\"teach movement\"}"
+   }
+  ]
+ ],
+ [
+  [
+   "design.write_candidate",
+   {
+    "path": "asset-requirements.json",
+    "content": "{\"schema_version\":3,\"requirements\":[{\"asset_id\":\"player_tank\",\"kind\":\"sprite\",\"required\":true,\"consumer_refs\":[\"level_1\"],\"style_ref\":\"palette.json\",\"size_px\":[16,16],\"directions\":[\"N\",\"E\",\"S\",\"W\"],\"anims\":[{\"name\":\"move\",\"fps\":10,\"looped\":true,\"frames\":4,\"dirs\":[\"N\",\"E\",\"S\",\"W\"]}],\"semantics\":\"player\",\"strategy\":\"shapes\",\"seamless\":false,\"priority\":1,\"acceptance\":[{\"id\":\"size\",\"type\":\"machine\",\"check\":\"size.equals\",\"expected\":[16,16]}]},{\"asset_id\":\"enemy_tank\",\"kind\":\"sprite\",\"required\":true,\"consumer_refs\":[\"level_1\"],\"style_ref\":\"palette.json\",\"size_px\":[16,16],\"directions\":[\"N\",\"E\",\"S\",\"W\"],\"anims\":[],\"semantics\":\"enemy\",\"strategy\":\"shapes\",\"seamless\":false,\"priority\":1,\"acceptance\":[{\"id\":\"size\",\"type\":\"machine\",\"check\":\"size.equals\",\"expected\":[16,16]}]},{\"asset_id\":\"b\",\"kind\":\"tile\",\"required\":true,\"consumer_refs\":[\"level_1\"],\"style_ref\":\"palette.json\",\"size_px\":[16,16],\"directions\":[],\"anims\":[],\"semantics\":\"wall\",\"strategy\":\"tile_gen\",\"seamless\":true,\"priority\":1,\"acceptance\":[{\"id\":\"tile\",\"type\":\"machine\",\"check\":\"tile.seamless\",\"expected\":true}]},{\"asset_id\":\"w\",\"kind\":\"tile\",\"required\":true,\"consumer_refs\":[\"level_1\"],\"style_ref\":\"palette.json\",\"size_px\":[16,16],\"directions\":[],\"anims\":[],\"semantics\":\"water\",\"strategy\":\"tile_gen\",\"seamless\":true,\"priority\":1,\"acceptance\":[{\"id\":\"tile\",\"type\":\"machine\",\"check\":\"tile.seamless\",\"expected\":true}]}]}"
+   }
+  ]
+ ],
+ [
+  [
+   "design.write_candidate",
+   {
+    "path": "acceptance-plan.json",
+    "content": "{\"schema_version\":3,\"items\":[{\"requirement_id\":\"player_tank\",\"description\":\"delivered\",\"gate_id\":\"assets.coverage\",\"stage\":\"assets\",\"evidence\":\"manifest\"},{\"requirement_id\":\"enemy_tank\",\"description\":\"delivered\",\"gate_id\":\"assets.coverage\",\"stage\":\"assets\",\"evidence\":\"manifest\"},{\"requirement_id\":\"b\",\"description\":\"delivered\",\"gate_id\":\"assets.coverage\",\"stage\":\"assets\",\"evidence\":\"manifest\"},{\"requirement_id\":\"w\",\"description\":\"delivered\",\"gate_id\":\"assets.coverage\",\"stage\":\"assets\",\"evidence\":\"manifest\"}]}"
+   }
+  ]
+ ],
+ [
+  [
+   "design.read_template",
+   {}
+  ]
+ ],
+ [
+  [
+   "design.validate",
+   {}
+  ]
+ ],
+ [
+  [
+   "design.request_review",
+   {
+    "summary": "3 logical levels, tank template reused",
+    "risks": [
+     "water readability"
+    ],
+    "open_questions": []
+   }
+  ]
+ ]
+]

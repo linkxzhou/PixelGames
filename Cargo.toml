@@ -1,15 +1,45 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/pxl-core",
-    "crates/pxl-format",
-    "crates/pxl-gen",
-    "crates/pxl-ops",
-    "crates/pxl-qa",
-    "crates/pxl-export",
-    "crates/pxl-cli",
-    "harness",
+    "libs/pxl-core",
+    "libs/pxl-format",
+    "libs/pxl-gen",
+    "libs/pxl-ops",
+    "libs/pxl-qa",
+    "libs/pxl-export",
+    "libs/pxl-art",
+    "libs/pxl-svg",
+    "libs/pxl-engine",
+    "libs/pxl-wasm",
+    "libs/pxl-audio",
+    "libs/pxl-cli",
+    "libs/pxl-ase-doc",
+    "libs/pxl-ase-io",
+    "libs/pxl-ase",
+    "libs/pxl-arcade-kit",
+    "libs/pxl-fight",
+    "games/todo-01-pac-man/runtime",
+    "games/todo-02-donkey-kong/runtime",
+    "games/todo-03-street-fighter-ii/runtime",
+    "games/todo-04-galaga/runtime",
+    "games/todo-05-ms-pac-man/runtime",
+    "games/todo-06-space-invaders/runtime",
+    "games/todo-07-mortal-kombat/runtime",
+    "games/todo-08-dig-dug/runtime",
+    "games/todo-09-frogger/runtime",
+    "games/todo-10-asteroids/runtime",
     "games/battle-city/runtime",
+    "games/metal-slug/runtime",
+    "games/stardew/runtime",
+    "games/octopath/runtime",
+    "steps/step-100-design",
+    "steps/step-200-art-spec",
+    "steps/step-400-package",
+    "steps/step-500-engine",
+    "steps/step-500-engine/web-engine",
+    "libs/pxl-agent",
+    "libs/pxl-store",
+    "libs/pxl-contract",
 ]
 
 [workspace.package]
@@ -26,12 +56,25 @@ sha2 = { version = "0.10", default-features = false }
 png = "0.17"
 gif = "0.13"
 clap = { version = ">=4.5.23, <4.6", features = ["derive"] }
-pxl-core = { path = "crates/pxl-core" }
-pxl-format = { path = "crates/pxl-format" }
-pxl-gen = { path = "crates/pxl-gen" }
-pxl-ops = { path = "crates/pxl-ops" }
-pxl-qa = { path = "crates/pxl-qa" }
-pxl-export = { path = "crates/pxl-export" }
+pxl-core = { path = "libs/pxl-core" }
+pxl-format = { path = "libs/pxl-format" }
+pxl-gen = { path = "libs/pxl-gen" }
+pxl-ops = { path = "libs/pxl-ops" }
+pxl-art = { path = "libs/pxl-art" }
+pxl-svg = { path = "libs/pxl-svg" }
+pxl-qa = { path = "libs/pxl-qa" }
+pxl-export = { path = "libs/pxl-export" }
+pxl-engine = { path = "libs/pxl-engine" }
+pxl-wasm = { path = "libs/pxl-wasm" }
+pxl-audio = { path = "libs/pxl-audio" }
+pxl-arcade-kit = { path = "libs/pxl-arcade-kit" }
+pxl-contract = { path = "libs/pxl-contract" }
+pxl-fight = { path = "libs/pxl-fight" }
+pxl-store = { path = "libs/pxl-store" }
+pxl-agent = { path = "libs/pxl-agent" }
+pxl-ase-doc = { path = "libs/pxl-ase-doc" }
+pxl-ase-io = { path = "libs/pxl-ase-io" }
+pxl-ase = { path = "libs/pxl-ase" }
 
 # macroquad 0.4.13 pins miniquad =0.4.6. That release calls center() before the
 # NSView exists; AppKit then messages a nil view and Apple Silicon panics.

@@ -1,0 +1,15 @@
+[package]
+name = "pxl-ase-doc"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Clean-room Aseprite-like document model for headless CLI"
+
+[dependencies]
+pxl-core = { workspace = true }
+serde = { workspace = true, optional = true }
+
+[features]
+default = ["serde"]
+serde = ["dep:serde", "pxl-core/serde"]

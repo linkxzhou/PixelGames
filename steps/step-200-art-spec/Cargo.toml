@@ -1,0 +1,22 @@
+[package]
+name = "step-200-art-spec"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Step 200: requirements -> SVG/ASCII/JSON art specs (LLM)"
+
+[[bin]]
+name = "step-200"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+serde = { workspace = true, features = ["std"] }
+serde_json = { workspace = true }
+pxl-contract = { workspace = true }
+pxl-store = { workspace = true }
+pxl-agent = { workspace = true }
+pxl-core = { workspace = true }
+pxl-format = { workspace = true }
+pxl-audio = { workspace = true }

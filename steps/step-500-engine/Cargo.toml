@@ -1,0 +1,18 @@
+[package]
+name = "step-500-engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Step 500: asset-package -> engine intake and slice gate"
+
+[[bin]]
+name = "step-500"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+serde = { workspace = true, features = ["std"] }
+serde_json = { workspace = true }
+pxl-contract = { workspace = true }
+pxl-store = { workspace = true }

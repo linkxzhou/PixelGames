@@ -1,0 +1,65 @@
+{
+  "template_version": 1,
+  "genre": "top_down_tank",
+  "name": "Top-down tank single-screen slice",
+  "description": "Single-screen top-down tank game: navigate a maze, shoot crates/enemies, reach the exit. Reuses the existing tank asset family.",
+  "defaults": {
+    "single_player": true,
+    "single_screen": true,
+    "input": "keyboard",
+    "palette": "single",
+    "tile_size_px": 16,
+    "sprite_size_px": 16,
+    "levels": 3,
+    "directions": ["N", "E", "S", "W"],
+    "logical_resolution": [320, 240]
+  },
+  "core_loop": "navigate maze, shoot obstacles/enemies, avoid hazards, reach exit",
+  "actions": [
+    { "id": "move", "name": "Move", "input": "arrow/WASD", "desc": "Move tank in 4 directions" },
+    { "id": "shoot", "name": "Shoot", "input": "space", "desc": "Fire a bullet in the facing direction" }
+  ],
+  "entities": [
+    { "id": "player_tank", "kind": "player", "actions": ["move", "shoot"], "speed": 3.0 },
+    { "id": "enemy_tank", "kind": "enemy", "actions": ["move", "shoot"], "speed": 2.0 },
+    { "id": "bullet", "kind": "bullet", "actions": [], "speed": 8.0 },
+    { "id": "explosion", "kind": "effect", "actions": [] },
+    { "id": "hq_base", "kind": "prop", "actions": [] }
+  ],
+  "tiles": [
+    { "tile_id": "f", "behaviour": "floor", "blocks": false },
+    { "tile_id": "b", "behaviour": "wall", "blocks": true },
+    { "tile_id": "w", "behaviour": "water", "blocks": true },
+    { "tile_id": "s", "behaviour": "hazard", "blocks": false },
+    { "tile_id": "g", "behaviour": "goal_pad", "blocks": false }
+  ],
+  "win_condition": { "id": "win_reach_exit", "statement": "player reaches the exit tile", "refs": ["player_tank"] },
+  "lose_condition": { "id": "lose_destroyed", "statement": "player is hit by a bullet or stands on hazard", "refs": ["player_tank", "bullet"] },
+  "asset_hints": {
+    "player_tank": { "strategy": "template", "ref": "assets/tank_body.shapes.json" },
+    "enemy_tank": { "strategy": "template", "ref": "assets/tank_body.shapes.json" },
+    "bullet": { "strategy": "template", "ref": "assets/bullet.shapes.json" },
+    "explosion": { "strategy": "template", "ref": "assets/explosion.shapes.json" },
+    "hq_base": { "strategy": "template", "ref": "assets/hq_base.shapes.json" },
+    "b": { "strategy": "template", "ref": "assets/brick.shapes.json" },
+    "w": { "strategy": "template", "ref": "assets/water.shapes.json" },
+    "steel": { "strategy": "template", "ref": "assets/steel.shapes.json" }
+  },
+  "level_guidance": {
+    "grid_w_range": [8, 20],
+    "grid_h_range": [6, 15],
+    "teaching_order": [
+      "level_1: teach movement + reaching the exit, no enemies",
+      "level_2: add destructible brick + shooting",
+      "level_3: add enemy tanks + water hazards + steel cover"
+    ]
+  },
+  "style": {
+    "palette": "assets/palette.json",
+    "transparent_index": 0,
+    "outline": "always",
+    "anim_fps_min": 2,
+    "anim_fps_max": 16,
+    "nearest_filtering": true
+  }
+}

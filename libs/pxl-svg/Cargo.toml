@@ -1,0 +1,12 @@
+[package]
+name = "pxl-svg"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "SVG subset to palette-indexed pixel frames: supersampled scanline fill, majority vote, feature protection"
+
+[dev-dependencies]
+[dependencies]
+pxl-core = { workspace = true }
+pxl-art = { workspace = true }

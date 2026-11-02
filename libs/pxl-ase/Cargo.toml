@@ -1,0 +1,18 @@
+[package]
+name = "pxl-ase"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Facade: ase color/filters/render/ops + batch helpers for step-300 ase"
+
+[dependencies]
+pxl-ase-doc = { workspace = true }
+pxl-ase-io = { workspace = true }
+pxl-core = { workspace = true }
+pxl-export = { workspace = true }
+pxl-art = { workspace = true }
+pxl-ops = { workspace = true }
+pxl-format = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

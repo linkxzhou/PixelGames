@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pxl/slice/v1",
+  "title": "slice-report.json",
+  "description": "Output of `step-500 slice`: the producer's go/no-go on full production, after the .slice/ run of steps 200-500. Verdict PROCEED/PIVOT/KILL/NOT_ASSESSED after Claude-Code-Game-Studios vertical-slice-report.md. Missing evidence forces NOT_ASSESSED, never PASS.",
+  "type": "object",
+  "required": ["schema_version", "verdict", "questions", "missing"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "verdict": {
+      "enum": ["PROCEED", "PIVOT", "KILL", "NOT_ASSESSED"],
+      "description": "PIVOT goes back to step-100; KILL archives; NOT_ASSESSED must be re-run after fixing inputs."
+    },
+    "questions": {
+      "type": "array",
+      "description": "Experience + feasibility pair; each answer cites evidence.",
+      "items": {
+        "type": "object",
+        "required": ["id", "answer", "evidence"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^(loop|art|pipeline)\\.[a-z_]+$"
+          },
+          "answer": { "type": ["string", "boolean", "integer"] },
+          "evidence": {
+            "type": "string",
+            "description": "Path to the .slice/ artifact backing this answer."
+          }
+        }
+      }
+    },
+    "missing": {
+      "type": "array",
+      "description": "Required .slice/ artifacts that were absent; non-empty forces NOT_ASSESSED.",
+      "items": { "type": "string" }
+    },
+    "next": {
+      "type": "string",
+      "description": "The command the verdict unlocks, e.g. 'step-200 run --scope all'."
+    }
+  }
+}

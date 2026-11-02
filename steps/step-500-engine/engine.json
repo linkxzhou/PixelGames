@@ -1,0 +1,51 @@
+{
+  "name": "pxl-web",
+  "contract": "engine/v4",
+  "runtime": {
+    "mode": "js",
+    "kind": "wasm+js",
+    "kernel": "pxl_web.wasm",
+    "loader": "mq_js_bundle.js",
+    "entry": "game.js"
+  },
+  "project_structure": {
+    "source": "assets",
+    "dirs": {
+      "sprites": "assets/sprites",
+      "sheets": "assets/sheets",
+      "palettes": "assets/palettes",
+      "levels": "assets/levels",
+      "audio": "assets/audio"
+    }
+  },
+  "capabilities": {
+    "audio": {
+      "js": true,
+      "rust": false,
+      "formats": ["wav"],
+      "cache_bytes_max": 33554432,
+      "sfx_voices_max": 16,
+      "bgm_voices_max": 1
+    },
+    "visual": {
+      "abi": 2,
+      "pivot": true,
+      "duration": true,
+      "material": true,
+      "emissive": true,
+      "lighting": ["L0", "L1", "L2"]
+    }
+  },
+  "naming_conventions": {
+    "sheet_json": "<name>.sheet.json",
+    "sheet_png": "<name>.sheet.png",
+    "palette": "palette.json",
+    "level": "levels/<id>.json"
+  },
+  "required_files": ["asset-package.json"],
+  "platforms": ["browser"],
+  "limits": {
+    "frame_max": 256,
+    "palette_max": 62
+  }
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "pxl"
+  short_description: "Run the PixelGames pixel-art pipeline"
+  default_prompt: "Use $pxl to build a 16x16 slime sprite and validate it."
