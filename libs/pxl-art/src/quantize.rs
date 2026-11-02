@@ -13,8 +13,50 @@ use alloc::vec::Vec;
 
 use pxl_core::{Oklab, Palette, Rgba};
 
+/// Bayer 2x2, values 0..4.
+pub const BAYER2: [[i32; 2]; 2] = [[0, 2], [3, 1]];
+
 /// Bayer 4x4, values 0..16.
 pub const BAYER4: [[i32; 4]; 4] = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+
+/// Bayer 8x8, values 0..64 (standard ordered dither matrix).
+pub const BAYER8: [[i32; 8]; 8] = [
+    [0, 32, 8, 40, 2, 34, 10, 42],
+    [48, 16, 56, 24, 50, 18, 58, 26],
+    [12, 44, 4, 36, 14, 46, 6, 38],
+    [60, 28, 52, 20, 62, 30, 54, 22],
+    [3, 35, 11, 43, 1, 33, 9, 41],
+    [51, 19, 59, 27, 49, 17, 57, 25],
+    [15, 47, 7, 39, 13, 45, 5, 37],
+    [63, 31, 55, 23, 61, 29, 53, 21],
+];
+
+/// Ordered-dither matrix name aligned with Aseprite CLI docs (`bayer2x2`/`4x4`/`8x8`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DitherMatrix {
+    Bayer2,
+    Bayer4,
+    Bayer8,
+}
+
+impl DitherMatrix {
+    pub fn parse(s: &str) -> Option<Self> {
+        match s.to_ascii_lowercase().as_str() {
+            "bayer2" | "bayer2x2" | "2x2" => Some(Self::Bayer2),
+            "bayer4" | "bayer4x4" | "4x4" | "bayer" => Some(Self::Bayer4),
+            "bayer8" | "bayer8x8" | "8x8" => Some(Self::Bayer8),
+            _ => None,
+        }
+    }
+
+    fn threshold(self, x: usize, y: usize) -> (i64, i64) {
+        match self {
+            Self::Bayer2 => (BAYER2[y % 2][x % 2] as i64, 4),
+            Self::Bayer4 => (BAYER4[y % 4][x % 4] as i64, 16),
+            Self::Bayer8 => (BAYER8[y % 8][x % 8] as i64, 64),
+        }
+    }
+}
 
 /// Palette entries as OKLab, with transparent and missing entries skipped.
 pub struct LabPalette {
@@ -57,8 +99,20 @@ impl LabPalette {
 }
 
 /// Map an RGBA buffer onto `palette`. Alpha below 128 is transparent.
-/// `dither` is 0 (off) to 100 (full Bayer strength).
+/// `dither` is 0 (off) to 100 (full Bayer strength). Uses Bayer 4x4.
 pub fn map_to_palette(w: usize, h: usize, rgba: &[u8], palette: &Palette, dither: u8) -> Vec<u8> {
+    map_to_palette_ordered(w, h, rgba, palette, dither, DitherMatrix::Bayer4)
+}
+
+/// Like [`map_to_palette`] but with an explicit ordered-dither matrix.
+pub fn map_to_palette_ordered(
+    w: usize,
+    h: usize,
+    rgba: &[u8],
+    palette: &Palette,
+    dither: u8,
+    matrix: DitherMatrix,
+) -> Vec<u8> {
     let lab = LabPalette::new(palette);
     let mut out = vec![0u8; w * h];
     for y in 0..h {
@@ -68,7 +122,7 @@ pub fn map_to_palette(w: usize, h: usize, rgba: &[u8], palette: &Palette, dither
                 continue;
             }
             let c = Oklab::from_rgba(Rgba::rgb(rgba[i], rgba[i + 1], rgba[i + 2]));
-            out[y * w + x] = pick(&lab, c, x, y, dither);
+            out[y * w + x] = pick_matrix(&lab, c, x, y, dither, matrix);
         }
     }
     out
@@ -77,19 +131,30 @@ pub fn map_to_palette(w: usize, h: usize, rgba: &[u8], palette: &Palette, dither
 /// One pixel: nearest entry, or with dithering the second entry when the
 /// colour sits far enough toward it for this cell of the Bayer matrix.
 pub fn pick(lab: &LabPalette, c: Oklab, x: usize, y: usize, dither: u8) -> u8 {
+    pick_matrix(lab, c, x, y, dither, DitherMatrix::Bayer4)
+}
+
+fn pick_matrix(
+    lab: &LabPalette,
+    c: Oklab,
+    x: usize,
+    y: usize,
+    dither: u8,
+    matrix: DitherMatrix,
+) -> u8 {
     let Some(((a, da), (b, db))) = lab.nearest2(c) else {
         return 0;
     };
     if dither == 0 || a == b {
         return a;
     }
-    // Share of the way from `a` to `b`, 0..=8 of 16 (b is never nearer).
     let (ra, rb) = (isqrt(da), isqrt(db));
     if ra + rb == 0 {
         return a;
     }
-    let t = ra * 16 / (ra + rb);
-    let threshold = BAYER4[y % 4][x % 4] as i64;
+    let (threshold, levels) = matrix.threshold(x, y);
+    // Share of the way from `a` to `b`, scaled to matrix levels.
+    let t = ra * levels / (ra + rb);
     let t = t * dither as i64 / 100;
     if t * 2 > threshold + 1 {
         b
@@ -282,6 +347,25 @@ mod tests {
         assert!((4..=12).contains(&whites), "{d:?}");
         assert_eq!(map_to_palette(4, 4, &grey, &p, 100), d);
     }
+
+    #[test]
+    fn bayer8_matrix_parses_and_maps() {
+        assert_eq!(DitherMatrix::parse("bayer8x8"), Some(DitherMatrix::Bayer8));
+        let p = pal(&[Rgba::rgb(0, 0, 0), Rgba::rgb(255, 255, 255)]);
+        let mut grey = alloc::vec![0u8; 8 * 8 * 4];
+        for px in grey.chunks_exact_mut(4) {
+            px[0] = 128;
+            px[1] = 128;
+            px[2] = 128;
+            px[3] = 255;
+        }
+        let d4 = map_to_palette_ordered(8, 8, &grey, &p, 100, DitherMatrix::Bayer4);
+        let d8 = map_to_palette_ordered(8, 8, &grey, &p, 100, DitherMatrix::Bayer8);
+        assert_ne!(d4, d8);
+        assert!(d8.iter().any(|&i| i == 1));
+        assert!(d8.iter().any(|&i| i == 2));
+    }
+
 
     #[test]
     fn median_cut_finds_the_dominant_colours() {

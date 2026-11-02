@@ -6,9 +6,19 @@
 ## 命令
 
 ```bash
-cargo run -p pxl-cli --bin step-300 -- ase inspect work/v8-ase-pilot/mini_indexed.aseprite
-cargo run -p pxl-cli --bin step-300 -- --overwrite ase convert work/v8-ase-pilot/mini_indexed.aseprite --save-as work/v8-ase-pilot/frame0.png
-cargo run -p pxl-cli --bin step-300 -- --overwrite ase sheet work/v8-ase-pilot/mini_indexed.aseprite --out work/v8-ase-pilot/sheet.png
+cargo build -p pxl-cli --bin step-300
+BIN=target/debug/step-300
+
+$BIN ase inspect work/v8-ase-pilot/mini_indexed.aseprite
+$BIN --overwrite ase convert work/v8-ase-pilot/mini_indexed.aseprite --save-as work/v8-ase-pilot/out/anim.gif --frame-range 0-2
+$BIN --overwrite ase convert work/v8-ase-pilot/mini_indexed.aseprite --save-as work/v8-ase-pilot/out/dither.png \
+  --color-mode indexed --dithering-algorithm ordered --dithering-matrix bayer8x8 \
+  --palette work/v8-ase-pilot/pilot.gpl
+$BIN --overwrite ase list-slices work/v8-ase-pilot/mini_indexed.aseprite
+$BIN --overwrite ase split-slices work/v8-ase-pilot/mini_indexed.aseprite --out work/v8-ase-pilot/out/slices
+$BIN --overwrite ase sheet work/v8-ase-pilot/mini_indexed.aseprite --out work/v8-ase-pilot/out/sheet.png --layout horizontal
+$BIN --overwrite ase filter work/v8-ase-pilot/mini_indexed.aseprite invert --out work/v8-ase-pilot/out/invert.png
+$BIN --overwrite ase op work/v8-ase-pilot/mini_indexed.aseprite flip --axis h --out work/v8-ase-pilot/out/flipped.aseprite
 ```
 
-不修改 `games/`。
+产物见 `work/v8-ase-pilot/out/`。不修改 `games/`。

@@ -2,8 +2,7 @@
 
 > 日期：2026-11-02（Asia/Shanghai）  
 > 状态：**部分完成**（2026-11-02 Asia/Shanghai）  
-> 证据：`work/v8-ase-pilot/`；`steps/README` 指向 ase；未改 games/
-> 范围：如何把 v8 能力挂进 `step-300`、与 `step-200`/`400` 契约、试点路径；**本计划文档阶段不改代码**
+> 证据：pilot 扩展；steps/README ase；缺口清单部分关闭；import 契约未全
 
 ## 1. 背景
 

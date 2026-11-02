@@ -1,0 +1,9 @@
+GIMP Palette
+Name: pilot
+Columns: 4
+#
+0 0 0 Transparent
+255 64 64 Red
+64 128 255 Blue
+255 220 64 Yellow
+32 32 32 Dark

@@ -2,9 +2,7 @@
 
 > 日期：2026-11-02（Asia/Shanghai）  
 > 状态：**部分完成**（2026-11-02 Asia/Shanghai）  
-> 证据：`step-300 ase --help` 及 inspect/convert/sheet/list/filter；见 cli-flag-matrix.md
-> 对照：公开 https://www.aseprite.org/docs/cli/ ；本地 `src/app/cli/app_options.h`、`app_options.cpp`、`cli_processor.*`  
-> 主方案：**扩展 `step-300`（`pxl-cli`）增加 `ase` 子命令组**；与现有子命令共存
+> 证据：见 cli-flag-matrix.md；子命令+公开旗标子集；顺序敏感解析器未做
 
 ## 1. 背景
 
