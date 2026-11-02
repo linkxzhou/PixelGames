@@ -7,112 +7,19 @@ use pxl_format::Recipe;
 use pxl_gen::{generate_noise_tile, variant_seed};
 use serde_json::{json, Map, Value};
 
-use super::args::{BuildArgs, RenderArgs};
-use super::document::doc_from_frames;
-use super::generate::spec_file_name;
-use super::inspect::{checks_json, load_qa_config, load_report_with_config};
-use super::render::render_cmd;
-use super::sheet::{pack_loaded, Loaded};
-use super::sprite::{build_sprite, overwrite_ctx};
+use crate::cmd::args::{BuildArgs, RenderArgs};
+use crate::cmd::document::doc_from_frames;
+use crate::cmd::generate::spec_file_name;
+use crate::cmd::inspect::{checks_json, load_qa_config, load_report_with_config};
+use crate::cmd::render::render_cmd;
+use crate::cmd::sheet::{pack_loaded, Loaded};
+use crate::cmd::sprite::{build_sprite, overwrite_ctx};
 use crate::error::{CmdError, CmdResult};
 use crate::util::{self, Ctx};
 
-pub(super) const STAGING_DIR: &str = ".staging";
+use super::manifest::{build_manifest, manifest_file_name, sheet_resources, validate_built_doc};
 
-pub(super) const REJECTED_DIR: &str = ".rejected";
-
-/// Build into `<out>/.staging`, run QA there, and only then publish. A build
-/// that fails at any point leaves the files already in `<out>` untouched; the
-/// failed attempt is kept under `<out>/.rejected` for diagnosis. Each published
-/// file replaces its predecessor atomically (rename), but publishing several
-/// files is not one transaction. `<sheet>.build.json` is the commit record: it
-/// is removed first and written last, so whenever it exists every file it
-/// lists carries the digest it records.
-pub(super) fn build_cmd(ctx: &Ctx, args: BuildArgs) -> CmdResult<()> {
-    let final_dir = PathBuf::from(&args.out);
-    if final_dir.exists() && !final_dir.is_dir() {
-        return Err(
-            PxlError::semantic(format!("{} is not a directory", final_dir.display()))
-                .with_hint("pxl build -o takes a directory")
-                .into(),
-        );
-    }
-    let staging = final_dir.join(STAGING_DIR);
-    if staging.exists() {
-        fs::remove_dir_all(&staging)
-            .map_err(|e| PxlError::io(format!("cannot clear {}: {e}", staging.display())))?;
-    }
-    fs::create_dir_all(&staging)
-        .map_err(|e| PxlError::io(format!("cannot create output dir: {e}")))?;
-    match build_into(ctx, &args, &staging) {
-        Ok(body) => {
-            // The manifest is the bundle's commit record: drop the old one
-            // before replacing files and publish the new one last, so a crash
-            // mid-publish leaves no manifest claiming a mixed set of files.
-            let manifest = body
-                .get("manifest")
-                .and_then(|v| v.as_str())
-                .map(str::to_string);
-            if let Some(name) = &manifest {
-                let current = final_dir.join(name);
-                if current.exists() {
-                    fs::remove_file(&current).map_err(|e| {
-                        PxlError::io(format!("cannot retire {}: {e}", current.display()))
-                    })?;
-                }
-            }
-            publish_tree(&staging, &final_dir, manifest.as_deref())?;
-            if let Some(name) = &manifest {
-                fs::rename(staging.join(name), final_dir.join(name))
-                    .map_err(|e| PxlError::io(format!("cannot publish manifest {name}: {e}")))?;
-            }
-            let _ = fs::remove_dir_all(&staging);
-            let _ = fs::remove_dir_all(final_dir.join(REJECTED_DIR));
-            util::emit_ok(ctx, &Value::Object(body));
-            Ok(())
-        }
-        Err(mut err) => {
-            let rejected = final_dir.join(REJECTED_DIR);
-            let _ = fs::remove_dir_all(&rejected);
-            let kept = fs::read_dir(&staging)
-                .map(|mut d| d.next().is_some())
-                .unwrap_or(false)
-                && fs::rename(&staging, &rejected).is_ok();
-            if !kept {
-                let _ = fs::remove_dir_all(&staging);
-            } else if let Some(Value::Object(extra)) = err.extra.as_mut() {
-                extra.insert("rejected".into(), json!(rejected.to_string_lossy()));
-            } else {
-                err.extra = Some(json!({"rejected": rejected.to_string_lossy()}));
-            }
-            Err(err)
-        }
-    }
-}
-
-/// Move every file under `src` into `dst`, replacing what is there. A top-level
-/// file named `hold` stays in `src` so the caller can publish it last.
-pub(super) fn publish_tree(src: &Path, dst: &Path, hold: Option<&str>) -> CmdResult<()> {
-    fs::create_dir_all(dst)
-        .map_err(|e| PxlError::io(format!("cannot create {}: {e}", dst.display())))?;
-    let entries = fs::read_dir(src)
-        .map_err(|e| PxlError::io(format!("cannot read {}: {e}", src.display())))?;
-    for entry in entries.flatten() {
-        let from = entry.path();
-        let to = dst.join(entry.file_name());
-        if from.is_dir() {
-            publish_tree(&from, &to, None)?;
-        } else if hold.is_some_and(|h| entry.file_name().to_str() == Some(h)) {
-            continue;
-        } else {
-            fs::rename(&from, &to)
-                .map_err(|e| PxlError::io(format!("cannot publish {}: {e}", to.display())))?;
-        }
-    }
-    Ok(())
-}
-
-pub(super) fn build_into(
+pub(crate) fn build_into(
     ctx: &Ctx,
     args: &BuildArgs,
     out_dir: &Path,
@@ -138,7 +45,7 @@ pub(super) fn build_into(
         .unwrap_or_else(|| Path::new("."))
         .to_path_buf();
     let out_dir = out_dir.to_path_buf();
-    let visual = super::visual::VisualContext::for_recipe(&recipe_path)?;
+    let visual = crate::cmd::visual::VisualContext::for_recipe(&recipe_path)?;
     // One threshold source for dry-run parity and the real build.
     let thresholds = visual.as_ref().map(|context| context.qa_thresholds());
     let palette = util::load_palette(&recipe.palette, &recipe_dir)?;
@@ -151,7 +58,7 @@ pub(super) fn build_into(
     // no single asset id; the per-asset check runs per sprite below.
     let mut loaded = Vec::new();
     let family_of = |asset_id: &str,
-                     visual: Option<&super::visual::VisualContext>|
+                     visual: Option<&crate::cmd::visual::VisualContext>|
      -> CmdResult<Option<String>> {
         let Some(context) = visual else {
             return Ok(None);
@@ -177,11 +84,11 @@ pub(super) fn build_into(
         // Built-in palette: write canonical JSON.
         let file_text = match pal_name.as_str() {
             "tank.palette.json" | "tank" => {
-                include_str!("../../../../assets/palettes/tank.palette.json")
+                include_str!("../../../../../assets/palettes/tank.palette.json")
                     .as_bytes()
                     .to_vec()
             }
-            _ => include_str!("../../../../assets/palettes/p16.palette.json")
+            _ => include_str!("../../../../../assets/palettes/p16.palette.json")
                 .as_bytes()
                 .to_vec(),
         };
@@ -304,7 +211,7 @@ pub(super) fn build_into(
         });
     }
     if visual.is_some() {
-        let palette_bytes = super::visual::palette_bytes(&final_palette)?;
+        let palette_bytes = crate::cmd::visual::palette_bytes(&final_palette)?;
         util::write_out(
             out_dir.join(&stored_pal_name).to_str().unwrap(),
             &palette_bytes,
@@ -457,7 +364,7 @@ pub(super) fn build_into(
         .with_extra(json!({"cmd": "build", "checks": checks, "hash": hash})));
     }
     if visual.is_some() {
-        outputs.extend(super::visual_artifacts::write_visual_artifacts(
+        outputs.extend(crate::cmd::visual_artifacts::write_visual_artifacts(
             &out_dir,
             &recipe_dir,
             &loaded,
@@ -477,7 +384,7 @@ pub(super) fn build_into(
     );
     let manifest_name = manifest_file_name(&recipe.sheet.file);
     // The closure is shared with dry-run and includes transitive source files.
-    let specs = super::dependencies::recipe_dependencies(&recipe_dir, &recipe_path)?
+    let specs = crate::cmd::dependencies::recipe_dependencies(&recipe_dir, &recipe_path)?
         .as_object()
         .cloned()
         .unwrap_or_default();
@@ -504,174 +411,4 @@ pub(super) fn build_into(
     )?;
     body.insert("manifest".into(), json!(manifest_name));
     Ok(body)
-}
-
-/// `units.sheet.png` -> `units.build.json`. One manifest per sheet, so several
-/// recipes may share an output directory without overwriting each other's.
-pub(super) fn manifest_file_name(sheet_file: &str) -> String {
-    let name = Path::new(sheet_file)
-        .file_name()
-        .and_then(|s| s.to_str())
-        .unwrap_or("sheet.png");
-    let stem = name
-        .strip_suffix(".png")
-        .unwrap_or(name)
-        .trim_end_matches(".sheet");
-    format!("{stem}.build.json")
-}
-
-/// Read the `resources` block the sheet json recorded and bind it to the
-/// manifest: each entry gains the sheet file name and the asset's pxl document
-/// reference (source_digest stays the digest of that document). Assets the
-/// sheet did not place are dropped, keeping the manifest and the sheet json
-/// in exact agreement.
-fn sheet_resources(sheet_json_path: &Path, ordered: &[Loaded]) -> Vec<Value> {
-    let Ok(text) = fs::read_to_string(sheet_json_path) else {
-        return Vec::new();
-    };
-    let Ok(sheet) = serde_json::from_str::<Value>(&text) else {
-        return Vec::new();
-    };
-    // The png name is the json name with the sheet extension swapped back:
-    // the resource points at the packed image, `sheet_json` at its metadata.
-    let sheet_file = sheet_json_path
-        .file_name()
-        .and_then(|s| s.to_str())
-        .map(|name| name.trim_end_matches(".json").to_string())
-        .unwrap_or_else(|| "sheet.png".into())
-        + ".png";
-    let sheet_json = sheet_json_path
-        .file_name()
-        .and_then(|s| s.to_str())
-        .unwrap_or("sheet.json")
-        .to_string();
-    // `sheet_json` nests the pxl block (and with it `resources`) under
-    // `meta.pxl`; `resources` lives there, never at the document root.
-    let Some(entries) = sheet
-        .pointer("/meta/pxl/resources")
-        .and_then(Value::as_array)
-        else {
-        return Vec::new();
-    };
-    let mut out = Vec::new();
-    for entry in entries {
-        let Some(asset_id) = entry.get("asset_id").and_then(Value::as_str) else {
-            continue;
-        };
-        let Some(asset) = ordered.iter().find(|loaded| loaded.id == asset_id) else {
-            continue;
-        };
-        let mut bound = entry.clone();
-        bound["sheet"] = json!(sheet_file);
-        bound["sheet_json"] = json!(sheet_json);
-        bound["document"] = json!(format!("{asset_id}.pxl.json"));
-        bound["source_digest"] = json!(util::hash_of(
-            pxl_format::to_pretty(&asset.doc)
-                .unwrap_or_default()
-                .as_bytes()
-        ));
-        out.push(bound);
-    }
-    out
-}
-
-/// The delivery record of one successful build: what went in (recipe, palette,
-/// seed, versions), what came out (every file with its digest) and which QA
-/// passed. Engineering QA and visual review are separate states; this tool
-/// never claims the latter.
-///
-/// schema_version 3 (P04) adds the `resources` block: one stable resource id
-/// per built asset with its palette family, source digest and sheet/frame
-/// reference, so consumers address assets by a stable id instead of paths.
-/// The sheet/frame names come from the sheet json that `pack_loaded` wrote.
-#[allow(clippy::too_many_arguments)]
-fn build_manifest(
-    out_dir: &Path,
-    outputs: &[String],
-    recipe_text: &str,
-    palette_bytes: &[u8],
-    specs: Map<String, Value>,
-    seed: u64,
-    gen_version: u32,
-    config: &pxl_qa::QaConfig,
-    report: &pxl_qa::Report,
-    resources: Vec<Value>,
-) -> CmdResult<String> {
-    let mut files = Map::new();
-    for name in outputs {
-        let bytes = fs::read(out_dir.join(name))
-            .map_err(|e| PxlError::io(format!("cannot digest {name}: {e}")))?;
-        files.insert(name.clone(), json!(util::hash_of(&bytes)));
-    }
-    let failed = report.checks.iter().filter(|c| c.failed()).count();
-    let closure =
-        serde_json::to_vec(&specs).map_err(|e| PxlError::io(format!("input closure: {e}")))?;
-    let value = json!({
-        "schema_version": 3,
-        "pxl_version": PXL_VERSION,
-        "gen_version": gen_version,
-        "seed": seed,
-        "algorithm_version": pxl_core::GEN_VERSION,
-        "inputs": {
-            "recipe": util::hash_of(recipe_text.as_bytes()),
-            "palette": util::hash_of(palette_bytes),
-            "specs": specs,
-            "closure_digest": util::hash_of(&closure),
-            "capability_digest": pxl_format::capability_digest(),
-        },
-        "outputs": files,
-        "resources": resources,
-        "qa": {
-            "rules": report.rules,
-            "config": config,
-            "ok": failed == 0,
-            "checks": report.checks.len(),
-            "failed": failed,
-        },
-        "visual_review": "not_run",
-    });
-    let mut text =
-        serde_json::to_string_pretty(&value).map_err(|e| PxlError::io(format!("manifest: {e}")))?;
-    text.push('\n');
-    Ok(text)
-}
-
-fn validate_built_doc(
-    doc: &pxl_format::PxlDoc,
-    palette: &pxl_core::Palette,
-    sprite: Option<&pxl_format::RecipeSprite>,
-    custom: Option<&pxl_qa::QaConfig>,
-    strict: bool,
-    thresholds: Option<&pxl_contract::policy::QaThresholds>,
-) -> CmdResult<pxl_qa::Report> {
-    let mut config = custom.cloned().unwrap_or_else(|| {
-        // The effective policy wins over tier defaults whenever the visual
-        // contract carries one: generation and QA share the same budgets.
-        if let Some(thresholds) = thresholds {
-            let mut config = pxl_qa::QaConfig::for_policy(thresholds);
-            if doc.w >= 32 && doc.h >= 32 {
-                if let Ok(profile) = pxl_core::SizeProfile::for_size(doc.w, doc.h) {
-                    let tier = pxl_qa::QaConfig::for_profile(&profile);
-                    config.max_components = tier.max_components;
-                    config.max_isolated_pixels = tier.max_isolated_pixels;
-                    config.max_color_specks = tier.max_color_specks;
-                    config.min_content_coverage_bps = tier.min_content_coverage_bps;
-                    config.copy2x_warn_bps = tier.copy2x_warn_bps;
-                }
-            }
-            config
-        } else if doc.w >= 32 && doc.h >= 32 {
-            pxl_core::SizeProfile::for_size(doc.w, doc.h)
-                .map(|profile| pxl_qa::QaConfig::for_profile(&profile))
-                .unwrap_or_default()
-        } else {
-            pxl_qa::QaConfig::default()
-        }
-    });
-    config.strict |= strict;
-    let mut input = super::qa_input::doc_input(doc, palette)?;
-    if let Some(sprite) = sprite {
-        super::qa_input::apply_recipe_contract(&mut input, sprite)?;
-    }
-    Ok(pxl_qa::validate_with_config(&input, &config)?)
 }
