@@ -11,203 +11,8 @@ use serde_json::Value;
 use crate::error::{AudioError, AudioResult};
 use crate::limits::{MAX_BGM_BARS, MAX_BGM_FRAMES, MAX_POLYPHONY, MAX_VOICES, SAMPLE_RATE};
 
-pub const BEEPBOX_FORMAT: &str = "BeepBox";
-pub const BEEPBOX_VERSION: u64 = 9;
-/// partsPerBeat in beepbox 4.2.0 Config; notes are written in `ticksPerBeat`.
-const ALLOWED_TICKS_PER_BEAT: &[u64] = &[3, 4, 6, 8];
-const PITCH_MAX: i64 = 84;
-const DRUM_MAX: i64 = 11;
 
-const INSTRUMENT_TYPES: &[&str] = &[
-    "chip",
-    "noise",
-    "PWM",
-    "harmonics",
-    "Picked String",
-    "spectrum",
-    "drumset",
-    "supersaw",
-];
-/// FM is excluded: it rendered silent in the A0 probe with default operators.
-const SONG_KEYS: &[&str] = &[
-    "format",
-    "version",
-    "scale",
-    "key",
-    "introBars",
-    "loopBars",
-    "beatsPerBar",
-    "ticksPerBeat",
-    "beatsPerMinute",
-    "layeredInstruments",
-    "patternInstruments",
-    "channels",
-];
-const CHANNEL_KEYS: &[&str] = &[
-    "type",
-    "instruments",
-    "patterns",
-    "sequence",
-    "octaveScrollBar",
-];
-const INSTRUMENT_KEYS: &[&str] = &[
-    "type",
-    "volume",
-    "eqFilter",
-    "effects",
-    "transition",
-    "chord",
-    "fadeInSeconds",
-    "fadeOutTicks",
-    "wave",
-    "unison",
-    "pulseWidth",
-    "envelopes",
-    "harmonics",
-    "spectrum",
-    "drums",
-    "preset",
-    "dynamism",
-    "spread",
-    "shape",
-    "stringSustain",
-    "stringSustainType",
-];
-const ALLOWED_EFFECTS: &[&str] = &["transition type", "chord type"];
-const CHIP_WAVES: &[&str] = &[
-    "rounded",
-    "triangle",
-    "square",
-    "1/4 pulse",
-    "1/8 pulse",
-    "sawtooth",
-    "double saw",
-    "double pulse",
-    "spiky",
-];
-const NOISE_WAVES: &[&str] = &["retro", "white", "clang", "buzz", "hollow"];
-const UNISONS: &[&str] = &[
-    "none",
-    "shimmer",
-    "hum",
-    "honky tonk",
-    "dissonant",
-    "fifth",
-    "octave",
-    "bowed",
-    "piano",
-];
-const CHORDS: &[&str] = &["simultaneous", "strum", "arpeggio"];
-const TRANSITIONS: &[&str] = &[
-    "normal",
-    "interrupt",
-    "continue",
-    "slide",
-    "slide in pattern",
-];
-const ENVELOPES: &[&str] = &[
-    "none",
-    "note size",
-    "punch",
-    "flare 1",
-    "flare 2",
-    "flare 3",
-    "twang 1",
-    "twang 2",
-    "twang 3",
-    "swell 1",
-    "swell 2",
-    "swell 3",
-    "decay 1",
-    "decay 2",
-    "decay 3",
-];
-const SCALES: &[&str] = &[
-    "easy :)",
-    "easy :(",
-    "island :)",
-    "island :(",
-    "blues :)",
-    "blues :(",
-    "normal :)",
-    "normal :(",
-    "double harmonic :)",
-    "double harmonic :(",
-    "strange",
-    "expert",
-];
-const KEYS: &[&str] = &[
-    "C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B",
-];
-const FADE_OUT_TICKS: &[i64] = &[-24, -12, -6, -3, -1, 6, 12, 24, 48, 72, 96];
-
-/// What the Rust side needs to know about a validated song.
-#[derive(Debug, Clone, PartialEq)]
-pub struct SongFacts {
-    pub bpm: u64,
-    pub beats_per_bar: u64,
-    pub bars: u64,
-    pub ticks_per_beat: u64,
-    pub voices: usize,
-    pub max_polyphony: usize,
-    pub loop_frames: u64,
-}
-
-fn obj<'a>(value: &'a Value, what: &str) -> AudioResult<&'a serde_json::Map<String, Value>> {
-    value
-        .as_object()
-        .ok_or_else(|| AudioError::semantic(format!("{what} must be an object")))
-}
-
-fn arr<'a>(value: &'a Value, what: &str) -> AudioResult<&'a Vec<Value>> {
-    value
-        .as_array()
-        .ok_or_else(|| AudioError::semantic(format!("{what} must be an array")))
-}
-
-fn uint(value: &Value, what: &str) -> AudioResult<u64> {
-    value
-        .as_u64()
-        .ok_or_else(|| AudioError::semantic(format!("{what} must be a non-negative integer")))
-}
-
-fn int(value: &Value, what: &str) -> AudioResult<i64> {
-    value
-        .as_i64()
-        .ok_or_else(|| AudioError::semantic(format!("{what} must be an integer")))
-}
-
-fn text<'a>(value: &'a Value, what: &str) -> AudioResult<&'a str> {
-    value
-        .as_str()
-        .ok_or_else(|| AudioError::semantic(format!("{what} must be a string")))
-}
-
-fn one_of(value: &Value, what: &str, allowed: &[&str]) -> AudioResult<()> {
-    let s = text(value, what)?;
-    if allowed.contains(&s) {
-        Ok(())
-    } else {
-        Err(AudioError::semantic(format!(
-            "{what} '{s}' is not in the supported set"
-        )))
-    }
-}
-
-fn only_keys(
-    map: &serde_json::Map<String, Value>,
-    allowed: &[&str],
-    what: &str,
-) -> AudioResult<()> {
-    for key in map.keys() {
-        if !allowed.contains(&key.as_str()) {
-            return Err(AudioError::semantic(format!(
-                "{what} has unsupported field '{key}'"
-            )));
-        }
-    }
-    Ok(())
-}
+use super::consts::*;
 
 pub fn validate_song(
     song: &Value,
@@ -315,7 +120,8 @@ pub fn validate_song(
     })
 }
 
-fn validate_channel(channel: &Value, what: &str, bars: u64, bar_ticks: u64) -> AudioResult<usize> {
+
+pub(crate) fn validate_channel(channel: &Value, what: &str, bars: u64, bar_ticks: u64) -> AudioResult<usize> {
     let map = obj(channel, what)?;
     only_keys(map, CHANNEL_KEYS, what)?;
     let kind = text(
@@ -386,7 +192,7 @@ fn validate_channel(channel: &Value, what: &str, bars: u64, bar_ticks: u64) -> A
     Ok(max_poly)
 }
 
-fn validate_pattern(notes: &[Value], what: &str, drum: bool, bar_ticks: u64) -> AudioResult<usize> {
+pub(crate) fn validate_pattern(notes: &[Value], what: &str, drum: bool, bar_ticks: u64) -> AudioResult<usize> {
     let pitch_max = if drum { DRUM_MAX } else { PITCH_MAX };
     let mut spans: Vec<(u64, u64)> = Vec::new();
     for (ni, note) in notes.iter().enumerate() {
@@ -477,11 +283,11 @@ fn validate_pattern(notes: &[Value], what: &str, drum: bool, bar_ticks: u64) -> 
     Ok(poly)
 }
 
-fn int_first(points: &[Value]) -> AudioResult<u64> {
+pub(crate) fn int_first(points: &[Value]) -> AudioResult<u64> {
     uint(&points[0]["tick"], "first point tick")
 }
 
-fn validate_instrument(inst: &Value, what: &str, drum: bool) -> AudioResult<()> {
+pub(crate) fn validate_instrument(inst: &Value, what: &str, drum: bool) -> AudioResult<()> {
     let map = obj(inst, what)?;
     only_keys(map, INSTRUMENT_KEYS, what)?;
     let kind = text(
@@ -574,95 +380,3 @@ fn validate_instrument(inst: &Value, what: &str, drum: bool) -> AudioResult<()> 
     Ok(())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use serde_json::json;
-
-    fn instrument() -> Value {
-        json!({"type":"chip","volume":100,"eqFilter":[],"effects":["chord type"],"chord":"simultaneous",
-               "fadeInSeconds":0,"fadeOutTicks":-3,"wave":"square","unison":"none","envelopes":[]})
-    }
-
-    fn song(bpm: u64, bars: u64) -> Value {
-        json!({
-            "format":"BeepBox","version":9,"scale":"normal :(","key":"C","introBars":0,"loopBars":bars,
-            "beatsPerBar":8,"ticksPerBeat":4,"beatsPerMinute":bpm,
-            "layeredInstruments":false,"patternInstruments":false,
-            "channels":[{"type":"pitch","instruments":[instrument()],
-                "patterns":[{"notes":[{"pitches":[12],"points":[{"tick":0,"pitchBend":0,"volume":100},{"tick":8,"pitchBend":0,"volume":100}]}]}],
-                "sequence": vec![1; bars as usize], "octaveScrollBar":3}]
-        })
-    }
-
-    #[test]
-    fn accepts_a_valid_song_and_reports_loop_frames() {
-        let facts = validate_song(&song(125, 2), 0, 2).unwrap();
-        assert_eq!(facts.loop_frames, 338_688);
-        assert_eq!(facts.voices, 1);
-    }
-
-    #[test]
-    fn rejects_fractional_loop_lengths() {
-        let err = validate_song(&song(110, 2), 0, 2).unwrap_err();
-        assert!(err.message.contains("fractional"), "{}", err.message);
-    }
-
-    #[test]
-    fn rejects_note_crossing_the_bar() {
-        let mut s = song(125, 2);
-        s["channels"][0]["patterns"][0]["notes"][0]["points"][1]["tick"] = json!(40);
-        assert!(validate_song(&s, 0, 2)
-            .unwrap_err()
-            .message
-            .contains("past the bar"));
-    }
-
-    #[test]
-    fn rejects_overlapping_notes() {
-        let mut s = song(125, 2);
-        let second = json!({"pitches":[14],"points":[{"tick":4,"pitchBend":0,"volume":100},{"tick":12,"pitchBend":0,"volume":100}]});
-        s["channels"][0]["patterns"][0]["notes"]
-            .as_array_mut()
-            .unwrap()
-            .push(second);
-        assert!(validate_song(&s, 0, 2)
-            .unwrap_err()
-            .message
-            .contains("overlapping"));
-    }
-
-    #[test]
-    fn rejects_unknown_fields_and_fm() {
-        let mut s = song(125, 2);
-        s["extra"] = json!(1);
-        assert!(validate_song(&s, 0, 2)
-            .unwrap_err()
-            .message
-            .contains("unsupported field"));
-        let mut s = song(125, 2);
-        s["channels"][0]["instruments"][0]["type"] = json!("FM");
-        assert!(validate_song(&s, 0, 2)
-            .unwrap_err()
-            .message
-            .contains("not supported"));
-    }
-
-    #[test]
-    fn rejects_loop_mismatch_and_pitch_out_of_range() {
-        assert!(validate_song(&song(125, 2), 0, 1).is_err());
-        let mut s = song(125, 2);
-        s["channels"][0]["patterns"][0]["notes"][0]["pitches"] = json!([99]);
-        assert!(validate_song(&s, 0, 2)
-            .unwrap_err()
-            .message
-            .contains("outside"));
-    }
-
-    #[test]
-    fn rejects_empty_channels() {
-        let mut s = song(125, 2);
-        s["channels"] = json!([]);
-        assert!(validate_song(&s, 0, 2).is_err());
-    }
-}

@@ -21,8 +21,6 @@ pub mod visual;
 pub use knowledge::digest_bytes;
 
 
-#[cfg(test)]
-mod visual_tests;
 
 /// Frozen exit codes (plan §5.4). `step-300-asset-build` restricts itself to
 /// 0-6 so old callers keep working.

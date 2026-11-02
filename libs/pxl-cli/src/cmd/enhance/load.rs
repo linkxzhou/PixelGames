@@ -21,7 +21,7 @@ use crate::util::{self, DirResolver};
 
 use super::Source;
 
-pub(super) fn parse_upscale(text: &str) -> CmdResult<Upscale> {
+pub(crate) fn parse_upscale(text: &str) -> CmdResult<Upscale> {
     Upscale::parse(text).ok_or_else(|| {
         PxlError::usage(format!("unknown upscale '{text}'"))
             .with_hint("upscale is copy, epx, xbr, scale3x, contour, or hybrid")
@@ -89,7 +89,7 @@ pub(super) fn build_options(common: &EnhanceCommon, upscale: Upscale) -> CmdResu
     })
 }
 
-pub(super) fn parse_cleanup(text: &str) -> CmdResult<CleanOptions> {
+pub(crate) fn parse_cleanup(text: &str) -> CmdResult<CleanOptions> {
     match text {
         "all" => Ok(CleanOptions::ALL),
         "none" => Ok(CleanOptions::NONE),
@@ -260,7 +260,7 @@ pub(super) fn load_png(input: &str, common: &EnhanceCommon) -> CmdResult<Source>
 
 /// Largest `b` for which `w` and `h` divide by `b` and every `b x b` block is
 /// one RGBA value (alpha 0 blocks compare equal whatever their RGB).
-pub(super) fn detect_block(w: u32, h: u32, rgba: &[u8]) -> u32 {
+pub(crate) fn detect_block(w: u32, h: u32, rgba: &[u8]) -> u32 {
     let same = |a: &[u8], b: &[u8]| -> bool {
         if a[3] == 0 && b[3] == 0 {
             true
