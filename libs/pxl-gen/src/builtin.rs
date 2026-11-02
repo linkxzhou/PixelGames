@@ -9,58 +9,58 @@ pub struct Builtin {
 const TEMPLATES: &[Builtin] = &[
     Builtin {
         id: "slime_8x8",
-        json: include_str!("../../../../assets/templates/slime_8x8.template.json"),
+        json: include_str!("../../../assets/templates/slime_8x8.template.json"),
     },
     Builtin {
         id: "ship_8x12",
-        json: include_str!("../../../../assets/templates/ship_8x12.template.json"),
+        json: include_str!("../../../assets/templates/ship_8x12.template.json"),
     },
     Builtin {
         id: "robot_6x10",
-        json: include_str!("../../../../assets/templates/robot_6x10.template.json"),
+        json: include_str!("../../../assets/templates/robot_6x10.template.json"),
     },
     Builtin {
         id: "bug_8x8",
-        json: include_str!("../../../../assets/templates/bug_8x8.template.json"),
+        json: include_str!("../../../assets/templates/bug_8x8.template.json"),
     },
     Builtin {
         id: "gem_6x6",
-        json: include_str!("../../../../assets/templates/gem_6x6.template.json"),
+        json: include_str!("../../../assets/templates/gem_6x6.template.json"),
     },
     Builtin {
         id: "mushroom_8x8",
-        json: include_str!("../../../../assets/templates/mushroom_8x8.template.json"),
+        json: include_str!("../../../assets/templates/mushroom_8x8.template.json"),
     },
     Builtin {
         id: "tree_8x12",
-        json: include_str!("../../../../assets/templates/tree_8x12.template.json"),
+        json: include_str!("../../../assets/templates/tree_8x12.template.json"),
     },
     Builtin {
         id: "rock_6x6",
-        json: include_str!("../../../../assets/templates/rock_6x6.template.json"),
+        json: include_str!("../../../assets/templates/rock_6x6.template.json"),
     },
     Builtin {
         id: "dragon_side_8x10",
-        json: include_str!("../../../../assets/templates/dragon_side_8x10.template.json"),
+        json: include_str!("../../../assets/templates/dragon_side_8x10.template.json"),
     },
     Builtin {
         id: "dragon_top_8x8",
-        json: include_str!("../../../../assets/templates/dragon_top_8x8.template.json"),
+        json: include_str!("../../../assets/templates/dragon_top_8x8.template.json"),
     },
     Builtin {
         id: "panel_4x8",
-        json: include_str!("../../../../assets/templates/panel_4x8.template.json"),
+        json: include_str!("../../../assets/templates/panel_4x8.template.json"),
     },
 ];
 
 const PALETTES: &[Builtin] = &[
     Builtin {
         id: "p16",
-        json: include_str!("../../../../assets/palettes/p16.palette.json"),
+        json: include_str!("../../../assets/palettes/p16.palette.json"),
     },
     Builtin {
         id: "tank",
-        json: include_str!("../../../../assets/palettes/tank.palette.json"),
+        json: include_str!("../../../assets/palettes/tank.palette.json"),
     },
 ];
 

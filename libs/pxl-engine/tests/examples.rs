@@ -6,9 +6,9 @@ use pxl_engine::{
     OutputPurpose, RenderRequest,
 };
 
-const GEM: &str = include_str!("../../../../examples/ascii/gem/gem.ascii.txt");
-const SLIME_TXT: &str = include_str!("../../../../examples/ascii/slime/slime.ascii.txt");
-const TANK_SHAPES: &str = include_str!("../../../../examples/tank/tank_body.shapes.json");
+const GEM: &str = include_str!("../../../examples/ascii/gem/gem.ascii.txt");
+const SLIME_TXT: &str = include_str!("../../../examples/ascii/slime/slime.ascii.txt");
+const TANK_SHAPES: &str = include_str!("../../../examples/tank/tank_body.shapes.json");
 
 fn none() -> MemoryResolver {
     MemoryResolver::new()
@@ -102,9 +102,9 @@ fn example_2_ascii_json_with_anims_is_a_looping_gif() {
     let mut res = none();
     res.insert(
         "../shared/p16.legend.json",
-        include_str!("../../../../examples/ascii/shared/p16.legend.json"),
+        include_str!("../../../examples/ascii/shared/p16.legend.json"),
     );
-    let spec = include_str!("../../../../examples/ascii/slime/slime.ascii.json");
+    let spec = include_str!("../../../examples/ascii/slime/slime.ascii.json");
     let out = render(
         &RenderRequest {
             input: spec,
@@ -205,9 +205,9 @@ fn forcing_png_on_an_animated_spec_draws_a_still() {
     let mut res = none();
     res.insert(
         "p16.legend.json",
-        include_str!("../../../../examples/ascii/shared/p16.legend.json"),
+        include_str!("../../../examples/ascii/shared/p16.legend.json"),
     );
-    let spec = include_str!("../../../../examples/ascii/slime/slime.ascii.json");
+    let spec = include_str!("../../../examples/ascii/slime/slime.ascii.json");
     let out = render(
         &RenderRequest {
             input: spec,
@@ -226,9 +226,9 @@ fn unknown_anim_is_reported() {
     let mut res = none();
     res.insert(
         "p16.legend.json",
-        include_str!("../../../../examples/ascii/shared/p16.legend.json"),
+        include_str!("../../../examples/ascii/shared/p16.legend.json"),
     );
-    let spec = include_str!("../../../../examples/ascii/slime/slime.ascii.json");
+    let spec = include_str!("../../../examples/ascii/slime/slime.ascii.json");
     let err = render(
         &RenderRequest {
             input: spec,
@@ -246,9 +246,9 @@ fn inspect_lists_animations_without_encoding() {
     let mut res = none();
     res.insert(
         "p16.legend.json",
-        include_str!("../../../../examples/ascii/shared/p16.legend.json"),
+        include_str!("../../../examples/ascii/shared/p16.legend.json"),
     );
-    let spec = include_str!("../../../../examples/ascii/slime/slime.ascii.json");
+    let spec = include_str!("../../../examples/ascii/slime/slime.ascii.json");
     let info = inspect(
         &RenderRequest {
             input: spec,
@@ -264,7 +264,7 @@ fn inspect_lists_animations_without_encoding() {
 
 #[test]
 fn a_missing_shared_legend_says_so() {
-    let spec = include_str!("../../../../examples/ascii/slime/slime.ascii.json");
+    let spec = include_str!("../../../examples/ascii/slime/slime.ascii.json");
     let err = render(
         &RenderRequest {
             input: spec,

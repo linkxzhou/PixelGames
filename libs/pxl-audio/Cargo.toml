@@ -1,0 +1,12 @@
+[package]
+name = "pxl-audio"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Audio spec validation, WAV encoding, QA and manifest for step-300 audio"
+
+[dependencies]
+pxl-core = { workspace = true }
+serde = { workspace = true, features = ["std"] }
+serde_json = { workspace = true }

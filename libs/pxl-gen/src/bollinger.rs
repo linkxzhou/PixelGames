@@ -341,7 +341,7 @@ mod tests {
     #[test]
     fn same_seed_same_pixels() {
         let file = parse_template(include_str!(
-            "../../../../assets/templates/slime_8x8.template.json"
+            "../../../assets/templates/slime_8x8.template.json"
         ))
         .unwrap();
         let mask = RuntimeMask::from_file(&file, None).unwrap();
@@ -357,7 +357,7 @@ mod tests {
     #[test]
     fn mirror_doubles_width() {
         let file = parse_template(include_str!(
-            "../../../../assets/templates/gem_6x6.template.json"
+            "../../../assets/templates/gem_6x6.template.json"
         ))
         .unwrap();
         let mask = RuntimeMask::from_file(&file, None).unwrap();
@@ -369,7 +369,7 @@ mod tests {
     #[test]
     fn horizontal_gradient_differs_from_vertical() {
         let file = parse_template(include_str!(
-            "../../../../assets/templates/ship_8x12.template.json"
+            "../../../assets/templates/ship_8x12.template.json"
         ))
         .unwrap();
         let mut vertical = RuntimeMask::from_file(&file, None).unwrap();

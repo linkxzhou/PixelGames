@@ -395,8 +395,8 @@ mod tests {
 
     #[test]
     fn files_table_feeds_legend_ref() {
-        let spec = include_str!("../../../../examples/ascii/slime/slime.ascii.json");
-        let legend = include_str!("../../../../examples/ascii/shared/p16.legend.json");
+        let spec = include_str!("../../../examples/ascii/slime/slime.ascii.json");
+        let legend = include_str!("../../../examples/ascii/shared/p16.legend.json");
         let opts = serde_json::json!({
             "scale": 4,
             "files": { "p16.legend.json": legend }

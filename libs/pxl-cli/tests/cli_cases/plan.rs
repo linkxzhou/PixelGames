@@ -35,7 +35,7 @@ fn bullet_dir() -> PathBuf {
 
 fn install_visual_contract(root: &PathBuf, asset_dir: &str) {
     let fixture = repo_root().join(
-        "steps/step-300-asset-build/pxl-cli/tests/fixtures/visual-contract",
+        "libs/pxl-cli/tests/fixtures/visual-contract",
     );
     for name in ["visual-intent.snapshot.json", "visual-plan.json"] {
         fs::copy(fixture.join(name), root.join(name)).unwrap();
@@ -520,7 +520,7 @@ fn plan_builds_the_audio_entry_and_dry_run_stays_output_free() {
     }
     install_visual_contract(&plan_in, "static_bullet");
     let audio_source = repo_root().join(
-        "steps/step-300-asset-build/pxl-cli/tests/fixtures/audio",
+        "libs/pxl-cli/tests/fixtures/audio",
     );
     fs::create_dir_all(plan_in.join("audio/songs")).unwrap();
     fs::copy(

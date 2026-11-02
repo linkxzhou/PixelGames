@@ -177,11 +177,11 @@ pub(super) fn build_into(
         // Built-in palette: write canonical JSON.
         let file_text = match pal_name.as_str() {
             "tank.palette.json" | "tank" => {
-                include_str!("../../../../../assets/palettes/tank.palette.json")
+                include_str!("../../../../assets/palettes/tank.palette.json")
                     .as_bytes()
                     .to_vec()
             }
-            _ => include_str!("../../../../../assets/palettes/p16.palette.json")
+            _ => include_str!("../../../../assets/palettes/p16.palette.json")
                 .as_bytes()
                 .to_vec(),
         };
@@ -344,7 +344,7 @@ pub(super) fn build_into(
         });
     }
     let sheet_path = out_dir.join(&recipe.sheet.file);
-    let (png, json_text, hash, _w, _h, _n) = pack_loaded(
+    let (png, json_text, hash, _w, _h, _n, budget) = pack_loaded(
         &ordered,
         &recipe.sheet.layout,
         recipe.sheet.pad,
@@ -470,6 +470,11 @@ pub(super) fn build_into(
     body.insert("outputs".into(), json!(outputs));
     body.insert("hash".into(), json!(hash));
     body.insert("checks".into(), checks);
+    // P08: the whole-atlas RGBA8 budget for this recipe's single sheet.
+    body.insert(
+        "budget".into(),
+        serde_json::to_value(budget).unwrap_or(Value::Null),
+    );
     let manifest_name = manifest_file_name(&recipe.sheet.file);
     // The closure is shared with dry-run and includes transitive source files.
     let specs = super::dependencies::recipe_dependencies(&recipe_dir, &recipe_path)?

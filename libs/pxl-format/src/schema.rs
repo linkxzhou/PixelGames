@@ -53,40 +53,40 @@ pub fn schema_json(kind: &str) -> PxlResult<Value> {
         "sprite" => serde_json::to_value(schema_for!(SpriteSpec)),
         "svg-subset" => Ok(svg_subset_schema()),
         "visual-intent" => serde_json::from_str(include_str!(
-            "../../../../steps/contracts/visual-intent.schema.json"
+            "../../../steps/contracts/visual-intent.schema.json"
         )),
         "visual-intent-v2" => serde_json::from_str(include_str!(
-            "../../../../steps/contracts/visual-intent.v2.schema.json"
+            "../../../steps/contracts/visual-intent.v2.schema.json"
         )),
         "visual-plan" => serde_json::from_str(include_str!(
-            "../../../../steps/contracts/visual-plan.schema.json"
+            "../../../steps/contracts/visual-plan.schema.json"
         )),
         "visual-plan-v2" => serde_json::from_str(include_str!(
-            "../../../../steps/contracts/visual-plan.v2.schema.json"
+            "../../../steps/contracts/visual-plan.v2.schema.json"
         )),
         "prototype" => serde_json::from_str(include_str!(
-            "../../../../steps/contracts/prototype.schema.json"
+            "../../../steps/contracts/prototype.schema.json"
         )),
         "surface-recipe" => serde_json::from_str(include_str!(
-            "../../../../steps/contracts/surface-recipe.schema.json"
+            "../../../steps/contracts/surface-recipe.schema.json"
         )),
         "asset-instance" => serde_json::from_str(include_str!(
-            "../../../../steps/contracts/asset-instance.schema.json"
+            "../../../steps/contracts/asset-instance.schema.json"
         )),
         "catalog-lock" => serde_json::from_str(include_str!(
-            "../../../../steps/contracts/catalog-lock.schema.json"
+            "../../../steps/contracts/catalog-lock.schema.json"
         )),
         "scene-kit" => serde_json::from_str(include_str!(
-            "../../../../steps/contracts/scene-kit.schema.json"
+            "../../../steps/contracts/scene-kit.schema.json"
         )),
         "tileset" => serde_json::from_str(include_str!(
-            "../../../../steps/contracts/tileset.schema.json"
+            "../../../steps/contracts/tileset.schema.json"
         )),
         "module" => serde_json::from_str(include_str!(
-            "../../../../steps/contracts/module.schema.json"
+            "../../../steps/contracts/module.schema.json"
         )),
         "compiled-scene" => serde_json::from_str(include_str!(
-            "../../../../steps/contracts/compiled-scene.schema.json"
+            "../../../steps/contracts/compiled-scene.schema.json"
         )),
         "sheet" => Ok(sheet_schema()),
         other => {

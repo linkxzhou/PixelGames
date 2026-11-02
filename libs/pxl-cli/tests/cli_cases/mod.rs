@@ -1,5 +1,6 @@
 mod ascii;
 mod audio;
+mod budget;
 mod contract;
 mod enhance;
 mod modern_policy;

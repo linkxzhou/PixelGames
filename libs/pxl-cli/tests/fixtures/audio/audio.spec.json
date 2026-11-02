@@ -1,0 +1,16 @@
+{
+  "contract": "audio-spec/v1",
+  "asset": "fixture_audio",
+  "seed": 5,
+  "sfx": [
+    { "id": "beep", "engine": "zzfx", "params": { "waveform": "sine", "frequency_hz": 440, "sustain_sec": 0.05, "release_sec": 0.05 }, "gain": 0.4 },
+    { "id": "blip", "engine": "zzfx", "params": { "waveform": "square", "frequency_hz": 660, "sustain_sec": 0.04, "release_sec": 0.04 }, "gain": 0.3 },
+    { "id": "hit", "engine": "zzfx", "params": { "waveform": "noise", "frequency_hz": 120, "sustain_sec": 0.03, "release_sec": 0.05 }, "gain": 0.3 }
+  ],
+  "bgm": [{
+    "id": "theme",
+    "engine": "beepbox",
+    "song_file": "songs/theme.beepbox.json",
+    "loop": { "start_bar": 0, "end_bar_exclusive": 2 }
+  }]
+}

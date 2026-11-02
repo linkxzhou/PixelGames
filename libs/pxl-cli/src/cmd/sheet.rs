@@ -2,7 +2,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use pxl_core::{IndexFrame, Palette, PxlError, GEN_VERSION, PXL_VERSION};
-use pxl_export::{encode_indexed_png, pack_sheet, sheet_json, SheetCell};
+use pxl_export::{
+    encode_indexed_png, pack_sheet, sheet_budget_json, sheet_json, SheetBudget, SheetCell,
+};
 use pxl_format::PxlDoc;
 use serde_json::{json, Map, Value};
 
@@ -28,7 +30,7 @@ pub(super) fn sheet_cmd(ctx: &Ctx, args: SheetArgs) -> CmdResult<()> {
             .unwrap_or_else(|| util::stem_id(&path));
         loaded.push(Loaded { id, doc, palette, family: None });
     }
-    let (png, json_text, hash, w, h, count) =
+    let (png, json_text, hash, w, h, count, budget) =
         pack_loaded(&loaded, &args.layout, args.pad, &args.out)?;
     let json_path = Path::new(&args.out).with_extension("json");
     // The png and its json are one artefact: both obey --overwrite, and the
@@ -55,6 +57,9 @@ pub(super) fn sheet_cmd(ctx: &Ctx, args: SheetArgs) -> CmdResult<()> {
     body.insert("png_h".into(), json!(h));
     body.insert("frames_count".into(), json!(count));
     body.insert("hash".into(), json!(hash));
+    // P08: the RGBA8 texture estimate rides along so a packaging run can
+    // read the budget straight off the CLI result without decoding the png.
+    body.insert("budget".into(), serde_json::to_value(budget).unwrap_or(Value::Null));
     util::emit_ok(ctx, &Value::Object(body));
     Ok(())
 }
@@ -83,7 +88,7 @@ pub(super) fn pack_loaded(
     layout: &str,
     pad: u32,
     png_out: &str,
-) -> CmdResult<(Vec<u8>, String, String, u32, u32, usize)> {
+) -> CmdResult<(Vec<u8>, String, String, u32, u32, usize, SheetBudget)> {
     let palette = &loaded[0].palette;
     for doc in loaded.iter().skip(1) {
         if doc.palette.colors.len() != palette.colors.len()
@@ -352,10 +357,14 @@ pub(super) fn pack_loaded(
         "tiles": tiles,
         "assets": assets,
         "resources": resources_json,
+        // P08: the whole-atlas budget rides inside the sheet json so every
+        // consumer (validate, step-400, the web loader) reads one number.
+        "budget": sheet_budget_json(&packed),
     });
     let text = sheet_json(&packed, image_name, pxl)?;
     let png = encode_indexed_png(&packed.image, palette, 1)?;
     let hash = util::hash_of(&png);
+    let budget = SheetBudget::of(&packed);
     Ok((
         png,
         text,
@@ -363,6 +372,7 @@ pub(super) fn pack_loaded(
         packed.image.w as u32,
         packed.image.h as u32,
         packed.placements.len(),
+        budget,
     ))
 }
 

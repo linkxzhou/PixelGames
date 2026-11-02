@@ -1,0 +1,20 @@
+{
+  "contract": "visual-plan/v1",
+  "intent_digest": "sha256:be98623337b4cb643554254fba7c3db01d0430fe7b758de3787b37c14efcff2c",
+  "assets": [{
+    "asset_id": "bullet", "role": "actor", "native_size": [32, 32],
+    "finish": "keep", "lighting": "baked",
+    "regions": [
+      { "region_id": "body", "material_id": "metal", "ramp": "main", "light_role": "base", "protect": false, "source": { "kind": "shape", "selector": "static_bullet.shapes.json#body" }, "mask": null },
+      { "region_id": "eye", "material_id": "metal", "ramp": "main", "light_role": "base", "protect": true, "source": { "kind": "shape", "selector": "static_bullet.shapes.json#eye" }, "mask": null }
+    ],
+    "animations": [{
+      "anim_id": "fly", "anchor": [16, 31], "contact": [16, 31],
+      "allow_squash": false, "allow_smear": false, "terminal_empty": false,
+      "phases": [{ "phase_id": "contact", "frames": ["bullet_fly_N_0"], "duration_ms": [1000], "transform": null }]
+    }],
+    "tile": null,
+    "channels": { "material_labels": true, "emissive": false, "shadow": false }
+  }],
+  "previews": [{ "scene_id": "main", "assets": ["bullet"] }]
+}

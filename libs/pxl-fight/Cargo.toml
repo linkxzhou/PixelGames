@@ -1,0 +1,10 @@
+[package]
+name = "pxl-fight"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Deterministic 2D versus-fighter rules shared by the arcade fighting games"
+
+[dependencies]
+pxl-arcade-kit = { workspace = true }

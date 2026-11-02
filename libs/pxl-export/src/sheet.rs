@@ -27,6 +27,41 @@ pub struct PackedSheet {
     pub placements: Vec<Placement>,
 }
 
+/// The whole-atlas memory budget of one packed sheet (P08). `rgba8_bytes`
+/// is the level-1 texture estimate — width × height × 4 bytes at 1x — never
+/// the PNG size on disk. A sheet is always one page today: multi-page
+/// packing is deferred until a real sample proves it necessary, and any
+/// sheet that cannot fit under `page_limit` fails closed in `pack_sheet`.
+#[derive(Clone, Debug, Serialize)]
+pub struct SheetBudget {
+    pub width: u32,
+    pub height: u32,
+    pub pages: u32,
+    pub page_limit: u32,
+    pub frames: u32,
+    /// width × height × pages × 4, the RGBA8 texture estimate in bytes.
+    pub rgba8_bytes: u64,
+    /// Same estimate in mebibytes, rounded to two decimals.
+    pub rgba8_mib: f64,
+}
+
+impl SheetBudget {
+    pub fn of(packed: &PackedSheet) -> Self {
+        let pixels = u64::from(packed.image.w) * u64::from(packed.image.h);
+        let rgba8_bytes = pixels * 4;
+        Self {
+            width: packed.image.w as u32,
+            height: packed.image.h as u32,
+            pages: 1,
+            page_limit: 1,
+            frames: packed.placements.len() as u32,
+            rgba8_bytes,
+            rgba8_mib: (rgba8_bytes as f64) / (1024.0 * 1024.0),
+        }
+    }
+}
+
+
 /// `rows-by-anim` keeps caller row grouping. `grid` packs in a roughly square grid.
 pub fn pack_sheet(rows: &[Vec<SheetCell>], layout: &str, pad: u32) -> PxlResult<PackedSheet> {
     let flat: Vec<&SheetCell> = rows.iter().flatten().collect();
@@ -138,6 +173,14 @@ struct FrameTag {
     direction: String,
 }
 
+/// The budget block `sheet_json` embeds under `meta.pxl.budget` and step-400
+/// re-serializes into coverage.json. One canonical shape, two consumers.
+pub fn sheet_budget_json(packed: &PackedSheet) -> Value {
+    serde_json::to_value(SheetBudget::of(packed))
+        .map_err(|e| PxlError::io(e.to_string()))
+        .unwrap_or_else(|_| Value::Null)
+}
+
 pub fn sheet_json(packed: &PackedSheet, image_name: &str, pxl: Value) -> PxlResult<String> {
     let mut frames = Map::new();
     let mut tags: Vec<FrameTag> = Vec::new();
@@ -229,5 +272,26 @@ mod tests {
         assert!(err.message.contains("2048"), "{err:?}");
         let wide: Vec<SheetCell> = (0..40).map(|i| cell(&format!("f{i}"), 64)).collect();
         assert!(pack_sheet(&[wide], "rows-by-anim", 1).is_err());
+    }
+
+    #[test]
+    fn budget_reports_rgba8_estimate_not_png_size() {
+        let rows = vec![vec![cell("a", 4), cell("b", 4)]];
+        let packed = pack_sheet(&rows, "rows-by-anim", 1).unwrap();
+        let budget = SheetBudget::of(&packed);
+        // 9x4 sheet: the RGBA8 estimate is w*h*4, not the indexed PNG size.
+        assert_eq!(budget.rgba8_bytes, 9 * 4 * 4);
+        assert_eq!(budget.frames, 2);
+        assert_eq!(budget.pages, 1);
+        assert_eq!(budget.page_limit, 1);
+        // A full 2048x2048 single page tops out at exactly 16 MiB. Frames
+        // cannot reach that size (MAX_DIM is 256), so build the sheet
+        // directly and check the arithmetic.
+        let full = PackedSheet {
+            image: IndexFrame::canvas(2048, 2048).unwrap(),
+            placements: Vec::new(),
+        };
+        assert_eq!(SheetBudget::of(&full).rgba8_bytes, 2048 * 2048 * 4);
+        assert_eq!(SheetBudget::of(&full).rgba8_mib, 16.0);
     }
 }

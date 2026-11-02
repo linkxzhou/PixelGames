@@ -88,7 +88,7 @@ fn compute() -> BTreeMap<String, String> {
     push("tile.dirt.variant3", &varied);
 
     let shapes = pxl_format::parse_shapes(include_str!(
-        "../../../../examples/tank/tank_body.shapes.json"
+        "../../../examples/tank/tank_body.shapes.json"
     ))
     .unwrap();
     let body = generate_shapes(&shapes, &pal).unwrap();
