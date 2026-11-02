@@ -75,6 +75,7 @@ pxl-agent = { path = "libs/pxl-agent" }
 pxl-ase-doc = { path = "libs/pxl-ase-doc" }
 pxl-ase-io = { path = "libs/pxl-ase-io" }
 pxl-ase = { path = "libs/pxl-ase" }
+rhai = { version = "1.19", default-features = false, features = ["std"] }
 
 # macroquad 0.4.13 pins miniquad =0.4.6. That release calls center() before the
 # NSView exists; AppKit then messages a nil view and Apple Silicon panics.

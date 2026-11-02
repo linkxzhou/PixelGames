@@ -16,3 +16,12 @@ pxl-ops = { workspace = true }
 pxl-format = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+rhai = { workspace = true }
+
+[[example]]
+name = "open_save_flatten"
+path = "examples/open_save_flatten.rs"
+
+[[example]]
+name = "apply_replace_color"
+path = "examples/apply_replace_color.rs"

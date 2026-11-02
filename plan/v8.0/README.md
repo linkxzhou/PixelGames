@@ -19,7 +19,7 @@
 | [07-时间轴动画标签切片.md](./07-时间轴动画标签切片.md) | frames/tags/slices/linked cels |
 | [08-CLI命令面与批处理.md](./08-CLI命令面与批处理.md) | 对齐公开 CLI；主方案 `step-300 ase` |
 | [09-与steps集成与迁移.md](./09-与steps集成与迁移.md) | 挂入 step-300、契约、试点、缺口清单 |
-| [10-脚本与扩展.md](./10-脚本与扩展.md) | 可选脚本宿主（后续） |
+| [10-脚本与扩展.md](./10-脚本与扩展.md) | 可选脚本宿主（部分完成） |
 | [sources.md](./sources.md) | 本地路径证据 + 公开 URL |
 
 建议阅读顺序：`README` → `00` → `01`/`06`（模型与 IO 地基）→ `02`/`03`/`04` → `05`/`07` → `08`/`09`；`10` 不阻塞主线。
@@ -39,9 +39,9 @@
 | M4 | 像素 op / 滤镜无头批处理 | M1, M3 | **已完成** — flood-fill/hue-sat/crop/canvas-size + 既有滤镜/ops；选区 mask 延期 |
 | M5 | 合成渲染 + sheet/gif/png 导出对齐公开 CLI | M1–M2, 部分 M4 | **已完成** — PNG/GIF/sheet layout+meta + filename-format 子集 |
 | M6 | 时间轴 tags/slices/linked cels + list-* | M1–M2 | **已完成** — list-slices/split-slices/frame-range/tag direction |
-| M7 | `step-300 ase` 命令面与现有 `sheet`/`op`/`anim` 共存 | M2–M6 | **部分完成** — P0 trim/padding/extrude/crop/merge-duplicates；顺序敏感 argv/`--trim-by-grid` 延期 |
+| M7 | `step-300 ase` 命令面与现有 `sheet`/`op`/`anim` 共存 | M2–M6 | **已完成** — trim-by-grid / play-subtags / 最小 `ase run` 顺序 argv（非官方全集） |
 | M8 | step-300 集成试点与契约；缺口关闭清单 | M7 | **已完成** — `ase import` + pilot；§4.3 P0 关闭或显式延期 |
-| M9 | （可选）脚本宿主 / 扩展 API | M7+ | **后续** |
+| M9 | （可选）脚本宿主 / 扩展 API | M7+ | **部分完成** — Rhai + `ase script`；shell/MCP 后续 |
 
 ## 与 v6 / v7 / steps 的关系
 

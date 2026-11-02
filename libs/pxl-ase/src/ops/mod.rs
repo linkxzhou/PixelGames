@@ -236,6 +236,87 @@ pub fn trim_sprite(sprite: &mut Sprite) -> Result<Option<(i32, i32, u16, u16)>> 
     Ok(Some((min_x, min_y, w, h)))
 }
 
+
+/// Snap `v` down to the nearest grid line at or below `v`.
+fn grid_align_down(v: i32, origin: i32, cell: i32) -> i32 {
+    if cell <= 0 {
+        return v;
+    }
+    let rel = v - origin;
+    let q = if rel >= 0 {
+        rel / cell
+    } else {
+        // floor division for negatives
+        -(((-rel) + cell - 1) / cell)
+    };
+    origin + q * cell
+}
+
+/// Snap exclusive end `v` up to the nearest grid line at or above `v`.
+fn grid_align_up(v: i32, origin: i32, cell: i32) -> i32 {
+    if cell <= 0 {
+        return v;
+    }
+    let rel = v - origin;
+    let q = if rel >= 0 {
+        (rel + cell - 1) / cell
+    } else {
+        -((-rel) / cell)
+    };
+    origin + q * cell
+}
+
+/// Trim transparent borders, then expand the crop rect to the sprite [`Grid`].
+///
+/// Uses content alpha (>=8) union bbox across frames, then snaps edges outward
+/// onto `sprite.grid` lines (`x`/`y` origin, `w`/`h` cell). If `grid.w` or
+/// `grid.h` is 0, falls back to plain [`trim_sprite`].
+pub fn trim_sprite_by_grid(sprite: &mut Sprite) -> Result<Option<(i32, i32, u16, u16)>> {
+    let ow = sprite.width as i32;
+    let oh = sprite.height as i32;
+    let mut min_x = ow;
+    let mut min_y = oh;
+    let mut max_x = -1i32;
+    let mut max_y = -1i32;
+    for f in 0..sprite.frame_count() {
+        let rgba = flatten_frame_rgba(sprite, f as u16)?;
+        for y in 0..oh {
+            for x in 0..ow {
+                let i = ((y * ow + x) * 4) as usize;
+                if rgba[i + 3] >= 8 {
+                    min_x = min_x.min(x);
+                    min_y = min_y.min(y);
+                    max_x = max_x.max(x);
+                    max_y = max_y.max(y);
+                }
+            }
+        }
+    }
+    if max_x < min_x {
+        return Ok(None);
+    }
+    let gw = sprite.grid.w as i32;
+    let gh = sprite.grid.h as i32;
+    let gx = sprite.grid.x as i32;
+    let gy = sprite.grid.y as i32;
+    if gw > 0 && gh > 0 {
+        min_x = grid_align_down(min_x, gx, gw).max(0);
+        min_y = grid_align_down(min_y, gy, gh).max(0);
+        // exclusive end after inclusive max
+        let end_x = grid_align_up(max_x + 1, gx, gw).min(ow);
+        let end_y = grid_align_up(max_y + 1, gy, gh).min(oh);
+        max_x = end_x - 1;
+        max_y = end_y - 1;
+    }
+    if max_x < min_x || max_y < min_y {
+        return Ok(None);
+    }
+    let w = (max_x - min_x + 1) as u16;
+    let h = (max_y - min_y + 1) as u16;
+    crop_sprite(sprite, min_x, min_y, w, h)?;
+    Ok(Some((min_x, min_y, w, h)))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -278,4 +359,22 @@ mod tests {
         canvas_size(&mut s, 4, 4, 1, 1).unwrap();
         assert_eq!((s.width, s.height), (4, 4));
     }
+    #[test]
+    fn trim_by_grid_snaps_to_cells() {
+        let mut s = Sprite::new(8, 8, ColorMode::Rgba);
+        s.grid = pxl_ase_doc::Grid { x: 0, y: 0, w: 4, h: 4 };
+        s.frame_durations_ms = vec![100];
+        let layer = s.add_image_layer("a");
+        let mut px = vec![0u8; 8 * 8 * 4];
+        // opaque blob at (5,5)-(5,5) → content in cell (4..8,4..8)
+        let i = (5 * 8 + 5) * 4;
+        px[i] = 1; px[i+1] = 2; px[i+2] = 3; px[i+3] = 255;
+        let img = RgbaImage::from_rgba(8, 8, px);
+        let id = s.insert_image(ImageBuffer::Rgba(img));
+        s.set_cel(layer, 0, Cel::image(id, 0, 0, 255));
+        let bb = trim_sprite_by_grid(&mut s).unwrap().unwrap();
+        assert_eq!(bb, (4, 4, 4, 4));
+        assert_eq!((s.width, s.height), (4, 4));
+    }
+
 }

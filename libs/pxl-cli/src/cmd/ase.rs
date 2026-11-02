@@ -13,9 +13,11 @@ use pxl_ase::{
     expand_filename_format_ctx, export_frame_png, export_gif,
     export_sheet_png_json_layout_opts, frame_is_empty, frames_for_tag, inspect_json,
     list_layers_text, list_slices_json, list_slices_text, list_tags_text, merge_duplicate_frames,
-    open, select_frames, set_all_layers_visible, set_layer_visibility_by_name, split_slices_to_dir,
-    FilenameFormatCtx, SheetExportOpts,
+    open, select_frames_opts, set_all_layers_visible, set_layer_visibility_by_name,
+    split_slices_to_dir, FilenameFormatCtx, SheetExportOpts,
 };
+use pxl_ase::batch::run_batch_argv;
+use pxl_ase::script::{run_script_file, ScriptOptions};
 use pxl_core::{parse_hex, PxlError};
 use serde_json::json;
 
@@ -44,6 +46,10 @@ pub enum AseCmd {
     SplitSlices(AseSplitSlicesArgs),
     /// Import aseprite → schema-valid recipe + frames (M8 bridge).
     Import(AseImportArgs),
+    /// Left-to-right Aseprite-like argv subset (`ase run -- file.aseprite --save-as out.png`).
+    Run(AseRunArgs),
+    /// Run a Rhai script (`ase script path.rhai --script-param k=v`).
+    Script(AseScriptArgs),
 }
 
 #[derive(Args, Debug)]
@@ -118,6 +124,12 @@ pub struct AseConvertArgs {
     /// Trim transparent borders on the document before export.
     #[arg(long = "trim")]
     pub trim: bool,
+    /// Trim then snap crop edges to sprite Grid (from .aseprite header).
+    #[arg(long = "trim-by-grid")]
+    pub trim_by_grid: bool,
+    /// Expand nested/sub tags by range containment when using --tag.
+    #[arg(long = "play-subtags")]
+    pub play_subtags: bool,
 }
 
 #[derive(Args, Debug)]
@@ -149,12 +161,15 @@ pub struct AseSheetArgs {
     /// Trim transparent borders per cell before pack.
     #[arg(long = "trim")]
     pub trim: bool,
-    /// Deferred: grid-aligned trim (see STATUS / cli-flag-matrix).
+    /// Trim document by content bbox snapped to sprite Grid, then pack.
     #[arg(long = "trim-by-grid")]
     pub trim_by_grid: bool,
     /// Skip consecutive duplicate frames.
     #[arg(long = "merge-duplicates")]
     pub merge_duplicates: bool,
+    /// Expand nested/sub tags by range containment when using --tag.
+    #[arg(long = "play-subtags")]
+    pub play_subtags: bool,
 }
 
 #[derive(Args, Debug)]
@@ -258,6 +273,29 @@ pub struct AseSplitSlicesArgs {
     pub oneframe: bool,
 }
 
+
+#[derive(Args, Debug)]
+pub struct AseRunArgs {
+    /// Sequential argv (`--` then flags/files left-to-right). See cli-flag-matrix.
+    #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+    pub args: Vec<String>,
+}
+
+#[derive(Args, Debug)]
+pub struct AseScriptArgs {
+    /// Path to a `.rhai` script.
+    pub path: String,
+    /// Repeatable `key=value` injected as `params.key` in the script.
+    #[arg(long = "script-param", value_name = "KEY=VALUE")]
+    pub script_param: Vec<String>,
+    /// Working directory for path sandbox (default: cwd).
+    #[arg(long = "workdir")]
+    pub workdir: Option<String>,
+    /// Allow script paths outside workdir (dangerous; off by default).
+    #[arg(long = "allow-fs")]
+    pub allow_fs: bool,
+}
+
 pub fn ase_cmd(ctx: &Ctx, action: AseCmd) -> CmdResult<()> {
     match action {
         AseCmd::Inspect(a) => inspect(ctx, a),
@@ -300,6 +338,8 @@ pub fn ase_cmd(ctx: &Ctx, action: AseCmd) -> CmdResult<()> {
         AseCmd::Op(a) => op_cmd(ctx, a),
         AseCmd::SplitSlices(a) => split_slices_cmd(ctx, a),
         AseCmd::Import(a) => import_cmd(ctx, a),
+        AseCmd::Run(a) => run_cmd(ctx, a),
+        AseCmd::Script(a) => script_cmd(ctx, a),
     }
 }
 
@@ -369,7 +409,9 @@ fn convert_one(
         let colors = load_palette_file(Path::new(pal_path)).map_err(map_err)?;
         apply_palette(&mut doc.sprite, colors).map_err(map_err)?;
     }
-    if a.trim {
+    if a.trim_by_grid {
+        pxl_ase::ops::trim_sprite_by_grid(&mut doc.sprite).map_err(map_err)?;
+    } else if a.trim {
         pxl_ase::ops::trim_sprite(&mut doc.sprite).map_err(map_err)?;
     }
     if let Some(crop) = &a.crop {
@@ -409,7 +451,7 @@ fn convert_one(
         .map_err(map_err)?;
     }
 
-    let mut frames = select_frames(
+    let mut frames = select_frames_opts(
         &doc.sprite,
         a.tag.as_deref(),
         a.frame_range.as_deref(),
@@ -419,6 +461,7 @@ fn convert_one(
         } else {
             None
         },
+        a.play_subtags,
     )
     .map_err(map_err)?;
     // For plain PNG without tag/range, default to --frame.
@@ -608,24 +651,22 @@ fn resolve_batch_out(save_as: &str, file: &str, index: usize, n: usize) -> CmdRe
 }
 
 fn sheet(ctx: &Ctx, a: AseSheetArgs) -> CmdResult<()> {
-    if a.trim_by_grid {
-        return Err(PxlError::usage(
-            "--trim-by-grid is deferred (M7); use --trim for transparent-border trim",
-        )
-        .into());
-    }
     let mut doc = open(&a.file, a.oneframe).map_err(map_err)?;
     if a.all_layers {
         set_all_layers_visible(&mut doc.sprite, true);
     }
+    if a.trim_by_grid {
+        pxl_ase::ops::trim_sprite_by_grid(&mut doc.sprite).map_err(map_err)?;
+    }
     let mut frames = if a.oneframe {
         vec![0]
     } else {
-        select_frames(
+        select_frames_opts(
             &doc.sprite,
             a.tag.as_deref(),
             a.frame_range.as_deref(),
             None,
+            a.play_subtags,
         )
         .map_err(map_err)?
     };
@@ -839,6 +880,53 @@ fn import_cmd(ctx: &Ctx, a: AseImportArgs) -> CmdResult<()> {
         for w in &report.warnings {
             eprintln!("warning: {w}");
         }
+    }
+    Ok(())
+}
+
+
+fn run_cmd(ctx: &Ctx, a: AseRunArgs) -> CmdResult<()> {
+    let mut args = a.args;
+    // Allow `ase run -- ...` where clap may keep a leading `--`.
+    if args.first().map(|s| s.as_str()) == Some("--") {
+        args.remove(0);
+    }
+    let (st, _events) = run_batch_argv(&args, None).map_err(map_err)?;
+    if ctx.json {
+        println!("{}", json!({"ok": true, "written": st.written}));
+    } else if !ctx.quiet {
+        for w in &st.written {
+            println!("wrote {w}");
+        }
+    }
+    Ok(())
+}
+
+fn script_cmd(ctx: &Ctx, a: AseScriptArgs) -> CmdResult<()> {
+    let workdir = a
+        .workdir
+        .as_ref()
+        .map(PathBuf::from)
+        .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
+    let mut params = Vec::new();
+    for p in &a.script_param {
+        let (k, v) = p
+            .split_once('=')
+            .ok_or_else(|| PxlError::usage("--script-param expects key=value"))?;
+        params.push((k.to_string(), v.to_string()));
+    }
+    let opts = ScriptOptions {
+        workdir,
+        allow_fs_escape: a.allow_fs,
+        params,
+        ..Default::default()
+    };
+    let path = PathBuf::from(&a.path);
+    let _ = run_script_file(&path, &opts).map_err(map_err)?;
+    if ctx.json {
+        println!("{}", json!({"ok": true, "script": a.path}));
+    } else if !ctx.quiet {
+        println!("script ok: {}", a.path);
     }
     Ok(())
 }

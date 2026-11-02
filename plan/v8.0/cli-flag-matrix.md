@@ -1,4 +1,4 @@
-# CLI flag 覆盖矩阵（v8.0 / M0–M8）
+# CLI flag 覆盖矩阵（v8.0 / M0–M9）
 
 > 日期：2026-11-02（Asia/Shanghai）  
 > 对照：https://www.aseprite.org/docs/cli/
@@ -34,9 +34,9 @@
 | `--padding` | 已完成 | sheet；映射 `pack_sheet` pad |
 | `--extrude` | 已完成 | sheet；边缘像素外扩 |
 | `--trim` | 已完成 | convert=文档级透明边裁；sheet=每 cell bbox 裁 |
-| `--trim-by-grid` | 延期 | 需网格对齐语义；CLI 显式拒绝并提示用 `--trim` |
+| `--trim-by-grid` | 已完成 | convert/sheet：内容 bbox 后向外对齐 `sprite.grid`；`grid.w/h==0` 时退化为普通 trim |
 | `--crop` | 已完成 | convert：`x,y,w,h`；亦见 `ase op crop` |
 | sheet tag `direction` | 已完成 | meta.frameTags |
-| `--play-subtags` | 延期 | P1；非阻塞 M7 P0 |
-| `--script` / `--shell` | 后续 | M9 |
-| 顺序敏感官方 CLI 解析器 | 延期 | 成本高；当前 clap 子命令结构化子集已覆盖 P0 导出路径；不假装 PASS |
+| `--play-subtags` | 部分 | Tag 模型无 parent；按范围包含推断子标签并展开 direction；重叠兄弟启发式；见 08 |
+| `--script` / `ase script` | 部分 | Rhai：`ase script <path> --script-param k=v`；`--shell` REPL **不做/后续**；MCP 未做 |
+| 顺序敏感官方 CLI 解析器 / `ase run` | 部分 | 最小 `AseBatchParser`：open / `--save-as` / `--sheet` / `--tag` / `--trim` / `--trim-by-grid` / `--play-subtags` / `--filter replace-color|invert` / `--op trim|flip`；**非**官方全集 |

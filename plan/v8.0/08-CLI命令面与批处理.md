@@ -1,8 +1,8 @@
 # 08 · CLI 命令面与批处理
 
 > 日期：2026-11-02（Asia/Shanghai）  
-> 状态：**部分完成**（2026-11-02 Asia/Shanghai）  
-> 证据：见 cli-flag-matrix.md；P0 trim/padding/extrude/crop/merge-duplicates/filename-format 扩展已挂；顺序敏感官方 argv **延期**；`--trim-by-grid`/`--play-subtags`/`--script` 延期或后续
+> 状态：**已完成**（2026-11-02 Asia/Shanghai）  
+> 证据：cli-flag-matrix；`--trim-by-grid`/`--play-subtags` 已挂；`ase run` 最小顺序 argv（非官方全集）；`--script` 见 M9/10
 
 ## 1. 背景
 
@@ -57,7 +57,7 @@ step-300 ase op --ops ops.json ...
 | clap 全局 `--json/--seed/--strict/--overwrite` | 【已有·可复用】 | `pxl-cli/src/lib.rs` |
 | `sheet`/`render`/`inspect`/`build`/`plan` | 【已有·可复用】 | 各 `cmd/*.rs` |
 | `palette`/`op`/`anim` | 【已有·可复用】 | 同上 |
-| 类 Aseprite 顺序批处理解析器 | 【缺失】 | — |
+| 类 Aseprite 顺序批处理解析器 | 【部分】 | `pxl_ase::batch::AseBatchParser` + `ase run -- …`；覆盖 open/save-as/sheet/tag/trim/一滤镜一 op |
 | `--filename-format` 占位符全集 | 【缺失】 | sheet 侧有自己命名 |
 | `--list-layers` 等 | 【缺失】 | `list` 子命令列的是 generators/ops，不是文档层 |
 
@@ -77,11 +77,11 @@ step-300 ase op --ops ops.json ...
 | `--sheet` + sheet-* | 做 | 05；packer 映射 |
 | `--split-*` | 做 | 07 |
 | `--layer` / `--all-layers` / `--ignore-layer` | 做 | |
-| `--tag` / `--frame-range` / `--play-subtags` | 做 / 部分 | play-subtags P1 |
+| `--tag` / `--frame-range` / `--play-subtags` | 做 / 部分 | play-subtags：范围包含启发式 |
 | `--ignore-empty` / `--merge-duplicates` | 做 | |
 | `--*-padding` / `--trim*` / `--extrude` / `--crop` / `--slice` | 做 | |
 | `--filename-format` / `--tagname-format` | 做 | |
-| `--script` / `--script-param` | 后续 | 10 |
+| `--script` / `--script-param` | 部分（M9） | `ase script`；见 10 |
 | `--list-layers` / hierarchy / tags / slices | 做 | |
 | `--oneframe` | 做 | 06 |
 | `--export-tileset` | 部分 | 依赖 tilemap 模型进度 |
@@ -143,3 +143,17 @@ step-300 ase filter outline -i hero.aseprite -o hero-out.aseprite --width 1
 
 - 依赖：05、06、07、02、03、04。  
 - 被依赖：09。
+
+## 12. `ase run` / AseBatchParser 覆盖语法（诚实子集）
+
+```text
+step-300 ase run -- [-b|--batch] <file.aseprite>
+  [--tag NAME] [--play-subtags] [--frame-range SPEC]
+  [--trim | --trim-by-grid]
+  [--save-as PATH]
+  [--sheet PATH [--data PATH] [--layout NAME]]
+  [--filter replace-color --from-color HEX --to-color HEX | --filter invert]
+  [--op trim | --op flip --axis h|v]
+```
+
+左到右执行；打开文件后旗标累积，`--save-as`/`--sheet` 触发导出。未知旗标报错。不宣称官方 CLI 全集 parity。

@@ -12,8 +12,8 @@
 | M4 像素/滤镜 `03`/`04` | 已完成 | flood-fill；hue-saturation；crop/canvas-size/trim；既有 invert/replace/brightness-contrast/outline；ops flip/rotate90；选区 expand/contract/任意 mask **延期**（非 P0 CLI 主路径） |
 | M5 合成导出 `05` | 已完成 | flatten；`ase convert` PNG/GIF；`ase sheet` layout 别名+tag direction/slices meta；`--filename-format` 子集 |
 | M6 时间轴 `07` | 已完成 | Tag/Slice IO；`list-layers/tags/slices`；`split-slices`；`--tag`/`--frame-range`；linked cel 保持 |
-| M7 CLI `08` | 部分完成 | P0 导出旗标：`--trim`/`--padding`/`--extrude`/`--crop`/`--merge-duplicates`、filename-format 扩展；`--trim-by-grid`/`--play-subtags` **延期**；顺序敏感官方 argv 解析器 **延期**（clap 子命令子集，见矩阵） |
+| M7 CLI `08` | 已完成 | P0 旗标 + `--trim-by-grid`（Grid 对齐裁切）+ `--play-subtags`（平坦 Tag 范围包含启发式）+ 最小 `ase run`/`AseBatchParser` 顺序 argv（非官方全集）；诚实限制见矩阵/08 |
 | M8 集成 `09` | 已完成 | `ase import` → `import-manifest.json` + schema-valid `asset.recipe.json` + palette/frames/sheet；pilot 覆盖 flood-fill/hue-sat/flags/import；`steps/README` 已更新；未改 `games/`；P0 缺口勾选见 `09` §4.3 |
-| M9 脚本 `10` | 后续 | 未实现脚本宿主；`--script` 留 M9 |
+| M9 脚本 `10` | 部分完成 | Rhai 宿主 + `ase script`/`--script-param` + examples + SCRIPTING.md 沙箱；`--shell`/MCP **不做/后续**；需 Rust≥1.85（验证 1.95）因 rhai→thin-vec edition2024 |
 | `00` 总览 | 部分完成 | 架构与 crate 地图已落地（合并 color/filters/ops/render/import 进 `pxl-ase`） |
 | `README` | 已更新 | 里程碑总表已标注 |

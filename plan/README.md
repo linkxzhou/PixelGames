@@ -1,6 +1,6 @@
 # PixelGames 计划总览
 
-> 更新：2026-11-02。本文是 `plan/` 的**索引与状态总表**。**v5.0** 的 miniquad wasm + JS 游戏运行时与文本音频 A0–A4 工程已落地；**v6.0 通用像素美术与生成流程**的 P0–P5 工程已实现，真实视觉评审与真实模型 A/B 仍待开展；**v7.0 NES 素材模型**调研与落地计划（N0）已落成，N1–N4 工程未开始；**v8.0 Aseprite→Rust CLI** 计划已落成且工程已推进（M0–M2/M3/M5/M6 已完成；M4/M7/M8 部分完成；M9 后续），见 [STATUS.md](v8.0/STATUS.md)。v1.0–v4.0 文档保留为实施记录与历史方案。
+> 更新：2026-11-02。本文是 `plan/` 的**索引与状态总表**。**v5.0** 的 miniquad wasm + JS 游戏运行时与文本音频 A0–A4 工程已落地；**v6.0 通用像素美术与生成流程**的 P0–P5 工程已实现，真实视觉评审与真实模型 A/B 仍待开展；**v7.0 NES 素材模型**调研与落地计划（N0）已落成，N1–N4 工程未开始；**v8.0 Aseprite→Rust CLI** 计划已落成且工程已推进（M0–M8 主线已完成；M7 含 trim-by-grid/play-subtags/最小顺序 argv；M9 脚本部分完成），见 [STATUS.md](v8.0/STATUS.md)。v1.0–v4.0 文档保留为实施记录与历史方案。
 
 ## 当前实施线：v5.0、v6.0、v7.0 与 v8.0（计划）
 
@@ -35,7 +35,7 @@
 
 - **一句话**：用 Rust 在 `step-300` 旁建设无头、与 Aseprite 文档/批处理语义对齐的能力；**禁止**复制 EULA 覆盖的源码/资源；复用已有 `pxl-core`/`pxl-ops`/`pxl-export`/`pxl-cli`，缺口见各分册对照表。
 - 入口：[00-总览与架构.md](v8.0/00-总览与架构.md)、[08-CLI命令面与批处理.md](v8.0/08-CLI命令面与批处理.md)、[09-与steps集成与迁移.md](v8.0/09-与steps集成与迁移.md)；证据 [sources.md](v8.0/sources.md)。
-- 状态（2026-11-02）：M0–M3/M5/M6 **已完成**；M4/M7/M8 **部分完成**；M9 **后续**。可运行 `step-300 ase inspect|convert|sheet|filter|list-slices|split-slices`。证据见 [v8.0/STATUS.md](v8.0/STATUS.md)。
+- 状态（2026-11-02）：M0–M8 **已完成**（M7 诚实限制：顺序 argv/`--play-subtags` 为子集）；M9 **部分完成**（Rhai/`ase script`；shell/MCP 后续）。证据见 [v8.0/STATUS.md](v8.0/STATUS.md)。
 
 ## v4.0 质量与稳定性基础
 
@@ -118,7 +118,7 @@
 
 ## 下一步候选（按现有计划优先级）
 
-0. **v8.0**：M0–M3/M5/M6 已完成；继续补齐 M4/M7/M8 边角与其余公开 CLI 旗标。见 [STATUS.md](v8.0/STATUS.md)。
+0. **v8.0**：M0–M8 主线已完成；M9 脚本部分完成（`--shell`/MCP 后续）。见 [STATUS.md](v8.0/STATUS.md)。
 1. **v7.0 NES 约束资产**：推进 N1（4 色砖 + palette 校验/导出）与 N3（pac-man / galaga 或 battle-city 试点）；N2 metatile 预览与 N4↔V6-B 门禁随后。见 [v7.0 索引](v7.0/README.md)。
 2. **v6.0 剩余工作**：通用美术流程需补真实两名独立视觉评审、真实模型配对 A/B 与保留集人工结论；RSI 制作人闭环（[rsi-producer-evolution-plan.md](v6.0/rsi-producer-evolution-plan.md)）和美术光照/材质主计划（[美术光照与引擎材质改进计划.md](v6.0/美术光照与引擎材质改进计划.md)）仍按各自范围实施。
 3. ~~v3.0 M5 收尾~~ 已完成（2026-10-26）：`examples/v3` 12 个 Metal Slug 风格样本全部通过（QA 零警告、视觉核验、性能预算达标）。遗留：删 `ascii refine`/`shapes refine`（存量素材迁移完再删）、可选 `review/v5` 对照。
