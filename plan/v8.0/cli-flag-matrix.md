@@ -12,24 +12,31 @@
 | `ase list-tags` | 已完成 | 含 direction |
 | `ase list-slices` | 已完成 | |
 | `ase split-slices` / `convert --split-slices` | 已完成 | 每 slice 裁切 PNG |
-| `ase sheet` | 已完成 | PNG+JSON；`--layout` horizontal/vertical/packed |
-| `ase filter` | 已完成 | outline / replace-index / replace-color / invert / brightness-contrast |
-| `ase op` | 已完成 | flip / rotate90 跨帧 |
+| `ase sheet` | 已完成 | PNG+JSON；`--layout` horizontal/vertical/packed；`--padding`/`--extrude`/`--trim`/`--merge-duplicates` |
+| `ase filter` | 已完成 | outline / replace-index / replace-color / invert / brightness-contrast / hue-saturation |
+| `ase op` | 已完成 | flip / rotate90 / flood-fill / crop / canvas-size / trim |
+| `ase import` | 已完成 | ase-import/v1 manifest + schema-valid Recipe + palette/frames/sheet |
 | `-b` / `--batch` | 兼容忽略 | 默认无 UI |
 | `--preview` / `-p` | 已完成 | convert 干跑 |
 | `--tag` | 已完成 | convert/sheet 过滤 |
 | `--frame-range` | 已完成 | `0,2` / `1-3` |
-| `--oneframe` | 已完成 | inspect/convert/list/sheet |
+| `--oneframe` | 已完成 | inspect/convert/list/sheet/import |
 | `--color-mode` | 已完成 | rgba/indexed/grayscale |
 | `--palette` | 已完成 | `.gpl` / `.act` |
 | `--dithering-algorithm` | 已完成 | none/ordered/old |
 | `--dithering-matrix` | 已完成 | bayer2x2/4x4/8x8 |
 | `--scale` | 已完成 | convert/split-slices |
-| `--filename-format` | 部分 | `{frame}` `{tag}` `{layer}` `{title}` `{path}` `{fullname}` |
+| `--filename-format` | 部分 | `{frame}`/`{frame1}`/`{frame01}`/`{frame001}`/`{frame0001}` `{tag}` `{innertag}` `{layer}` `{title}` `{name}` `{path}` `{fullname}` `{slice}` `{duration}` `{tagframe}` `{innertagframe}` `{startframe}` `{endframe}`；非官方全集的冷门占位符不做 |
 | `--ignore-empty` | 已完成 | convert/sheet |
+| `--merge-duplicates` | 已完成 | convert/sheet；连续相同扁平帧去重 |
 | `--all-layers` / `--layer` | 已完成 | flatten 可见性 |
 | `--data` | 已完成 | sheet sidecar JSON |
+| `--padding` | 已完成 | sheet；映射 `pack_sheet` pad |
+| `--extrude` | 已完成 | sheet；边缘像素外扩 |
+| `--trim` | 已完成 | convert=文档级透明边裁；sheet=每 cell bbox 裁 |
+| `--trim-by-grid` | 延期 | 需网格对齐语义；CLI 显式拒绝并提示用 `--trim` |
+| `--crop` | 已完成 | convert：`x,y,w,h`；亦见 `ase op crop` |
 | sheet tag `direction` | 已完成 | meta.frameTags |
+| `--play-subtags` | 延期 | P1；非阻塞 M7 P0 |
 | `--script` / `--shell` | 后续 | M9 |
-| `--trim*` / padding / extrude / crop / merge-duplicates | 未完成 | 见 08；不假装 PASS |
-| 顺序敏感官方 CLI 解析器 | 未完成 | 当前为 clap 子命令结构化 |
+| 顺序敏感官方 CLI 解析器 | 延期 | 成本高；当前 clap 子命令结构化子集已覆盖 P0 导出路径；不假装 PASS |

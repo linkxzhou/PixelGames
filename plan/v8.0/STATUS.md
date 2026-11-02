@@ -9,11 +9,11 @@
 | M1 文档模型 `00`/`01` | 已完成 | crate `libs/pxl-ase-doc`；测试 linked cel / bridge hash / tag-slice-grid |
 | M2 文件 IO `06` | 已完成 | crate `libs/pxl-ase-io`；roundtrip indexed+RGBA；fixture `tests/fixtures/mini_indexed.aseprite` |
 | M3 颜色 `02` | 已完成 | `pxl-ase::color` convert+dither；CLI `--palette`/`--dithering-*`/`--color-mode`；GPL+ACT；`pxl-art` Bayer8 |
-| M4 像素/滤镜 `03`/`04` | 部分完成 | filters: outline/replace-index/replace-color/invert/brightness-contrast；ops flip/rotate90 全帧；缺 flood-fill 等 |
+| M4 像素/滤镜 `03`/`04` | 已完成 | flood-fill；hue-saturation；crop/canvas-size/trim；既有 invert/replace/brightness-contrast/outline；ops flip/rotate90；选区 expand/contract/任意 mask **延期**（非 P0 CLI 主路径） |
 | M5 合成导出 `05` | 已完成 | flatten；`ase convert` PNG/GIF；`ase sheet` layout 别名+tag direction/slices meta；`--filename-format` 子集 |
 | M6 时间轴 `07` | 已完成 | Tag/Slice IO；`list-layers/tags/slices`；`split-slices`；`--tag`/`--frame-range`；linked cel 保持 |
-| M7 CLI `08` | 部分完成 | 公开旗标子集已挂（见矩阵）；顺序敏感全集/trim/padding/script 未做 |
-| M8 集成 `09` | 部分完成 | `work/v8-ase-pilot/` 扩展（GIF/dither/slices/filters）；`steps/README` ase 指针；未改 games/；import 契约未全做 |
-| M9 脚本 `10` | 后续 | 未实现脚本宿主 |
-| `00` 总览 | 部分完成 | 架构与 crate 地图已落地（合并 color/filters/ops/render 进 `pxl-ase`） |
+| M7 CLI `08` | 部分完成 | P0 导出旗标：`--trim`/`--padding`/`--extrude`/`--crop`/`--merge-duplicates`、filename-format 扩展；`--trim-by-grid`/`--play-subtags` **延期**；顺序敏感官方 argv 解析器 **延期**（clap 子命令子集，见矩阵） |
+| M8 集成 `09` | 已完成 | `ase import` → `import-manifest.json` + schema-valid `asset.recipe.json` + palette/frames/sheet；pilot 覆盖 flood-fill/hue-sat/flags/import；`steps/README` 已更新；未改 `games/`；P0 缺口勾选见 `09` §4.3 |
+| M9 脚本 `10` | 后续 | 未实现脚本宿主；`--script` 留 M9 |
+| `00` 总览 | 部分完成 | 架构与 crate 地图已落地（合并 color/filters/ops/render/import 进 `pxl-ase`） |
 | `README` | 已更新 | 里程碑总表已标注 |

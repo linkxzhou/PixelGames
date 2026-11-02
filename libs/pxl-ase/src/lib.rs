@@ -3,11 +3,14 @@
 
 pub mod color;
 pub mod filters;
+pub mod import;
 pub mod ops;
 pub mod render;
 
 pub use pxl_ase_doc as doc;
 pub use pxl_ase_io as io;
+
+use std::path::Path;
 
 use pxl_ase_doc::{AseDoc, ColorMode, Slice, Sprite, Tag, TagDirection};
 use pxl_ase_io::{read_aseprite, ReadOptions};
@@ -257,7 +260,26 @@ pub fn frame_is_empty(rgba: &[u8]) -> bool {
     rgba.chunks_exact(4).all(|c| c[3] < 8)
 }
 
-/// Expand a small filename-format subset: `{frame}`, `{tag}`, `{layer}`, `{title}`, `{path}`, `{fullname}`.
+/// Context for `--filename-format` placeholders (Aseprite-aligned subset).
+#[derive(Debug, Clone, Default)]
+pub struct FilenameFormatCtx<'a> {
+    pub frame: u16,
+    pub tag: &'a str,
+    pub layer: &'a str,
+    pub title: &'a str,
+    pub path: &'a str,
+    pub slice: &'a str,
+    pub duration_ms: u32,
+    pub tagframe: u16,
+    pub innertagframe: u16,
+    pub startframe: u16,
+    pub endframe: u16,
+}
+
+/// Expand filename-format placeholders toward the Aseprite public list.
+/// Supported: `{frame}` `{frame1}` `{frame01}` `{frame001}` `{frame0001}`,
+/// `{tag}` `{innertag}` `{layer}` `{title}` `{path}` `{fullname}` `{name}`,
+/// `{slice}` `{duration}` `{tagframe}` `{innertagframe}` `{startframe}` `{endframe}`.
 pub fn expand_filename_format(
     fmt: &str,
     frame: u16,
@@ -266,16 +288,47 @@ pub fn expand_filename_format(
     title: &str,
     path: &str,
 ) -> String {
-    let fullname = if path.is_empty() {
-        title.to_string()
+    expand_filename_format_ctx(
+        fmt,
+        &FilenameFormatCtx {
+            frame,
+            tag,
+            layer,
+            title,
+            path,
+            ..Default::default()
+        },
+    )
+}
+
+pub fn expand_filename_format_ctx(fmt: &str, cx: &FilenameFormatCtx<'_>) -> String {
+    let fullname = if cx.path.is_empty() {
+        cx.title.to_string()
     } else {
-        path.to_string()
+        cx.path.to_string()
     };
-    fmt.replace("{frame}", &frame.to_string())
-        .replace("{tag}", tag)
-        .replace("{layer}", layer)
-        .replace("{title}", title)
-        .replace("{path}", path)
+    let name = Path::new(cx.title)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or(cx.title);
+    let innertag = if cx.tag.is_empty() { "" } else { cx.tag };
+    fmt.replace("{frame0001}", &format!("{:04}", cx.frame))
+        .replace("{frame001}", &format!("{:03}", cx.frame))
+        .replace("{frame01}", &format!("{:02}", cx.frame))
+        .replace("{frame1}", &(cx.frame + 1).to_string())
+        .replace("{frame}", &cx.frame.to_string())
+        .replace("{tagframe}", &cx.tagframe.to_string())
+        .replace("{innertagframe}", &cx.innertagframe.to_string())
+        .replace("{startframe}", &cx.startframe.to_string())
+        .replace("{endframe}", &cx.endframe.to_string())
+        .replace("{duration}", &cx.duration_ms.to_string())
+        .replace("{innertag}", innertag)
+        .replace("{tag}", cx.tag)
+        .replace("{layer}", cx.layer)
+        .replace("{slice}", cx.slice)
+        .replace("{title}", cx.title)
+        .replace("{name}", name)
+        .replace("{path}", cx.path)
         .replace("{fullname}", &fullname)
 }
 
@@ -401,6 +454,62 @@ fn sheet_layout_name(layout: &str) -> Result<&'static str> {
     }
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct SheetExportOpts {
+    pub padding: u32,
+    pub extrude: u32,
+    pub trim: bool,
+    pub merge_duplicates: bool,
+}
+
+/// Drop consecutive frames whose flattened RGBA bytes are identical.
+pub fn merge_duplicate_frames(sprite: &Sprite, frames: &[u16]) -> Result<Vec<u16>> {
+    let mut out = Vec::new();
+    let mut prev: Option<Vec<u8>> = None;
+    for &f in frames {
+        let rgba = flatten_frame_rgba(sprite, f)?;
+        if prev.as_ref() == Some(&rgba) {
+            continue;
+        }
+        prev = Some(rgba);
+        out.push(f);
+    }
+    Ok(out)
+}
+
+fn trim_index_frame(frame: &IndexFrame) -> Result<IndexFrame> {
+    let Some(bb) = frame.bbox() else {
+        return Ok(frame.clone());
+    };
+    let w = bb.w.max(1) as u16;
+    let h = bb.h.max(1) as u16;
+    let mut out = IndexFrame::canvas(w, h)?;
+    for y in 0..bb.h {
+        for x in 0..bb.w {
+            out.set(x, y, frame.get(bb.x + x, bb.y + y));
+        }
+    }
+    Ok(out)
+}
+
+fn extrude_index_frame(frame: &IndexFrame, n: u32) -> Result<IndexFrame> {
+    if n == 0 {
+        return Ok(frame.clone());
+    }
+    let n = n as i32;
+    let w = frame.w as i32 + 2 * n;
+    let h = frame.h as i32 + 2 * n;
+    let mut out = IndexFrame::canvas(w as u16, h as u16)?;
+    for y in 0..h {
+        for x in 0..w {
+            let sx = (x - n).clamp(0, frame.w as i32 - 1);
+            let sy = (y - n).clamp(0, frame.h as i32 - 1);
+            out.set(x, y, frame.get(sx, sy));
+        }
+    }
+    Ok(out)
+}
+
 pub fn export_sheet_png_json(
     sprite: &Sprite,
     frames: &[u16],
@@ -415,13 +524,27 @@ pub fn export_sheet_png_json_layout(
     image_name: &str,
     layout: &str,
 ) -> Result<(Vec<u8>, String)> {
+    export_sheet_png_json_layout_opts(sprite, frames, image_name, layout, &SheetExportOpts::default())
+}
+
+pub fn export_sheet_png_json_layout_opts(
+    sprite: &Sprite,
+    frames: &[u16],
+    image_name: &str,
+    layout: &str,
+    opts: &SheetExportOpts,
+) -> Result<(Vec<u8>, String)> {
     use pxl_export::{pack_sheet, sheet_json, SheetCell};
     let layout = sheet_layout_name(layout)?;
+    let mut frames = frames.to_vec();
+    if opts.merge_duplicates {
+        frames = merge_duplicate_frames(sprite, &frames)?;
+    }
     let pal = if sprite.color_mode == ColorMode::Indexed && !sprite.palette.is_empty() {
         sprite_palette(sprite)
     } else {
         let mut samples = Vec::new();
-        for &f in frames {
+        for &f in &frames {
             let rgba = flatten_frame_rgba(sprite, f)?;
             samples.extend_from_slice(&rgba);
         }
@@ -437,7 +560,7 @@ pub fn export_sheet_png_json_layout(
 
     let mut cells = Vec::new();
     let mut durations = Vec::new();
-    for &f in frames {
+    for &f in &frames {
         let rgba = flatten_frame_rgba(sprite, f)?;
         let indices = pxl_art::quantize::map_to_palette(
             sprite.width as usize,
@@ -448,6 +571,12 @@ pub fn export_sheet_png_json_layout(
         );
         let mut frame = IndexFrame::canvas(sprite.width, sprite.height)?;
         frame.pixels = indices;
+        if opts.trim {
+            frame = trim_index_frame(&frame)?;
+        }
+        if opts.extrude > 0 {
+            frame = extrude_index_frame(&frame, opts.extrude)?;
+        }
         let dur = sprite
             .frame_durations_ms
             .get(f as usize)
@@ -466,7 +595,7 @@ pub fn export_sheet_png_json_layout(
         });
         durations.push(dur);
     }
-    let packed = pack_sheet(&[cells], layout, 0)?;
+    let packed = pack_sheet(&[cells], layout, opts.padding)?;
     let png = pxl_export::encode_indexed_png(&packed.image, &pal, 1)?;
     let meta = json!({
         "frameTags": sprite.tags.iter().map(|t| json!({
@@ -636,7 +765,35 @@ mod tests {
             "mini.aseprite",
         );
         assert_eq!(name, "f3_idle.png");
+        let name2 = expand_filename_format_ctx(
+            "{title}_{frame001}_{duration}.png",
+            &FilenameFormatCtx {
+                frame: 7,
+                tag: "idle",
+                layer: "hero",
+                title: "mini",
+                path: "mini.aseprite",
+                duration_ms: 120,
+                ..Default::default()
+            },
+        );
+        assert_eq!(name2, "mini_007_120.png");
         let _ = s;
+    }
+
+    #[test]
+    fn sheet_padding_and_merge() {
+        let s = fixture();
+        let opts = SheetExportOpts {
+            padding: 1,
+            extrude: 1,
+            trim: true,
+            merge_duplicates: true,
+        };
+        let (png, js) =
+            export_sheet_png_json_layout_opts(&s, &[0, 1], "s.png", "horizontal", &opts).unwrap();
+        assert!(png.starts_with(&[0x89, b'P', b'N', b'G']));
+        assert!(js.contains("frame_"));
     }
 
     #[test]

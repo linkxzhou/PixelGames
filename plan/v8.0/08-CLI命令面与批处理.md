@@ -2,7 +2,7 @@
 
 > 日期：2026-11-02（Asia/Shanghai）  
 > 状态：**部分完成**（2026-11-02 Asia/Shanghai）  
-> 证据：见 cli-flag-matrix.md；子命令+公开旗标子集；顺序敏感解析器未做
+> 证据：见 cli-flag-matrix.md；P0 trim/padding/extrude/crop/merge-duplicates/filename-format 扩展已挂；顺序敏感官方 argv **延期**；`--trim-by-grid`/`--play-subtags`/`--script` 延期或后续
 
 ## 1. 背景
 

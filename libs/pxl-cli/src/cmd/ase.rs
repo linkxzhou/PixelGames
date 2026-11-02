@@ -10,10 +10,11 @@ use pxl_ase::color::{
 };
 use pxl_ase::doc::ColorMode;
 use pxl_ase::{
-    expand_filename_format, export_frame_png, export_gif, export_sheet_png_json_layout,
-    frame_is_empty, frames_for_tag, inspect_json, list_layers_text, list_slices_json,
-    list_slices_text, list_tags_text, open, select_frames, set_all_layers_visible,
-    set_layer_visibility_by_name, split_slices_to_dir,
+    expand_filename_format_ctx, export_frame_png, export_gif,
+    export_sheet_png_json_layout_opts, frame_is_empty, frames_for_tag, inspect_json,
+    list_layers_text, list_slices_json, list_slices_text, list_tags_text, merge_duplicate_frames,
+    open, select_frames, set_all_layers_visible, set_layer_visibility_by_name, split_slices_to_dir,
+    FilenameFormatCtx, SheetExportOpts,
 };
 use pxl_core::{parse_hex, PxlError};
 use serde_json::json;
@@ -41,6 +42,8 @@ pub enum AseCmd {
     Op(AseOpArgs),
     /// Write one cropped PNG per slice.
     SplitSlices(AseSplitSlicesArgs),
+    /// Import aseprite → schema-valid recipe + frames (M8 bridge).
+    Import(AseImportArgs),
 }
 
 #[derive(Args, Debug)]
@@ -106,6 +109,15 @@ pub struct AseConvertArgs {
     /// Split slices to cropped PNGs under this directory (also usable via `ase split-slices`).
     #[arg(long = "split-slices")]
     pub split_slices: Option<String>,
+    /// Crop document to `x,y,w,h` before export.
+    #[arg(long = "crop")]
+    pub crop: Option<String>,
+    /// Skip consecutive duplicate frames.
+    #[arg(long = "merge-duplicates")]
+    pub merge_duplicates: bool,
+    /// Trim transparent borders on the document before export.
+    #[arg(long = "trim")]
+    pub trim: bool,
 }
 
 #[derive(Args, Debug)]
@@ -128,12 +140,27 @@ pub struct AseSheetArgs {
     pub ignore_empty: bool,
     #[arg(long = "all-layers")]
     pub all_layers: bool,
+    /// Padding between packed cells (px).
+    #[arg(long = "padding", default_value_t = 0)]
+    pub padding: u32,
+    /// Extrude each cell edge by N px (edge duplicate).
+    #[arg(long = "extrude", default_value_t = 0)]
+    pub extrude: u32,
+    /// Trim transparent borders per cell before pack.
+    #[arg(long = "trim")]
+    pub trim: bool,
+    /// Deferred: grid-aligned trim (see STATUS / cli-flag-matrix).
+    #[arg(long = "trim-by-grid")]
+    pub trim_by_grid: bool,
+    /// Skip consecutive duplicate frames.
+    #[arg(long = "merge-duplicates")]
+    pub merge_duplicates: bool,
 }
 
 #[derive(Args, Debug)]
 pub struct AseFilterArgs {
     pub file: String,
-    /// outline | replace-index | replace-color | invert | brightness-contrast
+    /// outline | replace-index | replace-color | invert | brightness-contrast | hue-saturation
     pub name: String,
     #[arg(long, short = 'o')]
     pub out: String,
@@ -164,12 +191,18 @@ pub struct AseFilterArgs {
     /// Outline every frame (default: frame 0 only for outline).
     #[arg(long = "all-frames")]
     pub all_frames: bool,
+    #[arg(long = "hue", default_value_t = 0)]
+    pub hue: i32,
+    #[arg(long = "sat", default_value_t = 0)]
+    pub sat: i32,
+    #[arg(long = "value", default_value_t = 0)]
+    pub value: i32,
 }
 
 #[derive(Args, Debug)]
 pub struct AseOpArgs {
     pub file: String,
-    /// flip | rotate90
+    /// flip | rotate90 | flood-fill | crop | canvas-size | trim
     pub name: String,
     #[arg(long, short = 'o')]
     pub out: String,
@@ -178,6 +211,38 @@ pub struct AseOpArgs {
     pub axis: String,
     #[arg(long, default_value = "cw")]
     pub dir: String,
+    #[arg(long, default_value_t = 0)]
+    pub x: i32,
+    #[arg(long, default_value_t = 0)]
+    pub y: i32,
+    #[arg(long)]
+    pub w: Option<u16>,
+    #[arg(long)]
+    pub h: Option<u16>,
+    #[arg(long, default_value_t = 0)]
+    pub frame: u16,
+    /// Fill / target color `#RRGGBB` / `#RRGGBBAA` for flood-fill.
+    #[arg(long = "to-color")]
+    pub to_color: Option<String>,
+    #[arg(long, default_value_t = 0)]
+    pub tolerance: u8,
+    /// canvas-size: place old content at this origin.
+    #[arg(long = "ox", default_value_t = 0)]
+    pub ox: i32,
+    #[arg(long = "oy", default_value_t = 0)]
+    pub oy: i32,
+}
+
+#[derive(Args, Debug)]
+pub struct AseImportArgs {
+    pub file: String,
+    #[arg(long, short = 'o')]
+    pub out: String,
+    /// Asset id for recipe/palette (default: file stem).
+    #[arg(long)]
+    pub asset: Option<String>,
+    #[arg(long)]
+    pub oneframe: bool,
 }
 
 #[derive(Args, Debug)]
@@ -234,6 +299,7 @@ pub fn ase_cmd(ctx: &Ctx, action: AseCmd) -> CmdResult<()> {
         AseCmd::Filter(a) => filter(ctx, a),
         AseCmd::Op(a) => op_cmd(ctx, a),
         AseCmd::SplitSlices(a) => split_slices_cmd(ctx, a),
+        AseCmd::Import(a) => import_cmd(ctx, a),
     }
 }
 
@@ -303,6 +369,13 @@ fn convert_one(
         let colors = load_palette_file(Path::new(pal_path)).map_err(map_err)?;
         apply_palette(&mut doc.sprite, colors).map_err(map_err)?;
     }
+    if a.trim {
+        pxl_ase::ops::trim_sprite(&mut doc.sprite).map_err(map_err)?;
+    }
+    if let Some(crop) = &a.crop {
+        let (x, y, w, h) = parse_crop_rect(crop)?;
+        pxl_ase::ops::crop_sprite(&mut doc.sprite, x, y, w, h).map_err(map_err)?;
+    }
     let algo = DitherAlgorithm::parse(&a.dithering_algorithm).map_err(map_err)?;
     let matrix = DitherMatrix::parse(&a.dithering_matrix).ok_or_else(|| {
         PxlError::usage(format!(
@@ -366,6 +439,12 @@ fn convert_one(
         });
         if frames.is_empty() {
             return Err(PxlError::usage("all selected frames empty (--ignore-empty)").into());
+        }
+    }
+    if a.merge_duplicates {
+        frames = merge_duplicate_frames(&doc.sprite, &frames).map_err(map_err)?;
+        if frames.is_empty() {
+            return Err(PxlError::usage("no frames left after --merge-duplicates").into());
         }
     }
 
@@ -451,13 +530,34 @@ fn convert_one(
                         }
                     });
                 for &f in &frames {
-                    let name = expand_filename_format(
+                    let dur = doc
+                        .sprite
+                        .frame_durations_ms
+                        .get(f as usize)
+                        .copied()
+                        .unwrap_or(100);
+                    let (tagframe, startframe, endframe) = doc
+                        .sprite
+                        .tags
+                        .iter()
+                        .find(|t| t.name == tag_name)
+                        .map(|t| (f.saturating_sub(t.from), t.from, t.to))
+                        .unwrap_or((f, 0, doc.sprite.frame_count().saturating_sub(1) as u16));
+                    let name = expand_filename_format_ctx(
                         &fmt,
-                        f,
-                        &tag_name,
-                        &layer_name,
-                        title,
-                        file,
+                        &FilenameFormatCtx {
+                            frame: f,
+                            tag: &tag_name,
+                            layer: &layer_name,
+                            title,
+                            path: file,
+                            duration_ms: dur as u32,
+                            tagframe,
+                            innertagframe: tagframe,
+                            startframe,
+                            endframe,
+                            ..Default::default()
+                        },
                     );
                     let out = PathBuf::from(name);
                     ensure_out(ctx, &out)?;
@@ -508,6 +608,12 @@ fn resolve_batch_out(save_as: &str, file: &str, index: usize, n: usize) -> CmdRe
 }
 
 fn sheet(ctx: &Ctx, a: AseSheetArgs) -> CmdResult<()> {
+    if a.trim_by_grid {
+        return Err(PxlError::usage(
+            "--trim-by-grid is deferred (M7); use --trim for transparent-border trim",
+        )
+        .into());
+    }
     let mut doc = open(&a.file, a.oneframe).map_err(map_err)?;
     if a.all_layers {
         set_all_layers_visible(&mut doc.sprite, true);
@@ -537,8 +643,20 @@ fn sheet(ctx: &Ctx, a: AseSheetArgs) -> CmdResult<()> {
         .and_then(|s| s.to_str())
         .unwrap_or("sheet.png")
         .to_string();
-    let (png, js) =
-        export_sheet_png_json_layout(&doc.sprite, &frames, &image_name, &a.layout).map_err(map_err)?;
+    let opts = SheetExportOpts {
+        padding: a.padding,
+        extrude: a.extrude,
+        trim: a.trim,
+        merge_duplicates: a.merge_duplicates,
+    };
+    let (png, js) = export_sheet_png_json_layout_opts(
+        &doc.sprite,
+        &frames,
+        &image_name,
+        &a.layout,
+        &opts,
+    )
+    .map_err(map_err)?;
     std::fs::write(&out, png).map_err(|e| PxlError::io(e.to_string()))?;
     let data_path = a.data.unwrap_or_else(|| {
         let mut p = out.clone();
@@ -613,10 +731,14 @@ fn filter(ctx: &Ctx, a: AseFilterArgs) -> CmdResult<()> {
             pxl_ase::filters::brightness_contrast(&mut doc.sprite, a.brightness, a.contrast)
                 .map_err(map_err)?;
         }
+        "hue-saturation" | "huesat" | "hue_saturation" => {
+            pxl_ase::filters::hue_saturation(&mut doc.sprite, a.hue, a.sat, a.value)
+                .map_err(map_err)?;
+        }
         other => {
             return Err(PxlError::usage(format!("unknown filter '{other}'"))
                 .with_hint(
-                    "outline | replace-index | replace-color | invert | brightness-contrast",
+                    "outline | replace-index | replace-color | invert | brightness-contrast | hue-saturation",
                 )
                 .into());
         }
@@ -631,13 +753,114 @@ fn op_cmd(ctx: &Ctx, a: AseOpArgs) -> CmdResult<()> {
         "rotate90" | "rotate" => {
             pxl_ase::ops::rotate90_all_frames(&mut doc.sprite, &a.dir).map_err(map_err)?
         }
+        "flood-fill" | "flood_fill" | "floodfill" => {
+            let to = a
+                .to_color
+                .as_deref()
+                .ok_or_else(|| PxlError::usage("--to-color required for flood-fill"))?;
+            let fill = parse_hex(to)?;
+            pxl_ase::filters::flood_fill_frame(
+                &mut doc.sprite,
+                a.frame,
+                a.x,
+                a.y,
+                fill,
+                a.tolerance,
+            )
+            .map_err(map_err)?;
+        }
+        "crop" => {
+            let w = a.w.ok_or_else(|| PxlError::usage("--w required for crop"))?;
+            let h = a.h.ok_or_else(|| PxlError::usage("--h required for crop"))?;
+            pxl_ase::ops::crop_sprite(&mut doc.sprite, a.x, a.y, w, h).map_err(map_err)?;
+        }
+        "canvas-size" | "canvas_size" => {
+            let w = a.w.ok_or_else(|| PxlError::usage("--w required for canvas-size"))?;
+            let h = a.h.ok_or_else(|| PxlError::usage("--h required for canvas-size"))?;
+            pxl_ase::ops::canvas_size(&mut doc.sprite, w, h, a.ox, a.oy).map_err(map_err)?;
+        }
+        "trim" => {
+            pxl_ase::ops::trim_sprite(&mut doc.sprite).map_err(map_err)?;
+        }
         other => {
             return Err(PxlError::usage(format!("unknown op '{other}'"))
-                .with_hint("flip | rotate90")
+                .with_hint("flip | rotate90 | flood-fill | crop | canvas-size | trim")
                 .into());
         }
     }
     write_filter_out(ctx, &doc, &a.out)
+}
+
+fn import_cmd(ctx: &Ctx, a: AseImportArgs) -> CmdResult<()> {
+    let doc = open(&a.file, a.oneframe).map_err(map_err)?;
+    let asset = a.asset.clone().unwrap_or_else(|| {
+        Path::new(&a.file)
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("imported")
+            .to_string()
+    });
+    let out = PathBuf::from(&a.out);
+    if out.exists() && !ctx.overwrite {
+        // allow existing dir only with overwrite; import creates many files
+        if !out.is_dir() {
+            return Err(PxlError::exists(&out.display().to_string()).into());
+        }
+    }
+    std::fs::create_dir_all(&out).map_err(|e| PxlError::io(e.to_string()))?;
+    let report = pxl_ase::import::import_ase_to_dir(
+        &doc.sprite,
+        Path::new(&a.file),
+        &out,
+        &asset,
+    )
+    .map_err(map_err)?;
+    if ctx.json {
+        println!(
+            "{}",
+            json!({
+                "ok": true,
+                "out": a.out,
+                "manifest": report.manifest_path.display().to_string(),
+                "recipe": report.recipe_path.display().to_string(),
+                "palette": report.palette_path.display().to_string(),
+                "frames": report.frame_paths.iter().map(|p| p.display().to_string()).collect::<Vec<_>>(),
+                "warnings": report.warnings,
+            })
+        );
+    } else if !ctx.quiet {
+        println!(
+            "imported {} → {} (recipe {}, {} frames)",
+            a.file,
+            a.out,
+            report.recipe_path.display(),
+            report.frame_paths.len()
+        );
+        for w in &report.warnings {
+            eprintln!("warning: {w}");
+        }
+    }
+    Ok(())
+}
+
+fn parse_crop_rect(s: &str) -> CmdResult<(i32, i32, u16, u16)> {
+    let parts: Vec<_> = s.split(',').map(str::trim).collect();
+    if parts.len() != 4 {
+        return Err(PxlError::usage("--crop expects x,y,w,h").into());
+    }
+    let x: i32 = parts[0]
+        .parse()
+        .map_err(|_| PxlError::usage("bad --crop x"))?;
+    let y: i32 = parts[1]
+        .parse()
+        .map_err(|_| PxlError::usage("bad --crop y"))?;
+    let w: u16 = parts[2]
+        .parse()
+        .map_err(|_| PxlError::usage("bad --crop w"))?;
+    let h: u16 = parts[3]
+        .parse()
+        .map_err(|_| PxlError::usage("bad --crop h"))?;
+    Ok((x, y, w, h))
 }
 
 fn split_slices_cmd(ctx: &Ctx, a: AseSplitSlicesArgs) -> CmdResult<()> {

@@ -36,11 +36,11 @@
 | M1 | `pxl-ase-doc` 文档模型（RGBA/Indexed/Grayscale） | M0 | **已完成** — `libs/pxl-ase-doc` 单测通过 |
 | M2 | `.aseprite` 读（写可选紧随）+ PNG 往返 | M1 | **已完成** — `pxl-ase-io` roundtrip + PNG 导出 |
 | M3 | 调色板/量化/remap + 色模式转换 CLI | M1–M2 | **已完成** — dither/GPL/ACT + `--palette`/`--dithering-*` |
-| M4 | 像素 op / 滤镜无头批处理 | M1, M3 | **部分完成** — invert/replace-color/brightness + flip/rotate90；非全滤镜 |
+| M4 | 像素 op / 滤镜无头批处理 | M1, M3 | **已完成** — flood-fill/hue-sat/crop/canvas-size + 既有滤镜/ops；选区 mask 延期 |
 | M5 | 合成渲染 + sheet/gif/png 导出对齐公开 CLI | M1–M2, 部分 M4 | **已完成** — PNG/GIF/sheet layout+meta + filename-format 子集 |
 | M6 | 时间轴 tags/slices/linked cels + list-* | M1–M2 | **已完成** — list-slices/split-slices/frame-range/tag direction |
-| M7 | `step-300 ase` 命令面与现有 `sheet`/`op`/`anim` 共存 | M2–M6 | **部分完成** — 公开旗标子集；顺序敏感/trim 等未做 |
-| M8 | step-300 集成试点与契约；缺口关闭清单 | M7 | **部分完成** — pilot 扩展；import 契约未全 |
+| M7 | `step-300 ase` 命令面与现有 `sheet`/`op`/`anim` 共存 | M2–M6 | **部分完成** — P0 trim/padding/extrude/crop/merge-duplicates；顺序敏感 argv/`--trim-by-grid` 延期 |
+| M8 | step-300 集成试点与契约；缺口关闭清单 | M7 | **已完成** — `ase import` + pilot；§4.3 P0 关闭或显式延期 |
 | M9 | （可选）脚本宿主 / 扩展 API | M7+ | **后续** |
 
 ## 与 v6 / v7 / steps 的关系

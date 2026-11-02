@@ -38,7 +38,7 @@ JS mode builds a static `web/` directory from prebuilt miniquad wasm and runs de
 
 ## Contracts
 
-`step-300 ase`（v8.0）提供 `.aseprite` inspect/convert(PNG|GIF)/sheet/list-layers|tags|slices/split-slices/filter/op 子集；详见 `plan/v8.0/`。
+`step-300 ase`（v8.0）提供 `.aseprite` inspect/convert(PNG|GIF)/sheet/list-layers|tags|slices/split-slices/filter/op/import 子集（含 flood-fill、hue-saturation、sheet padding/extrude/trim、`--crop`/`--merge-duplicates`）；详见 `plan/v8.0/`。
 
 Every step prints its contract with `--contract`:
 

@@ -1,8 +1,8 @@
 # 09 · 与 steps 集成与迁移
 
 > 日期：2026-11-02（Asia/Shanghai）  
-> 状态：**部分完成**（2026-11-02 Asia/Shanghai）  
-> 证据：pilot 扩展；steps/README ase；缺口清单部分关闭；import 契约未全
+> 状态：**已完成**（2026-11-02 Asia/Shanghai）  
+> 证据：`ase import` → ase-import/v1 manifest + schema-valid Recipe；pilot 含 flood-fill/hue-sat/flags/import；steps/README；未改 games/；§4.3 P0 已关或显式延期
 
 ## 1. 背景
 
@@ -59,15 +59,17 @@ v8 提供「外部 Aseprite 文档 ↔ 内部确定性资产」桥梁，而不�
 | Outline | core/op | 缺完整 outline_filter 参数面 |
 | `list` 命令 | 列 gen/ops | 不列文档层/标签 |
 
-### 4.3 【缺失】（本版主交付）
+### 4.3 【缺失】→ 关闭状态（M8.3，2026-11-02 Asia/Shanghai）
 
-1. `AseDoc` 多层时间轴模型  
-2. `.aseprite` 编解码  
-3. 层合成 blend  
-4. 滤镜集（hue/replace/convolve/median/…）  
-5. 类官方批处理解析与 flag 矩阵  
-6. Tag/Slice 一等编辑与 split/list  
-7. 正式 `Ase → recipe/PxlDoc` 导入契约版本号  
+| # | 项 | 状态 | 证据 / 备注 |
+|---|---|---|---|
+| 1 | `AseDoc` 多层时间轴模型 | 已关闭 | `pxl-ase-doc`；M1 |
+| 2 | `.aseprite` 编解码 | 已关闭 | `pxl-ase-io`；M2 |
+| 3 | 层合成 blend | 部分/延期 | flatten 已有 normal 合成；高级 blend mode 延期 |
+| 4 | 滤镜集（hue/replace/…） | P0 已关闭 | hue-saturation/replace/outline/invert/brightness-contrast；convolve/median/curve **延期**（P1/P2） |
+| 5 | 类官方批处理解析与 flag 矩阵 | 部分/延期 | 矩阵已刷新；顺序敏感 argv **延期**；P0 旗标子集已挂 |
+| 6 | Tag/Slice 一等编辑与 split/list | 已关闭 | M6；list/split CLI |
+| 7 | 正式 `Ase → recipe/PxlDoc` 导入契约 | 已关闭 | `ase import` + `ase-import/v1` + schema-valid Recipe |
 
 ## 5. 契约草案（待 P 任务冻结）
 

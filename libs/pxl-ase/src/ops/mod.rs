@@ -92,10 +92,154 @@ pub fn rotate90_all_frames(sprite: &mut Sprite, dir: &str) -> Result<()> {
     apply_op_to_frames(sprite, &frames, &Op::Rotate90 { dir }, 0)
 }
 
+
+/// Crop the sprite canvas to `[x,y,w,h)` (document space). Updates slices.
+/// Flattens layers into one RGBA layer per frame.
+pub fn crop_sprite(sprite: &mut Sprite, x: i32, y: i32, w: u16, h: u16) -> Result<()> {
+    if w == 0 || h == 0 {
+        return Err(AseErr("crop size must be non-zero".into()));
+    }
+    let ow = sprite.width as i32;
+    let oh = sprite.height as i32;
+    let frames = sprite.frame_count();
+    let mut flats = Vec::with_capacity(frames);
+    for f in 0..frames {
+        let src = flatten_frame_rgba(sprite, f as u16)?;
+        let mut out = vec![0u8; (w as usize) * (h as usize) * 4];
+        for dy in 0..h as i32 {
+            for dx in 0..w as i32 {
+                let sx = x + dx;
+                let sy = y + dy;
+                if sx < 0 || sy < 0 || sx >= ow || sy >= oh {
+                    continue;
+                }
+                let si = ((sy * ow + sx) * 4) as usize;
+                let di = ((dy * w as i32 + dx) * 4) as usize;
+                out[di..di + 4].copy_from_slice(&src[si..si + 4]);
+            }
+        }
+        flats.push(out);
+    }
+    for slice in &mut sprite.slices {
+        for key in &mut slice.keys {
+            key.x -= x;
+            key.y -= y;
+            if let Some((px, py)) = key.pivot.as_mut() {
+                *px -= x;
+                *py -= y;
+            }
+            if let Some((cx, cy, _cw, _ch)) = key.center.as_mut() {
+                *cx -= x;
+                *cy -= y;
+            }
+        }
+    }
+    sprite.layers.clear();
+    sprite.images.clear();
+    sprite.width = w;
+    sprite.height = h;
+    let layer = sprite.add_image_layer("Cropped");
+    for (fi, px) in flats.into_iter().enumerate() {
+        let img = pxl_ase_doc::RgbaImage::from_rgba(w, h, px);
+        let id = sprite.insert_image(ImageBuffer::Rgba(img));
+        sprite.set_cel(layer, fi as u16, pxl_ase_doc::Cel::image(id, 0, 0, 255));
+    }
+    sprite.color_mode = ColorMode::Rgba;
+    Ok(())
+}
+
+/// Resize canvas to `new_w`×`new_h`, placing old content at `(ox, oy)`.
+/// Content outside the new canvas is clipped. Updates slices.
+pub fn canvas_size(
+    sprite: &mut Sprite,
+    new_w: u16,
+    new_h: u16,
+    ox: i32,
+    oy: i32,
+) -> Result<()> {
+    if new_w == 0 || new_h == 0 {
+        return Err(AseErr("canvas size must be non-zero".into()));
+    }
+    let ow = sprite.width as i32;
+    let oh = sprite.height as i32;
+    let frames = sprite.frame_count();
+    let mut flats = Vec::with_capacity(frames);
+    for f in 0..frames {
+        let src = flatten_frame_rgba(sprite, f as u16)?;
+        let mut out = vec![0u8; (new_w as usize) * (new_h as usize) * 4];
+        for sy in 0..oh {
+            for sx in 0..ow {
+                let dx = sx + ox;
+                let dy = sy + oy;
+                if dx < 0 || dy < 0 || dx >= new_w as i32 || dy >= new_h as i32 {
+                    continue;
+                }
+                let si = ((sy * ow + sx) * 4) as usize;
+                let di = ((dy * new_w as i32 + dx) * 4) as usize;
+                out[di..di + 4].copy_from_slice(&src[si..si + 4]);
+            }
+        }
+        flats.push(out);
+    }
+    for slice in &mut sprite.slices {
+        for key in &mut slice.keys {
+            key.x += ox;
+            key.y += oy;
+            if let Some((px, py)) = key.pivot.as_mut() {
+                *px += ox;
+                *py += oy;
+            }
+        }
+    }
+    sprite.layers.clear();
+    sprite.images.clear();
+    sprite.width = new_w;
+    sprite.height = new_h;
+    let layer = sprite.add_image_layer("Canvas");
+    for (fi, px) in flats.into_iter().enumerate() {
+        let img = pxl_ase_doc::RgbaImage::from_rgba(new_w, new_h, px);
+        let id = sprite.insert_image(ImageBuffer::Rgba(img));
+        sprite.set_cel(layer, fi as u16, pxl_ase_doc::Cel::image(id, 0, 0, 255));
+    }
+    sprite.color_mode = ColorMode::Rgba;
+    Ok(())
+}
+
+/// Trim transparent borders across all frames (union bbox), then crop.
+pub fn trim_sprite(sprite: &mut Sprite) -> Result<Option<(i32, i32, u16, u16)>> {
+    let ow = sprite.width as i32;
+    let oh = sprite.height as i32;
+    let mut min_x = ow;
+    let mut min_y = oh;
+    let mut max_x = -1;
+    let mut max_y = -1;
+    for f in 0..sprite.frame_count() {
+        let rgba = flatten_frame_rgba(sprite, f as u16)?;
+        for y in 0..oh {
+            for x in 0..ow {
+                let i = ((y * ow + x) * 4) as usize;
+                if rgba[i + 3] >= 8 {
+                    min_x = min_x.min(x);
+                    min_y = min_y.min(y);
+                    max_x = max_x.max(x);
+                    max_y = max_y.max(y);
+                }
+            }
+        }
+    }
+    if max_x < min_x {
+        return Ok(None);
+    }
+    let w = (max_x - min_x + 1) as u16;
+    let h = (max_y - min_y + 1) as u16;
+    crop_sprite(sprite, min_x, min_y, w, h)?;
+    Ok(Some((min_x, min_y, w, h)))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use pxl_ase_doc::{Cel, ColorMode, ImageBuffer, IndexedImage, Sprite};
+    use pxl_ase_doc::{Cel, ColorMode, ImageBuffer, IndexedImage, RgbaImage, Sprite};
     use pxl_core::Rgba;
 
     #[test]
@@ -110,5 +254,28 @@ mod tests {
         s.set_cel(layer, 1, Cel::linked(0));
         flip_all_frames(&mut s, "h").unwrap();
         assert_eq!(s.frame_count(), 2);
+    }
+
+    #[test]
+    fn crop_and_canvas_size() {
+        let mut s = Sprite::new(4, 4, ColorMode::Rgba);
+        s.frame_durations_ms = vec![100];
+        let layer = s.add_image_layer("a");
+        let mut px = vec![0u8; 4 * 4 * 4];
+        // opaque pixel at (2,2)
+        let i = (2 * 4 + 2) * 4;
+        px[i] = 9;
+        px[i + 1] = 8;
+        px[i + 2] = 7;
+        px[i + 3] = 255;
+        let img = RgbaImage::from_rgba(4, 4, px);
+        let id = s.insert_image(ImageBuffer::Rgba(img));
+        s.set_cel(layer, 0, Cel::image(id, 0, 0, 255));
+        crop_sprite(&mut s, 1, 1, 2, 2).unwrap();
+        assert_eq!((s.width, s.height), (2, 2));
+        let flat = flatten_frame_rgba(&s, 0).unwrap();
+        assert_eq!(&flat[12..16], &[9, 8, 7, 255]); // local (1,1) after crop from (2,2)
+        canvas_size(&mut s, 4, 4, 1, 1).unwrap();
+        assert_eq!((s.width, s.height), (4, 4));
     }
 }

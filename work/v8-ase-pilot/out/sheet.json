@@ -4,62 +4,62 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 4,
-        "h": 4
+        "w": 6,
+        "h": 6
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 4,
-        "h": 4
+        "w": 6,
+        "h": 6
       },
       "sourceSize": {
-        "w": 4,
-        "h": 4
+        "w": 6,
+        "h": 6
       },
       "duration": 100
     },
     "frame_1": {
       "frame": {
-        "x": 4,
+        "x": 7,
         "y": 0,
-        "w": 4,
-        "h": 4
+        "w": 6,
+        "h": 6
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 4,
-        "h": 4
+        "w": 6,
+        "h": 6
       },
       "sourceSize": {
-        "w": 4,
-        "h": 4
+        "w": 6,
+        "h": 6
       },
       "duration": 100
     },
     "frame_2": {
       "frame": {
-        "x": 8,
+        "x": 14,
         "y": 0,
-        "w": 4,
-        "h": 4
+        "w": 6,
+        "h": 6
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 4,
-        "h": 4
+        "w": 6,
+        "h": 6
       },
       "sourceSize": {
-        "w": 4,
-        "h": 4
+        "w": 6,
+        "h": 6
       },
       "duration": 100
     }
@@ -70,8 +70,8 @@
     "image": "sheet.png",
     "format": "indexed8",
     "size": {
-      "w": 12,
-      "h": 4
+      "w": 20,
+      "h": 6
     },
     "scale": "1",
     "frameTags": [
