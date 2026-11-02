@@ -22,7 +22,8 @@ pub(crate) fn json_line(stdout: &str) -> Value {
 }
 
 pub(crate) fn repo_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../..")
+    // Package lives at <repo>/libs/pxl-cli; two levels up is the workspace root.
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 
 pub(crate) fn build_to(recipe: &std::path::Path, tag: &str) -> PathBuf {
