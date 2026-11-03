@@ -17,9 +17,18 @@
 | GB-5 `--shrink-to` | P2 | 已完成 | `ops::shrink_sprite_to` |
 | GC-2..4 | P1–P2 | 已完成 | split/padding/format/sheet 高级旗标 |
 | GD-1..6 / GD-8 | P1–P2 | 已完成 | frame/tag/layer/cel/flatten/sprite/palette-sort |
-| GD-7 帧级 palette | P2 | 已完成 | `frame_palettes` 读写；`ase palette set/add/remove/clear-frame --frame`；`frame_palette_roundtrip` |
+| GD-7 帧级 palette | P2 | 已完成 | `frame_palettes` + CLI；`frame_palette_roundtrip` |
+| Palette entry names | P2 | 已完成 | `palette_names` / `frame_palette_names` 读写；不再记 loss note；`palette_entry_names_roundtrip` |
 | GE-1..3 | P1–P2 | 已完成 | convolve/median/curve |
-| GE-4 target/tiled | P2 | 已完成 | `FilterOpts` + `--channels`/`--tiled`；见 `ge4-filter-boundary.md` |
-| GE-5 tileset + 渲染 | P2 | 已完成 | 读 0x2023/cel3；`export-tileset`；**tilemap 层参与 flatten**（`tilemap_paints_tiles_into_flatten`） |
+| GE-4 target/tiled | P2 | 已完成 | `FilterOpts` + `--channels`/`--tiled` |
+| GE-5 tileset + 渲染 | P2 | 已完成 | 0x2023/cel3；export-tileset；tilemap flatten |
+
+## 仍开放 / 明确不做
+
+| 项 | 状态 | 说明 |
+|---|---|---|
+| Tile management plugins | **不做** | GE-5 范围冻结：无 `set_sprite_tile_management_plugin` / 外部 tileset 编辑 |
+| `AGENTS.md` | 未跟踪 | 工作区若存在仍 untracked；本轮不纳入 |
+| 多页 sheet pack | 不做 | GC-4 单页；超高失败 |
 
 验证：`cargo +1.95.0 test -p pxl-ase-doc -p pxl-ase-io -p pxl-ase --lib`；`check -p pxl-cli`。

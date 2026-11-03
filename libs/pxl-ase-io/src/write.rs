@@ -85,7 +85,12 @@ pub fn write_aseprite_bytes(sprite: &Sprite, opts: &WriteOptions) -> IoResult<Ve
         }
         if fi > 0 {
             if let Some(pal) = sprite.frame_palettes.get(&(fi as u16)) {
-                chunks.push(encode_palette_colors(pal));
+                let names = sprite
+                    .frame_palette_names
+                    .get(&(fi as u16))
+                    .map(|n| n.as_slice())
+                    .unwrap_or(&[]);
+                chunks.push(encode_palette_colors(pal, names));
             }
         }
         let duration = sprite
@@ -169,10 +174,10 @@ fn encode_layer_chunk(layer: &pxl_ase_doc::Layer, header_flags: u32) -> Vec<u8> 
 }
 
 fn encode_palette_chunk(sprite: &Sprite) -> Vec<u8> {
-    encode_palette_colors(&sprite.palette)
+    encode_palette_colors(&sprite.palette, &sprite.palette_names)
 }
 
-fn encode_palette_colors(colors: &[pxl_core::Rgba]) -> Vec<u8> {
+fn encode_palette_colors(colors: &[pxl_core::Rgba], names: &[Option<String>]) -> Vec<u8> {
     let colors = if colors.is_empty() {
         vec![pxl_core::Rgba::TRANSPARENT]
     } else {
@@ -183,12 +188,21 @@ fn encode_palette_colors(colors: &[pxl_core::Rgba]) -> Vec<u8> {
     body.extend_from_slice(&0u32.to_le_bytes());
     body.extend_from_slice(&((colors.len() as u32).saturating_sub(1)).to_le_bytes());
     body.extend_from_slice(&[0u8; 8]);
-    for c in &colors {
-        body.extend_from_slice(&0u16.to_le_bytes()); // flags
+    for (i, c) in colors.iter().enumerate() {
+        let name = names.get(i).and_then(|n| n.as_ref());
+        let flags: u16 = if name.map(|s| !s.is_empty()).unwrap_or(false) {
+            1
+        } else {
+            0
+        };
+        body.extend_from_slice(&flags.to_le_bytes());
         body.push(c.r);
         body.push(c.g);
         body.push(c.b);
         body.push(c.a);
+        if flags & 1 != 0 {
+            write_string(&mut body, name.unwrap());
+        }
     }
     wrap_chunk(0x2019, &body)
 }

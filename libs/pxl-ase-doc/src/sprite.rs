@@ -97,8 +97,12 @@ pub struct Sprite {
     pub layers: Vec<Layer>,
     pub images: BTreeMap<ImageId, ImageBuffer>,
     pub palette: Vec<Rgba>,
+    /// Optional names parallel to `palette` (ASE 0x2019 flag bit0).
+    pub palette_names: Vec<Option<String>>,
     /// Per-frame palette overrides (ASE 0x2019 on frame >0).
     pub frame_palettes: BTreeMap<FrameIndex, Vec<Rgba>>,
+    /// Names parallel to each `frame_palettes` entry.
+    pub frame_palette_names: BTreeMap<FrameIndex, Vec<Option<String>>>,
     pub tags: Vec<Tag>,
     pub slices: Vec<Slice>,
     pub grid: Grid,
@@ -128,7 +132,9 @@ impl Sprite {
             layers: Vec::new(),
             images: BTreeMap::new(),
             palette: Vec::new(),
+            palette_names: Vec::new(),
             frame_palettes: BTreeMap::new(),
+            frame_palette_names: BTreeMap::new(),
             tags: Vec::new(),
             slices: Vec::new(),
             grid: Grid::default(),
@@ -245,9 +251,26 @@ impl Sprite {
             } else {
                 self.palette.clone()
             };
+            let names = if self.palette_names.len() == base.len() {
+                self.palette_names.clone()
+            } else {
+                let mut n = self.palette_names.clone();
+                n.resize(base.len(), None);
+                n
+            };
             self.frame_palettes.insert(frame, base);
+            self.frame_palette_names.insert(frame, names);
         }
         self.frame_palettes.get_mut(&frame).unwrap()
+    }
+
+    /// Keep `palette_names` length in sync with `palette`.
+    pub fn sync_palette_names_len(&mut self) {
+        if self.palette_names.len() < self.palette.len() {
+            self.palette_names.resize(self.palette.len(), None);
+        } else if self.palette_names.len() > self.palette.len() {
+            self.palette_names.truncate(self.palette.len());
+        }
     }
     pub fn visible_image_layers(&self) -> impl Iterator<Item = &Layer> {
         self.layers

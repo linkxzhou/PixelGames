@@ -193,37 +193,53 @@ pub(crate) fn read_palette_chunk(
     let last = read_u32(c)? as usize;
     let mut pad = [0u8; 8];
     c.read_exact(&mut pad)?;
-    let mut entries = Vec::new();
+    let mut entries: Vec<(usize, Rgba, Option<String>)> = Vec::new();
     for i in first..=last {
         let flags = read_u16(c)?;
         let r = read_u8(c)?;
         let g = read_u8(c)?;
         let b = read_u8(c)?;
         let a = read_u8(c)?;
-        if flags & 1 != 0 {
-            let _name = read_string(c)?;
-            let note = "dropped palette entry name(s); write-back will not restore names";
-            if !sprite.read_loss_notes.iter().any(|n| n == note) {
-                sprite.read_loss_notes.push(note.into());
-            }
-        }
-        entries.push((i, Rgba { r, g, b, a }));
+        let name = if flags & 1 != 0 {
+            Some(read_string(c)?)
+        } else {
+            None
+        };
+        entries.push((i, Rgba { r, g, b, a }, name));
     }
-    let apply = |pal: &mut Vec<Rgba>| {
+    let apply = |pal: &mut Vec<Rgba>, names: &mut Vec<Option<String>>| {
         if pal.len() < size {
             pal.resize(size, Rgba::TRANSPARENT);
         }
-        for (i, rgba) in entries.iter() {
+        if names.len() < pal.len() {
+            names.resize(pal.len(), None);
+        }
+        for (i, rgba, name) in &entries {
             if *i < pal.len() {
                 pal[*i] = *rgba;
             }
+            if *i < names.len() {
+                names[*i] = name.clone();
+            }
         }
     };
+    // Clear obsolete loss note once names are preserved.
+    sprite
+        .read_loss_notes
+        .retain(|n| n != "dropped palette entry name(s); write-back will not restore names");
     if frame == 0 {
-        apply(&mut sprite.palette);
+        apply(&mut sprite.palette, &mut sprite.palette_names);
     } else {
         let _ = sprite.ensure_frame_palette(frame);
-        apply(sprite.frame_palettes.get_mut(&frame).unwrap());
+        let pal = sprite.frame_palettes.get_mut(&frame).unwrap();
+        let names = sprite
+            .frame_palette_names
+            .entry(frame)
+            .or_insert_with(|| vec![None; pal.len()]);
+        if names.len() < pal.len() {
+            names.resize(pal.len(), None);
+        }
+        apply(pal, names);
     }
     Ok(())
 }

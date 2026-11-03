@@ -131,6 +131,25 @@ mod tests {
     }
 
     #[test]
+    fn palette_entry_names_roundtrip() {
+        use pxl_core::Rgba;
+        let mut src = Sprite::new(1, 1, ColorMode::Indexed);
+        src.palette = vec![Rgba::TRANSPARENT, Rgba::rgb(1, 2, 3)];
+        src.palette_names = vec![None, Some("skin".into())];
+        let bytes = write_aseprite_bytes(&src, &WriteOptions::default()).unwrap();
+        let dst = read_aseprite_bytes(&bytes, &ReadOptions::default()).unwrap().sprite;
+        assert_eq!(dst.palette_names.get(1).and_then(|n| n.as_deref()), Some("skin"));
+        assert!(
+            !dst
+                .read_loss_notes
+                .iter()
+                .any(|n| n.contains("palette entry name")),
+            "names preserved → no loss note: {:?}",
+            dst.read_loss_notes
+        );
+    }
+
+    #[test]
     fn write_emits_loss_warnings_for_skipped_chunks() {
         let mut src = mini_indexed();
         src.read_loss_notes.push("skipped Color Profile chunk (0x2007); write-back will drop it".into());

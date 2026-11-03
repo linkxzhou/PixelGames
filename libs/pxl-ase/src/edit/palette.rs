@@ -106,6 +106,20 @@ pub fn palette_set_entry(
         return Err(AseErr("palette index must be < 256".into()));
     }
     pal[index] = color;
+    let pal_len = pal.len();
+    drop(pal);
+    match frame {
+        None => sprite.sync_palette_names_len(),
+        Some(f) => {
+            let names = sprite
+                .frame_palette_names
+                .entry(f)
+                .or_insert_with(|| vec![None; pal_len]);
+            if names.len() < pal_len {
+                names.resize(pal_len, None);
+            }
+        }
+    }
     Ok(())
 }
 
@@ -125,7 +139,22 @@ pub fn palette_add_entry(
         return Err(AseErr("palette already has 256 colors".into()));
     }
     pal.push(color);
-    Ok(pal.len() - 1)
+    let new_index = pal.len() - 1;
+    drop(pal);
+    match frame {
+        None => {
+            sprite.palette_names.push(None);
+            sprite.sync_palette_names_len();
+        }
+        Some(f) => {
+            sprite
+                .frame_palette_names
+                .entry(f)
+                .or_insert_with(Vec::new)
+                .push(None);
+        }
+    }
+    Ok(new_index)
 }
 
 pub fn palette_remove_entry(
@@ -139,6 +168,10 @@ pub fn palette_remove_entry(
                 return Err(AseErr(format!("palette index {index} out of range")));
             }
             sprite.palette.remove(index);
+            if index < sprite.palette_names.len() {
+                sprite.palette_names.remove(index);
+            }
+            sprite.sync_palette_names_len();
         }
         Some(f) => {
             let Some(pal) = sprite.frame_palettes.get_mut(&f) else {
@@ -148,8 +181,14 @@ pub fn palette_remove_entry(
                 return Err(AseErr(format!("frame palette index {index} out of range")));
             }
             pal.remove(index);
+            if let Some(names) = sprite.frame_palette_names.get_mut(&f) {
+                if index < names.len() {
+                    names.remove(index);
+                }
+            }
             if pal.is_empty() {
                 sprite.frame_palettes.remove(&f);
+                sprite.frame_palette_names.remove(&f);
             }
         }
     }
@@ -160,6 +199,7 @@ pub fn palette_clear_frame(sprite: &mut Sprite, frame: u16) -> Result<()> {
     if sprite.frame_palettes.remove(&frame).is_none() {
         return Err(AseErr(format!("no frame palette on frame {frame}")));
     }
+    sprite.frame_palette_names.remove(&frame);
     Ok(())
 }
 
