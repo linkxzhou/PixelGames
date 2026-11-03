@@ -1,7 +1,8 @@
 # CLI flag 覆盖矩阵（v8.0 / M0–M9）
 
-> 日期：2026-11-02（Asia/Shanghai）  
-> 对照：https://www.aseprite.org/docs/cli/
+> 日期：2026-11-03（Asia/Shanghai）  
+> 对照：https://www.aseprite.org/docs/cli/ + 本地 `thirdparty/aseprite/src/app/cli/app_options.h`  
+> v8.1 **GC-1**：补全对照 `app_options.h` 曾缺行的旗标（状态与 `libs/pxl-cli/src/cmd/ase/` 核对）
 
 | Flag / 子命令 | 状态 | 说明 |
 |---|---|---|
@@ -40,3 +41,50 @@
 | `--play-subtags` | 部分 | Tag 模型无 parent；按范围包含推断子标签并展开 direction；重叠兄弟启发式；见 08 |
 | `--script` / `ase script` | 部分 | Rhai：`ase script <path> --script-param k=v`；`--shell` REPL **不做/后续**；MCP 未做 |
 | 顺序敏感官方 CLI 解析器 / `ase run` | 部分 | 最小 `AseBatchParser`：open / `--save-as` / `--sheet` / `--tag` / `--trim` / `--trim-by-grid` / `--play-subtags` / `--filter replace-color|invert` / `--op trim|flip`；**非**官方全集 |
+
+
+## v8.1 GC-1 · `app_options.h` 曾缺行旗标
+
+> 证据：`thirdparty/aseprite/src/app/cli/app_options.h` / `app_options.cpp`；实现核验：`libs/pxl-cli/src/cmd/ase/{args,convert,ops,mod}.rs`。  
+> 状态取值：已实现 / 部分 / 缺失 / 不做。扩展别名须写明映射。
+
+| Flag | 状态 | 证据 / 映射 | 说明 |
+|---|---|---|---|
+| `--split-layers` | 缺失 | `app_options.h` `splitLayers()`；CLI 无同名 arg | 按层拆文件导出；GC-2 |
+| `--split-tags` | 缺失 | `splitTags()`；CLI 无同名 arg | 按 tag 拆文件；GC-2 |
+| `--split-grid` | 缺失 | `splitGrid()`；CLI 无同名 arg | 按 grid 拆；GC-2 / 07 |
+| `--split-slices` | 已实现 | `args.rs` `split_slices`；`ase split-slices` / `convert --split-slices` | 矩阵上表已有；此处对照确认 |
+| `--slice <name>` | 缺失 | `slice()`；CLI 无按名过滤 | 仅导出指定 slice；≠ `split-slices`；GC-2 |
+| `--ignore-layer` | 缺失 | `ignoreLayer()`；有 `--layer` / `--all-layers` 无忽略列表 | GC-2；可与 `--layer` 组合语义对齐 |
+| `--shrink-to` | 缺失 | `shrinkTo()`；08 §6 标「做」；CLI 无 arg | GB-5 / GC-2 外的缩放适配 |
+| `--format`（`json-hash` / `json-array`） | 部分 | 官方 `format()`；我方 sheet 侧车经 `--data` 写 JSON（hash 形） | **无** `--format json-array`；GC-3；现有 `--data` 消费者勿破 |
+| `--data` | 已实现 | `AseSheetArgs.data` → sheet sidecar | 上表已有；与 `--format` 分工：我方用 `--data` 路径，未暴露 format 枚举 |
+| `--tagname-format` | 缺失 | `tagnameFormat()`；仅有 `--filename-format` 子集 | GC-4 |
+| `--filename-format` | 部分 | 上表已列占位符子集 | 冷门占位符不做 |
+| `--power-of-two-size` | 缺失 | `powerOfTwoSize()`；CLI 无 | GC-4；依赖 pack 能力 |
+| `--trim-sprite` | 部分 | 官方独立 flag；我方 `convert --trim` / `ase op trim` 调 `ops::trim_sprite`（`ops.rs`/`convert.rs`） | **无**官方同名 `--trim-sprite`；文档级透明边裁语义已覆盖 convert；sheet 的 `--trim` 是 per-cell bbox |
+| `--trim` | 已实现 | convert=文档裁；sheet=cell bbox | 上表已有 |
+| `--trim-by-grid` | 已实现 | convert/sheet | 上表已有 |
+| `--border-padding` | 部分 | 官方三分 padding；我方单一 `--padding` → `pack_sheet` pad（`AseSheetArgs.padding`） | 扩展别名 **`--padding`** ≈ 均匀 border/shape；**未**拆 shape/inner；GC-2 |
+| `--shape-padding` | 部分 | 同上 | 映射进 `--padding` 时无法区分；GC-2 拆分前保持「部分」 |
+| `--inner-padding` | 部分 | 同上 | 同上 |
+| `--padding` | 已实现 | 扩展别名（非官方同名）；sheet | 映射官方三类 padding 的均匀近似 |
+| `--sheet-type` | 部分 | 官方 `sheetType()`；我方扩展 **`--layout`**=`horizontal\|vertical\|packed\|rows\|grid` | `packed`≈`--sheet-pack`；非官方全集 type 名；GC-4 |
+| `--sheet-pack` | 部分 | 官方；我方 `--layout packed` | 无独立 `--sheet-pack` 开关 |
+| `--sheet-width` / `--sheet-height` | 缺失 | `sheetWidth/Height()`；CLI 无 | GC-4 |
+| `--sheet-columns` / `--sheet-rows` | 缺失 | `sheetColumns/Rows()`；`--layout rows\|grid` 无固定行列数 | GC-4 |
+| `--layout` | 已实现 | 扩展别名 → `pxl-export` layouts | 对应 `--sheet-type` 子集 |
+| `--list-layers` | 已实现 | `ase list-layers` | 上表已有 |
+| `--list-layer-hierarchy` | 缺失 | `listLayerHierarchy()`；仅扁平 `list-layers` | GC-2/树形输出未做 |
+| `--export-tileset` | 缺失 | `exportTileset()`；tileset IO 仍跳过（GE-5） | 矩阵如实：缺失；实现依赖 tilemap P2 |
+| `--layer` / `--all-layers` | 已实现 | convert/sheet 可见性 | 上表已有；非 `--ignore-layer` |
+
+### 扩展别名速查
+
+| 官方 | 我方 | 关系 |
+|---|---|---|
+| `--sheet-type` | `--layout` | 子集别名；packed/rows/grid/horizontal/vertical |
+| `--sheet-pack` | `--layout packed` | 等价意图 |
+| `--border-padding` / `--shape-padding` / `--inner-padding` | `--padding` | 单一均匀 pad；未拆三路 |
+| `--format json-hash` | `--data <path>` | 侧车路径；未暴露 format 枚举 |
+| `--trim-sprite` | `convert --trim` / `ase op trim` | 语义近；旗标名不同 |
