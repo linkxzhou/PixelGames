@@ -4,6 +4,7 @@ use alloc::string::String;
 use crate::blend::BlendMode;
 use crate::image::{GrayImage, IndexedImage, RgbaImage};
 use crate::types::{FrameIndex, ImageId, LayerId};
+use crate::user_data::UserData;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LayerKind {
@@ -69,9 +70,12 @@ pub enum Cel {
         y: i16,
         opacity: u8,
         z_index: i16,
+        user_data: UserData,
     },
     Linked {
         frame: FrameIndex,
+        z_index: i16,
+        user_data: UserData,
     },
 }
 
@@ -83,11 +87,34 @@ impl Cel {
             y,
             opacity,
             z_index: 0,
+            user_data: UserData::default(),
         }
     }
 
     pub fn linked(frame: FrameIndex) -> Self {
-        Cel::Linked { frame }
+        Cel::Linked {
+            frame,
+            z_index: 0,
+            user_data: UserData::default(),
+        }
+    }
+
+    pub fn z_index(&self) -> i16 {
+        match self {
+            Cel::Image { z_index, .. } | Cel::Linked { z_index, .. } => *z_index,
+        }
+    }
+
+    pub fn user_data(&self) -> &UserData {
+        match self {
+            Cel::Image { user_data, .. } | Cel::Linked { user_data, .. } => user_data,
+        }
+    }
+
+    pub fn user_data_mut(&mut self) -> &mut UserData {
+        match self {
+            Cel::Image { user_data, .. } | Cel::Linked { user_data, .. } => user_data,
+        }
     }
 }
 
@@ -124,6 +151,7 @@ pub struct Layer {
     pub opacity: u8,
     pub cels: BTreeMap<FrameIndex, Cel>,
     pub tileset_index: Option<u32>,
+    pub user_data: UserData,
 }
 
 impl Layer {
@@ -142,6 +170,7 @@ impl Layer {
             opacity: 255,
             cels: BTreeMap::new(),
             tileset_index: None,
+            user_data: UserData::default(),
         }
     }
 }

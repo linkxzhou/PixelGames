@@ -3,9 +3,10 @@ use std::path::Path;
 
 use flate2::write::ZlibEncoder;
 use flate2::Compression;
-use pxl_ase_doc::{Cel, ColorMode, ImageBuffer, LayerKind, Sprite, TagDirection};
+use pxl_ase_doc::{Cel, ColorMode, ImageBuffer, LayerKind, Sprite, TagDirection, UserData};
 
 use crate::error::{IoError, IoResult};
+use crate::user_data::encode_user_data_body;
 
 #[derive(Clone, Debug)]
 pub struct WriteOptions {
@@ -27,6 +28,7 @@ pub fn write_aseprite(path: impl AsRef<Path>, sprite: &Sprite, opts: &WriteOptio
 }
 
 pub fn write_aseprite_bytes(sprite: &Sprite, opts: &WriteOptions) -> IoResult<Vec<u8>> {
+    emit_write_loss_warnings(sprite);
     let mut frames_blob = Vec::new();
     let frame_count = sprite.frame_count().max(1);
 
@@ -35,20 +37,37 @@ pub fn write_aseprite_bytes(sprite: &Sprite, opts: &WriteOptions) -> IoResult<Ve
         if fi == 0 {
             for layer in &sprite.layers {
                 chunks.push(encode_layer_chunk(layer));
+                if !layer.user_data.is_empty() {
+                    chunks.push(wrap_chunk(0x2020, &encode_user_data_body(&layer.user_data)));
+                }
             }
             if !sprite.palette.is_empty() || sprite.color_mode == ColorMode::Indexed {
                 chunks.push(encode_palette_chunk(sprite));
             }
+            if !sprite.user_data.is_empty() {
+                chunks.push(wrap_chunk(0x2020, &encode_user_data_body(&sprite.user_data)));
+            }
             if !sprite.tags.is_empty() {
                 chunks.push(encode_tags_chunk(sprite));
+                for tag in &sprite.tags {
+                    if !tag.user_data.is_empty() {
+                        chunks.push(wrap_chunk(0x2020, &encode_user_data_body(&tag.user_data)));
+                    }
+                }
             }
             for slice in &sprite.slices {
                 chunks.push(encode_slice_chunk(slice));
+                if !slice.user_data.is_empty() {
+                    chunks.push(wrap_chunk(0x2020, &encode_user_data_body(&slice.user_data)));
+                }
             }
         }
         for layer in &sprite.layers {
             if let Some(cel) = layer.cels.get(&(fi as u16)) {
                 chunks.push(encode_cel_chunk(layer.id.0, cel, sprite, opts)?);
+                if !cel.user_data().is_empty() {
+                    chunks.push(wrap_chunk(0x2020, &encode_user_data_body(cel.user_data())));
+                }
             }
         }
         let duration = sprite
@@ -158,10 +177,15 @@ fn encode_tags_chunk(sprite: &Sprite) -> Vec<u8> {
         body.push(t.direction.to_u8());
         body.extend_from_slice(&t.repeat.to_le_bytes());
         body.extend_from_slice(&[0u8; 6]);
-        body.extend_from_slice(&[0, 0, 0]); // deprecated rgb
+        let (r, g, b) = t
+            .user_data
+            .color
+            .map(|c| (c.r, c.g, c.b))
+            .unwrap_or((0, 0, 0));
+        body.extend_from_slice(&[r, g, b]); // deprecated rgb (compat); canonical color in following UD
         body.push(0);
         write_string(&mut body, &t.name);
-        let _ = TagDirection::Forward; // keep import used if empty
+        let _ = TagDirection::Forward;
     }
     wrap_chunk(0x2018, &body)
 }
@@ -210,12 +234,12 @@ fn encode_cel_chunk(
     let mut body = Vec::new();
     body.extend_from_slice(&layer_index.to_le_bytes());
     match cel {
-        Cel::Linked { frame } => {
+        Cel::Linked { frame, z_index, .. } => {
             body.extend_from_slice(&0i16.to_le_bytes());
             body.extend_from_slice(&0i16.to_le_bytes());
             body.push(255);
             body.extend_from_slice(&1u16.to_le_bytes()); // linked
-            body.extend_from_slice(&0i16.to_le_bytes());
+            body.extend_from_slice(&z_index.to_le_bytes());
             body.extend_from_slice(&[0u8; 5]);
             body.extend_from_slice(&frame.to_le_bytes());
         }
@@ -225,6 +249,7 @@ fn encode_cel_chunk(
             y,
             opacity,
             z_index,
+            ..
         } => {
             body.extend_from_slice(&x.to_le_bytes());
             body.extend_from_slice(&y.to_le_bytes());
@@ -270,4 +295,11 @@ fn write_string(out: &mut Vec<u8>, s: &str) {
     let b = s.as_bytes();
     out.extend_from_slice(&(b.len() as u16).to_le_bytes());
     out.extend_from_slice(b);
+}
+
+fn emit_write_loss_warnings(sprite: &Sprite) {
+    for note in &sprite.read_loss_notes {
+        eprintln!("pxl-ase-io write warning: {note}");
+    }
+    let _ = UserData::default();
 }

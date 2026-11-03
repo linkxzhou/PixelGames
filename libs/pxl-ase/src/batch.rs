@@ -406,6 +406,7 @@ mod tests {
             to: 1,
             direction: TagDirection::Forward,
             repeat: 0,
+            user_data: Default::default(),
         });
         write_aseprite(path, &s, &WriteOptions::default()).unwrap();
     }

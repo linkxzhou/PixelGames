@@ -13,6 +13,7 @@ mod image;
 mod layer;
 mod sprite;
 mod types;
+mod user_data;
 
 pub use blend::BlendMode;
 pub use bridge::{ensure_transparent_palette, indexed_cel_to_frame, palette_from_rgba, sprite_from_index_frame};
@@ -22,6 +23,7 @@ pub use image::{GrayImage, ImageBuffer, IndexedImage, RgbaImage};
 pub use layer::{Cel, CelPixels, Layer, LayerFlags, LayerKind};
 pub use sprite::{AseDoc, Grid, Slice, SliceKey, Sprite, Tag, TagDirection};
 pub use types::{CelId, FrameIndex, ImageId, LayerId};
+pub use user_data::UserData;
 
 #[cfg(test)]
 mod tests {
@@ -79,6 +81,7 @@ mod tests {
             to: 2,
             direction: TagDirection::Forward,
             repeat: 0,
+            user_data: UserData::default(),
         });
         s.slices.push(Slice {
             name: alloc::string::String::from("body"),
@@ -91,6 +94,7 @@ mod tests {
                 center: None,
                 pivot: Some((2, 3)),
             }],
+            user_data: UserData::default(),
         });
         s.grid = Grid {
             x: 0,

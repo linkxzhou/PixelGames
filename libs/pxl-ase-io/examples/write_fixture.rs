@@ -33,7 +33,8 @@ fn main() {
         to: 2,
         direction: TagDirection::Forward,
         repeat: 0,
-    });
+            user_data: Default::default(),
+        });
     s.slices.push(Slice {
         name: "body".into(),
         keys: vec![SliceKey {
@@ -45,7 +46,8 @@ fn main() {
             center: None,
             pivot: Some((1, 1)),
         }],
-    });
+            user_data: Default::default(),
+        });
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let fix = root.join("tests/fixtures/mini_indexed.aseprite");
     write_aseprite(&fix, &s, &WriteOptions::default()).unwrap();

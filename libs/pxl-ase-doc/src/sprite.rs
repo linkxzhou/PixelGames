@@ -10,6 +10,7 @@ use crate::error::{AseError, AseResult};
 use crate::image::ImageBuffer;
 use crate::layer::{Cel, CelPixels, Layer, LayerKind};
 use crate::types::{FrameIndex, ImageId, LayerId};
+use crate::user_data::UserData;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TagDirection {
@@ -41,6 +42,7 @@ pub struct Tag {
     pub to: FrameIndex,
     pub direction: TagDirection,
     pub repeat: u16,
+    pub user_data: UserData,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -58,6 +60,7 @@ pub struct SliceKey {
 pub struct Slice {
     pub name: String,
     pub keys: Vec<SliceKey>,
+    pub user_data: UserData,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
@@ -81,6 +84,9 @@ pub struct Sprite {
     pub tags: Vec<Tag>,
     pub slices: Vec<Slice>,
     pub grid: Grid,
+    pub user_data: UserData,
+    /// Notes collected while reading (skipped chunks / dropped fields). Cleared by callers if undesired.
+    pub read_loss_notes: Vec<String>,
     next_image_id: u32,
 }
 
@@ -98,6 +104,8 @@ impl Sprite {
             tags: Vec::new(),
             slices: Vec::new(),
             grid: Grid::default(),
+            user_data: UserData::default(),
+            read_loss_notes: Vec::new(),
             next_image_id: 1,
         }
     }
@@ -150,7 +158,7 @@ impl Sprite {
             .get(&frame)
             .ok_or_else(|| AseError::new(alloc::format!("no cel on frame {frame}")))?;
         match cel {
-            Cel::Linked { frame: src } => self.resolve_cel(layer, *src, depth + 1),
+            Cel::Linked { frame: src, .. } => self.resolve_cel(layer, *src, depth + 1),
             Cel::Image {
                 image,
                 x,

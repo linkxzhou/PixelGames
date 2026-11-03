@@ -13,6 +13,9 @@ pub use outline_fill::{flood_fill_frame, outline_all_frames, outline_flatten};
 mod tests {
     use super::*;
     use pxl_ase_doc::{Cel, ColorMode, ImageBuffer, RgbaImage, Sprite};
+    use pxl_core::Rgba;
+
+    use crate::render::flatten_frame_rgba;
 
     fn rgba_sprite() -> Sprite {
         let mut s = Sprite::new(2, 1, ColorMode::Rgba);

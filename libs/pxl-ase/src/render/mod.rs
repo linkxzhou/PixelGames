@@ -5,18 +5,41 @@ use pxl_core::Rgba;
 
 use crate::{AseErr, Result};
 
-/// Composite visible image layers bottom→top for one frame into RGBA8.
+/// Composite visible image layers for one frame into RGBA8.
+///
+/// Paint order follows ase-file-specs NOTE.5: sort by
+/// `layer_index + z_index`, then by `z_index` on ties (back → front).
 pub fn flatten_frame_rgba(sprite: &Sprite, frame: u16) -> Result<Vec<u8>> {
     let w = sprite.width as usize;
     let h = sprite.height as usize;
     let mut out = vec![0u8; w * h * 4];
-    for layer in &sprite.layers {
+
+    let mut plan: Vec<(i32, i16, usize)> = Vec::new();
+    for (layer_index, layer) in sprite.layers.iter().enumerate() {
         if layer.kind != LayerKind::Image || !layer.flags.visible {
             continue;
         }
         if layer.opacity == 0 {
             continue;
         }
+        if !layer.cels.contains_key(&frame) {
+            // Still allow linked resolution via cel_pixels — include if resolvable.
+            if sprite.cel_pixels(layer.id, frame).is_err() {
+                continue;
+            }
+        }
+        let z = layer
+            .cels
+            .get(&frame)
+            .map(|c| c.z_index())
+            .unwrap_or(0);
+        let order = layer_index as i32 + z as i32;
+        plan.push((order, z, layer_index));
+    }
+    plan.sort_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
+
+    for (_, _, layer_index) in plan {
+        let layer = &sprite.layers[layer_index];
         let Ok(cel) = sprite.cel_pixels(layer.id, frame) else {
             continue;
         };

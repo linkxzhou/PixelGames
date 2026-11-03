@@ -226,6 +226,7 @@ mod tests {
             to: 1,
             direction: TagDirection::PingPong,
             repeat: 0,
+            user_data: Default::default(),
         });
         s.slices.push(Slice {
             name: "body".into(),
@@ -238,6 +239,7 @@ mod tests {
                 center: None,
                 pivot: Some((1, 1)),
             }],
+            user_data: Default::default(),
         });
         s
     }
@@ -309,6 +311,7 @@ mod tests {
             to: 4,
             direction: TagDirection::Forward,
             repeat: 0,
+            user_data: Default::default(),
         });
         s.tags.push(Tag {
             name: "sub".into(),
@@ -316,6 +319,7 @@ mod tests {
             to: 3,
             direction: TagDirection::Reverse,
             repeat: 0,
+            user_data: Default::default(),
         });
         assert_eq!(expand_tag_frames(&s.tags[1]), vec![3, 2, 1]);
         let frames = frames_for_tag_opts(&s, Some("root"), true).unwrap();
@@ -324,4 +328,56 @@ mod tests {
         assert_eq!(plain, vec![0, 1, 2, 3, 4]);
     }
 
+}
+
+#[cfg(test)]
+mod z_index_render_tests {
+    use pxl_ase_doc::{Cel, ColorMode, ImageBuffer, RgbaImage, Sprite};
+
+    use crate::render::flatten_frame_rgba;
+
+    #[test]
+    fn z_index_changes_paint_order() {
+        let mut s = Sprite::new(1, 1, ColorMode::Rgba);
+        let l0 = s.add_image_layer("A");
+        let l1 = s.add_image_layer("B");
+        let red = s.insert_image(ImageBuffer::Rgba(RgbaImage::from_rgba(
+            1, 1, vec![255, 0, 0, 255],
+        )));
+        let blue = s.insert_image(ImageBuffer::Rgba(RgbaImage::from_rgba(
+            1, 1, vec![0, 0, 255, 255],
+        )));
+        s.set_cel(
+            l0,
+            0,
+            Cel::Image {
+                image: red,
+                x: 0,
+                y: 0,
+                opacity: 255,
+                z_index: 0,
+                user_data: Default::default(),
+            },
+        );
+        s.set_cel(
+            l1,
+            0,
+            Cel::Image {
+                image: blue,
+                x: 0,
+                y: 0,
+                opacity: 255,
+                z_index: 0,
+                user_data: Default::default(),
+            },
+        );
+        let flat = flatten_frame_rgba(&s, 0).unwrap();
+        assert_eq!(&flat[0..4], &[0, 0, 255, 255], "default: later layer on top");
+
+        if let Some(Cel::Image { z_index, .. }) = s.layers[0].cels.get_mut(&0) {
+            *z_index = 2;
+        }
+        let flat2 = flatten_frame_rgba(&s, 0).unwrap();
+        assert_eq!(&flat2[0..4], &[255, 0, 0, 255], "z_index=2 lifts layer 0 above layer 1");
+    }
 }

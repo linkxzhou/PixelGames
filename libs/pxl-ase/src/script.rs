@@ -270,7 +270,7 @@ fn set_pixel_rgba(
                     img_id = Some(*image);
                     break;
                 }
-                Cel::Linked { frame: src } => {
+                Cel::Linked { frame: src, .. } => {
                     if let Some(Cel::Image { image, .. }) = layer.cels.get(src) {
                         img_id = Some(*image);
                         break;

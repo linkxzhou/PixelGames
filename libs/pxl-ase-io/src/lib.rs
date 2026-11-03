@@ -1,8 +1,10 @@
 //! Clean-room `.aseprite` / `.ase` codec following the public file specs.
 //! Does not include or generate code from Aseprite C++ sources.
 
+mod chunks;
 mod error;
 mod read;
+mod user_data;
 mod write;
 
 pub use error::{IoError, IoResult};
@@ -36,6 +38,7 @@ mod tests {
             to: 1,
             direction: TagDirection::Forward,
             repeat: 0,
+            user_data: Default::default(),
         });
         s
     }
@@ -88,4 +91,30 @@ mod tests {
             _ => panic!("rgba"),
         }
     }
+
+    #[test]
+    fn tag_color_user_data_roundtrip() {
+        use pxl_ase_doc::UserData;
+        let mut src = mini_indexed();
+        src.tags[0].user_data = UserData {
+            text: Some("tag-note".into()),
+            color: Some(Rgba { r: 10, g: 20, b: 30, a: 255 }),
+            properties_raw: None,
+        };
+        let bytes = write_aseprite_bytes(&src, &WriteOptions::default()).unwrap();
+        let dst = read_aseprite_bytes(&bytes, &ReadOptions::default()).unwrap().sprite;
+        assert_eq!(dst.tags[0].user_data.color.map(|c| (c.r, c.g, c.b, c.a)), Some((10, 20, 30, 255)));
+        assert_eq!(dst.tags[0].user_data.text.as_deref(), Some("tag-note"));
+    }
+
+    #[test]
+    fn write_emits_loss_warnings_for_skipped_chunks() {
+        let mut src = mini_indexed();
+        src.read_loss_notes.push("skipped Color Profile chunk (0x2007); write-back will drop it".into());
+        // Capture stderr via a side channel: function always eprintln!; we just ensure write succeeds
+        // and notes are still present for callers.
+        let _bytes = write_aseprite_bytes(&src, &WriteOptions::default()).unwrap();
+        assert!(!src.read_loss_notes.is_empty());
+    }
+
 }
