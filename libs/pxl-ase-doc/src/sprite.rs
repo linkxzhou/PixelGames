@@ -64,6 +64,21 @@ pub struct Slice {
     pub user_data: UserData,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Tileset {
+    pub id: u32,
+    pub flags: u32,
+    pub ntiles: u32,
+    pub tile_width: u16,
+    pub tile_height: u16,
+    pub base_index: i16,
+    pub name: String,
+    /// Decompressed atlas pixels (sprite color mode), height = tile_height * ntiles.
+    pub pixels: Vec<u8>,
+    /// Raw chunk body for write passthrough when pixels empty / external.
+    pub raw: Option<Vec<u8>>,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub struct Grid {
     pub x: i16,
@@ -93,6 +108,8 @@ pub struct Sprite {
     pub color_profile_raw: Option<Vec<u8>>,
     /// Raw External Files chunk body (0x2008), passthrough.
     pub external_files_raw: Option<Vec<u8>>,
+    /// Parsed / passthrough tilesets (0x2023).
+    pub tilesets: Vec<Tileset>,
     /// Notes collected while reading (skipped chunks / dropped fields). Cleared by callers if undesired.
     pub read_loss_notes: Vec<String>,
     next_image_id: u32,
@@ -117,6 +134,7 @@ impl Sprite {
             pixel_ratio: PixelRatio::default(),
             color_profile_raw: None,
             external_files_raw: None,
+            tilesets: Vec::new(),
             read_loss_notes: Vec::new(),
             next_image_id: 1,
         }
@@ -171,6 +189,9 @@ impl Sprite {
             .ok_or_else(|| AseError::new(alloc::format!("no cel on frame {frame}")))?;
         match cel {
             Cel::Linked { frame: src, .. } => self.resolve_cel(layer, *src, depth + 1),
+            Cel::Tilemap { .. } => {
+                return Err(AseError::new("tilemap cel cannot provide RGBA pixels yet"));
+            }
             Cel::Image {
                 image,
                 x,

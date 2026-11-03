@@ -254,3 +254,55 @@ pub fn sprite_palette(sprite: &Sprite) -> Palette {
         special: Default::default(),
     }
 }
+
+
+/// GE-5: export one tileset atlas as PNG (RGBA conversion for indexed).
+pub fn export_tileset_png(sprite: &Sprite, tileset_index: usize) -> Result<Vec<u8>> {
+    let ts = sprite
+        .tilesets
+        .get(tileset_index)
+        .ok_or_else(|| AseErr(format!("tileset index {tileset_index} not found")))?;
+    if ts.pixels.is_empty() {
+        return Err(AseErr(format!(
+            "tileset '{}' has no embedded pixels (external-only?)",
+            ts.name
+        )));
+    }
+    let w = ts.tile_width;
+    let h = ts.tile_height.saturating_mul(ts.ntiles as u16).max(ts.tile_height);
+    let bpp = match sprite.color_mode {
+        pxl_ase_doc::ColorMode::Rgba => 4,
+        pxl_ase_doc::ColorMode::Grayscale => 2,
+        pxl_ase_doc::ColorMode::Indexed => 1,
+    };
+    let expect = (w as usize) * (h as usize) * bpp;
+    if ts.pixels.len() < expect {
+        return Err(AseErr(format!(
+            "tileset pixels {} < expected {expect}",
+            ts.pixels.len()
+        )));
+    }
+    let rgba = match sprite.color_mode {
+        pxl_ase_doc::ColorMode::Rgba => ts.pixels[..expect].to_vec(),
+        pxl_ase_doc::ColorMode::Grayscale => {
+            let mut out = Vec::with_capacity((w as usize) * (h as usize) * 4);
+            for chunk in ts.pixels[..expect].chunks_exact(2) {
+                out.extend_from_slice(&[chunk[0], chunk[0], chunk[0], chunk[1]]);
+            }
+            out
+        }
+        pxl_ase_doc::ColorMode::Indexed => {
+            let mut out = Vec::with_capacity((w as usize) * (h as usize) * 4);
+            for &idx in &ts.pixels[..expect] {
+                let c = sprite
+                    .palette
+                    .get(idx as usize)
+                    .copied()
+                    .unwrap_or(Rgba::TRANSPARENT);
+                out.extend_from_slice(&[c.r, c.g, c.b, c.a]);
+            }
+            out
+        }
+    };
+    Ok(pxl_export::encode_rgba_png(w as u32, h as u32, &rgba)?)
+}

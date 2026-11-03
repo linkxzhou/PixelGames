@@ -276,6 +276,7 @@ fn set_pixel_rgba(
                         break;
                     }
                 }
+                Cel::Tilemap { .. } => {}
             }
         }
     }

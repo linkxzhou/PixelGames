@@ -68,6 +68,9 @@ pub fn write_aseprite_bytes(sprite: &Sprite, opts: &WriteOptions) -> IoResult<Ve
                     chunks.push(wrap_chunk(0x2020, &encode_user_data_body(&slice.user_data)));
                 }
             }
+            for ts in &sprite.tilesets {
+                chunks.push(encode_tileset_chunk(ts, sprite, opts)?);
+            }
         }
         for layer in &sprite.layers {
             if let Some(cel) = layer.cels.get(&(fi as u16)) {
@@ -282,8 +285,61 @@ fn encode_cel_chunk(
             body.extend_from_slice(&h.to_le_bytes());
             body.extend(deflate(&pixels, opts.compression)?);
         }
+        Cel::Tilemap {
+            x,
+            y,
+            opacity,
+            z_index,
+            w,
+            h,
+            tiles,
+            ..
+        } => {
+            body.extend_from_slice(&x.to_le_bytes());
+            body.extend_from_slice(&y.to_le_bytes());
+            body.push(*opacity);
+            body.extend_from_slice(&3u16.to_le_bytes()); // tilemap
+            body.extend_from_slice(&z_index.to_le_bytes());
+            body.extend_from_slice(&[0u8; 5]);
+            body.extend_from_slice(&w.to_le_bytes());
+            body.extend_from_slice(&h.to_le_bytes());
+            let mut raw = Vec::with_capacity(tiles.len() * 4);
+            for t in tiles {
+                raw.extend_from_slice(&t.to_le_bytes());
+            }
+            let compressed = deflate(&raw, opts.compression)?;
+            body.extend_from_slice(&(compressed.len() as u32).to_le_bytes());
+            body.extend_from_slice(&compressed);
+        }
     }
     Ok(wrap_chunk(0x2005, &body))
+}
+
+
+fn encode_tileset_chunk(
+    ts: &pxl_ase_doc::Tileset,
+    sprite: &Sprite,
+    opts: &WriteOptions,
+) -> IoResult<Vec<u8>> {
+    if let Some(raw) = &ts.raw {
+        return Ok(wrap_chunk(0x2023, raw));
+    }
+    let mut body = Vec::new();
+    body.extend_from_slice(&ts.id.to_le_bytes());
+    body.extend_from_slice(&ts.flags.to_le_bytes());
+    body.extend_from_slice(&ts.ntiles.to_le_bytes());
+    body.extend_from_slice(&ts.tile_width.to_le_bytes());
+    body.extend_from_slice(&ts.tile_height.to_le_bytes());
+    body.extend_from_slice(&ts.base_index.to_le_bytes());
+    body.extend_from_slice(&[0u8; 14]);
+    write_string(&mut body, &ts.name);
+    if ts.flags & 2 != 0 && !ts.pixels.is_empty() {
+        let compressed = deflate(&ts.pixels, opts.compression)?;
+        body.extend_from_slice(&(compressed.len() as u32).to_le_bytes());
+        body.extend_from_slice(&compressed);
+    }
+    let _ = sprite.color_mode;
+    Ok(wrap_chunk(0x2023, &body))
 }
 
 fn deflate(data: &[u8], level: Compression) -> IoResult<Vec<u8>> {

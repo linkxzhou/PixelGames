@@ -1,4 +1,5 @@
 use alloc::collections::BTreeMap;
+use alloc::vec::Vec;
 use alloc::string::String;
 
 use crate::blend::BlendMode;
@@ -104,6 +105,20 @@ pub enum Cel {
         user_data: UserData,
         extra: Option<CelExtra>,
     },
+    /// Cel type 3 — compressed tilemap (GE-5).
+    Tilemap {
+        x: i16,
+        y: i16,
+        opacity: u8,
+        z_index: i16,
+        /// Width/height in tiles.
+        w: u16,
+        h: u16,
+        /// 32-bit tile ids (incl. flip bits) row-major.
+        tiles: Vec<u32>,
+        user_data: UserData,
+        extra: Option<CelExtra>,
+    },
 }
 
 impl Cel {
@@ -130,31 +145,35 @@ impl Cel {
 
     pub fn z_index(&self) -> i16 {
         match self {
-            Cel::Image { z_index, .. } | Cel::Linked { z_index, .. } => *z_index,
+            Cel::Image { z_index, .. } | Cel::Linked { z_index, .. } | Cel::Tilemap { z_index, .. } => *z_index,
         }
     }
 
     pub fn user_data(&self) -> &UserData {
         match self {
-            Cel::Image { user_data, .. } | Cel::Linked { user_data, .. } => user_data,
+            Cel::Image { user_data, .. } | Cel::Linked { user_data, .. } | Cel::Tilemap { user_data, .. } => user_data,
         }
     }
 
     pub fn user_data_mut(&mut self) -> &mut UserData {
         match self {
-            Cel::Image { user_data, .. } | Cel::Linked { user_data, .. } => user_data,
+            Cel::Image { user_data, .. } | Cel::Linked { user_data, .. } | Cel::Tilemap { user_data, .. } => user_data,
         }
     }
 
     pub fn extra(&self) -> Option<&CelExtra> {
         match self {
-            Cel::Image { extra, .. } | Cel::Linked { extra, .. } => extra.as_ref(),
+            Cel::Image { extra, .. } | Cel::Linked { extra, .. } | Cel::Tilemap { extra, .. } => {
+                extra.as_ref()
+            }
         }
     }
 
     pub fn set_extra(&mut self, extra: CelExtra) {
         match self {
-            Cel::Image { extra: slot, .. } | Cel::Linked { extra: slot, .. } => {
+            Cel::Image { extra: slot, .. }
+            | Cel::Linked { extra: slot, .. }
+            | Cel::Tilemap { extra: slot, .. } => {
                 *slot = Some(extra);
             }
         }

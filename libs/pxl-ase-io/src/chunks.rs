@@ -115,8 +115,34 @@ pub(crate) fn read_cel_chunk(
             );
         }
         3 => {
-            c.set_position(data_end);
-            return Ok(None);
+            let w = read_u16(c)?;
+            let h = read_u16(c)?;
+            let compressed_len = read_u32(c)? as usize;
+            let mut compressed = vec![0u8; compressed_len.min((data_end.saturating_sub(c.position())) as usize)];
+            c.read_exact(&mut compressed)?;
+            let expect = (w as usize).saturating_mul(h as usize).saturating_mul(4);
+            let raw = inflate(&compressed, expect)?;
+            if raw.len() < expect {
+                return Err(IoError::new("tilemap cel truncated"));
+            }
+            let mut tiles = Vec::with_capacity(w as usize * h as usize);
+            for chunk in raw[..expect].chunks_exact(4) {
+                tiles.push(u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]));
+            }
+            sprite.layers[layer_pos].cels.insert(
+                frame,
+                Cel::Tilemap {
+                    x,
+                    y,
+                    opacity,
+                    z_index,
+                    w,
+                    h,
+                    tiles,
+                    user_data: UserData::default(),
+                    extra: None,
+                },
+            );
         }
         other => {
             return Err(IoError::new(format!("unsupported cel type {other}")));
@@ -259,6 +285,72 @@ pub(crate) fn read_slice_chunk(c: &mut Cursor<&[u8]>, sprite: &mut Sprite) -> Io
         user_data: UserData::default(),
     });
     Ok(())
+}
+
+
+pub(crate) fn read_tileset_chunk(c: &mut Cursor<&[u8]>, sprite: &mut Sprite, data_end: u64) -> IoResult<()> {
+    let start = c.position();
+    let id = read_u32(c)?;
+    let flags = read_u32(c)?;
+    let ntiles = read_u32(c)?;
+    let tile_width = read_u16(c)?;
+    let tile_height = read_u16(c)?;
+    let base_index = {
+        let mut b = [0u8; 2];
+        c.read_exact(&mut b)?;
+        i16::from_le_bytes(b)
+    };
+    let mut reserved = [0u8; 14];
+    c.read_exact(&mut reserved)?;
+    let name = read_string(c)?;
+    let mut pixels = Vec::new();
+    let mut raw_passthrough = None;
+    if flags & 1 != 0 {
+        // external link — keep remainder as raw for write
+        let _ext_file = read_u32(c)?;
+        let _ext_tileset = read_u32(c)?;
+    }
+    if flags & 2 != 0 {
+        let data_len = read_u32(c)? as usize;
+        let mut compressed = vec![0u8; data_len.min((data_end.saturating_sub(c.position())) as usize)];
+        c.read_exact(&mut compressed)?;
+        let bpp = sprite.color_mode.bytes_per_pixel();
+        let expect = (tile_width as usize)
+            .saturating_mul(tile_height as usize)
+            .saturating_mul(ntiles as usize)
+            .saturating_mul(bpp);
+        match inflate(&compressed, expect) {
+            Ok(px) => pixels = px,
+            Err(_) => {
+                // fall back: store whole chunk body
+                c.set_position(start);
+                raw_passthrough = Some(read_raw_remaining(c, data_end)?);
+            }
+        }
+    }
+    if pixels.is_empty() && raw_passthrough.is_none() && c.position() < data_end {
+        c.set_position(start);
+        raw_passthrough = Some(read_raw_remaining(c, data_end)?);
+    }
+    sprite.tilesets.push(pxl_ase_doc::Tileset {
+        id,
+        flags,
+        ntiles,
+        tile_width,
+        tile_height,
+        base_index,
+        name,
+        pixels,
+        raw: raw_passthrough,
+    });
+    Ok(())
+}
+
+fn read_raw_remaining(c: &mut Cursor<&[u8]>, data_end: u64) -> IoResult<Vec<u8>> {
+    let n = data_end.saturating_sub(c.position()) as usize;
+    let mut buf = vec![0u8; n];
+    c.read_exact(&mut buf)?;
+    Ok(buf)
 }
 
 fn inflate(data: &[u8], expect: usize) -> IoResult<Vec<u8>> {

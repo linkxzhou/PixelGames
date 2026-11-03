@@ -6,7 +6,7 @@ use pxl_core::Rgba;
 
 use crate::chunks::{
     read_cel_chunk, read_layer_chunk, read_old_palette_chunk, read_palette_chunk, read_slice_chunk,
-    read_tags_chunk,
+    read_tags_chunk, read_tileset_chunk,
 };
 use crate::error::{IoError, IoResult};
 use crate::passthrough::{read_cel_extra, read_raw_body};
@@ -227,8 +227,7 @@ pub fn read_aseprite_bytes(bytes: &[u8], opts: &ReadOptions) -> IoResult<AseDoc>
                     sprite.external_files_raw = Some(read_raw_body(&mut c, data_end)?);
                 }
                 0x2023 => {
-                    note_skip(&mut sprite, "Tileset chunk (0x2023)");
-                    c.set_position(data_end);
+                    read_tileset_chunk(&mut c, &mut sprite, data_end)?;
                 }
                 _ => {
                     c.set_position(data_end);

@@ -1,12 +1,18 @@
 //! Headless filters (merged `pxl-ase-filters`).
 
 mod color_adjust;
+mod convolve;
+mod curve;
+mod median;
 mod outline_fill;
 
 pub use color_adjust::{
     brightness_contrast, hue_saturation, invert, replace_color_rgba, replace_color_rgba_tol,
     replace_index,
 };
+pub use convolve::{convolve_sprite, Kernel};
+pub use curve::{apply_curve_lut, contrast_curve_lut, lut_from_points};
+pub use median::{median_sprite, MAX_MEDIAN_RADIUS};
 pub use outline_fill::{flood_fill_frame, outline_all_frames, outline_flatten};
 
 #[cfg(test)]

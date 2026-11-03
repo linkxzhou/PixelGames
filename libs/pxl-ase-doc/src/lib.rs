@@ -23,7 +23,7 @@ pub use color_mode::ColorMode;
 pub use error::{AseError, AseResult};
 pub use image::{GrayImage, ImageBuffer, IndexedImage, RgbaImage};
 pub use layer::{Cel, CelPixels, Layer, LayerFlags, LayerKind};
-pub use sprite::{AseDoc, Grid, Slice, SliceKey, Sprite, Tag, TagDirection};
+pub use sprite::{AseDoc, Grid, Slice, SliceKey, Sprite, Tag, TagDirection, Tileset};
 pub use types::{CelId, FrameIndex, ImageId, LayerId};
 pub use user_data::UserData;
 pub use pixel_ratio::PixelRatio;

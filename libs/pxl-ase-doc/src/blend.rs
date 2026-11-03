@@ -51,4 +51,29 @@ impl BlendMode {
             _ => BlendMode::Normal,
         }
     }
+
+    pub fn from_name(s: &str) -> Option<Self> {
+        Some(match s.to_ascii_lowercase().as_str() {
+            "normal" => BlendMode::Normal,
+            "multiply" => BlendMode::Multiply,
+            "screen" => BlendMode::Screen,
+            "overlay" => BlendMode::Overlay,
+            "darken" => BlendMode::Darken,
+            "lighten" => BlendMode::Lighten,
+            "color_dodge" | "colordodge" => BlendMode::ColorDodge,
+            "color_burn" | "colorburn" => BlendMode::ColorBurn,
+            "hard_light" | "hardlight" => BlendMode::HardLight,
+            "soft_light" | "softlight" => BlendMode::SoftLight,
+            "difference" => BlendMode::Difference,
+            "exclusion" => BlendMode::Exclusion,
+            "hue" => BlendMode::Hue,
+            "saturation" => BlendMode::Saturation,
+            "color" => BlendMode::Color,
+            "luminosity" => BlendMode::Luminosity,
+            "addition" | "add" => BlendMode::Addition,
+            "subtract" | "sub" => BlendMode::Subtract,
+            "divide" => BlendMode::Divide,
+            _ => return None,
+        })
+    }
 }
