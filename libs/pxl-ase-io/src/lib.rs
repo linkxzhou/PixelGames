@@ -155,4 +155,18 @@ mod tests {
             Some((1, 1 << 16, 3 << 16))
         );
     }
+
+    #[test]
+    fn external_files_passthrough_roundtrip() {
+        let mut src = mini_indexed();
+        // Minimal body: 0 entries + 8 reserved
+        let mut body = Vec::new();
+        body.extend_from_slice(&0u32.to_le_bytes());
+        body.extend_from_slice(&[0u8; 8]);
+        src.external_files_raw = Some(body.clone());
+        let bytes = write_aseprite_bytes(&src, &WriteOptions::default()).unwrap();
+        let dst = read_aseprite_bytes(&bytes, &ReadOptions::default()).unwrap().sprite;
+        assert_eq!(dst.external_files_raw.as_ref(), Some(&body));
+    }
 }
+

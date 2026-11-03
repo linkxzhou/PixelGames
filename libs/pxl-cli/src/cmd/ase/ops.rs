@@ -19,7 +19,7 @@ use crate::util::Ctx;
 
 
 use super::args::*;
-use super::gc_flags::{apply_ignore_layers, effective_sheet_padding};
+use super::gc_flags::{apply_ignore_layers};
 use super::util::{ensure_out, map_err};
 
 pub(crate) fn sheet(ctx: &Ctx, a: AseSheetArgs) -> CmdResult<()> {
@@ -63,15 +63,14 @@ pub(crate) fn sheet(ctx: &Ctx, a: AseSheetArgs) -> CmdResult<()> {
         .unwrap_or("sheet.png")
         .to_string();
     let opts = SheetExportOpts {
-        padding: effective_sheet_padding(
-            a.padding,
-            a.border_padding,
-            a.shape_padding,
-            a.inner_padding,
-        ),
+        padding: a.padding,
+        border_padding: a.border_padding.unwrap_or(0),
+        shape_padding: a.shape_padding,
+        inner_padding: a.inner_padding.unwrap_or(0),
         extrude: a.extrude,
         trim: a.trim,
         merge_duplicates: a.merge_duplicates,
+        data_format: a.format.clone(),
     };
     let (png, js) = export_sheet_png_json_layout_opts(
         &doc.sprite,

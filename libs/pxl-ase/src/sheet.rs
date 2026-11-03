@@ -18,12 +18,32 @@ fn sheet_layout_name(layout: &str) -> Result<&'static str> {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct SheetExportOpts {
     pub padding: u32,
+    pub border_padding: u32,
+    pub shape_padding: Option<u32>,
+    pub inner_padding: u32,
     pub extrude: u32,
     pub trim: bool,
     pub merge_duplicates: bool,
+    /// `json-hash` (default) or `json-array`.
+    pub data_format: String,
+}
+
+impl Default for SheetExportOpts {
+    fn default() -> Self {
+        Self {
+            padding: 0,
+            border_padding: 0,
+            shape_padding: None,
+            inner_padding: 0,
+            extrude: 0,
+            trim: false,
+            merge_duplicates: false,
+            data_format: "json-hash".into(),
+        }
+    }
 }
 
 /// Drop consecutive frames whose flattened RGBA bytes are identical.
@@ -98,7 +118,7 @@ pub fn export_sheet_png_json_layout_opts(
     layout: &str,
     opts: &SheetExportOpts,
 ) -> Result<(Vec<u8>, String)> {
-    use pxl_export::{pack_sheet, sheet_json, SheetCell};
+    use pxl_export::{pack_sheet_padded, sheet_json_format, SheetCell, SheetPadding};
     let layout = sheet_layout_name(layout)?;
     let mut frames = frames.to_vec();
     if opts.merge_duplicates {
@@ -159,7 +179,12 @@ pub fn export_sheet_png_json_layout_opts(
         });
         durations.push(dur);
     }
-    let packed = pack_sheet(&[cells], layout, opts.padding)?;
+    let pad = SheetPadding {
+        border: opts.border_padding,
+        shape: opts.shape_padding.unwrap_or(opts.padding),
+        inner: opts.inner_padding,
+    };
+    let packed = pack_sheet_padded(&[cells], layout, pad)?;
     let png = pxl_export::encode_indexed_png(&packed.image, &pal, 1)?;
     let meta = json!({
         "frameTags": sprite.tags.iter().map(|t| json!({
@@ -178,7 +203,7 @@ pub fn export_sheet_png_json_layout_opts(
         "durations_ms": durations,
         "layout": layout,
     });
-    let mut js = sheet_json(&packed, image_name, meta)?;
+    let mut js = sheet_json_format(&packed, image_name, meta, &opts.data_format)?;
     // Prefer document tag directions over packer defaults ("forward").
     if let Ok(mut v) = serde_json::from_str::<Value>(&js) {
         if let Some(meta_obj) = v.get_mut("meta").and_then(|m| m.as_object_mut()) {

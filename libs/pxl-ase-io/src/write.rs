@@ -48,6 +48,9 @@ pub fn write_aseprite_bytes(sprite: &Sprite, opts: &WriteOptions) -> IoResult<Ve
             if let Some(raw) = &sprite.color_profile_raw {
                 chunks.push(wrap_chunk(0x2007, raw));
             }
+            if let Some(raw) = &sprite.external_files_raw {
+                chunks.push(wrap_chunk(0x2008, raw));
+            }
             if !sprite.user_data.is_empty() {
                 chunks.push(wrap_chunk(0x2020, &encode_user_data_body(&sprite.user_data)));
             }

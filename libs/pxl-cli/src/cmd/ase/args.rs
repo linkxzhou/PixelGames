@@ -152,6 +152,9 @@ pub struct AseSheetArgs {
     /// Expand nested/sub tags by range containment when using --tag.
     #[arg(long = "play-subtags")]
     pub play_subtags: bool,
+    /// Sheet data format: `json-hash` (default) or `json-array`.
+    #[arg(long = "format", default_value = "json-hash")]
+    pub format: String,
 }
 
 #[derive(Args, Debug)]

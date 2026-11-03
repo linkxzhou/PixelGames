@@ -282,6 +282,7 @@ mod tests {
             extrude: 1,
             trim: true,
             merge_duplicates: true,
+            ..Default::default()
         };
         let (png, js) =
             export_sheet_png_json_layout_opts(&s, &[0, 1], "s.png", "horizontal", &opts).unwrap();

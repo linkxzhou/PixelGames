@@ -224,8 +224,7 @@ pub fn read_aseprite_bytes(bytes: &[u8], opts: &ReadOptions) -> IoResult<AseDoc>
                     sprite.color_profile_raw = Some(read_raw_body(&mut c, data_end)?);
                 }
                 0x2008 => {
-                    note_skip(&mut sprite, "External Files chunk (0x2008)");
-                    c.set_position(data_end);
+                    sprite.external_files_raw = Some(read_raw_body(&mut c, data_end)?);
                 }
                 0x2023 => {
                     note_skip(&mut sprite, "Tileset chunk (0x2023)");

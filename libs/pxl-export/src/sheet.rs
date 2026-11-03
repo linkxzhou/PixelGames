@@ -27,6 +27,27 @@ pub struct PackedSheet {
     pub placements: Vec<Placement>,
 }
 
+/// Official Aseprite sheet padding triad.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct SheetPadding {
+    /// Empty margin around the whole atlas.
+    pub border: u32,
+    /// Gap between packed cells.
+    pub shape: u32,
+    /// Extra transparent margin inside each cell rect (content inset).
+    pub inner: u32,
+}
+
+impl SheetPadding {
+    pub fn shape_only(shape: u32) -> Self {
+        Self {
+            border: 0,
+            shape,
+            inner: 0,
+        }
+    }
+}
+
 /// The whole-atlas memory budget of one packed sheet (P08). `rgba8_bytes`
 /// is the level-1 texture estimate — width × height × 4 bytes at 1x — never
 /// the PNG size on disk. A sheet is always one page today: multi-page
@@ -64,6 +85,14 @@ impl SheetBudget {
 
 /// `rows-by-anim` keeps caller row grouping. `grid` packs in a roughly square grid.
 pub fn pack_sheet(rows: &[Vec<SheetCell>], layout: &str, pad: u32) -> PxlResult<PackedSheet> {
+    pack_sheet_padded(rows, layout, SheetPadding::shape_only(pad))
+}
+
+pub fn pack_sheet_padded(
+    rows: &[Vec<SheetCell>],
+    layout: &str,
+    pad: SheetPadding,
+) -> PxlResult<PackedSheet> {
     let flat: Vec<&SheetCell> = rows.iter().flatten().collect();
     if flat.is_empty() {
         return Err(PxlError::semantic("sheet has no frames"));
@@ -87,26 +116,28 @@ pub fn pack_sheet(rows: &[Vec<SheetCell>], layout: &str, pad: u32) -> PxlResult<
                 .with_hint("layout is rows-by-anim or grid"));
         }
     };
-    let pad = i64::from(pad);
+    let shape = i64::from(pad.shape);
+    let border = i64::from(pad.border);
+    let inner = i64::from(pad.inner);
     let mut placements = Vec::new();
-    let mut y = 0i64;
+    let mut y = border;
     let mut sheet_w = 1i64;
     for row in &groups {
-        let mut x = 0i64;
+        let mut x = border;
         let mut row_h = 1i64;
         for cell in row {
-            let cw = cell.frame.w as i64;
-            let ch = cell.frame.h as i64;
+            let cw = cell.frame.w as i64 + inner * 2;
+            let ch = cell.frame.h as i64 + inner * 2;
             placements.push((x, y, cell));
             row_h = row_h.max(ch);
-            x += cw + pad;
+            x += cw + shape;
         }
-        if x > 0 {
-            sheet_w = sheet_w.max(x - pad);
+        if x > border {
+            sheet_w = sheet_w.max(x - shape + border);
         }
-        y += row_h + pad;
+        y += row_h + shape;
     }
-    let sheet_h = if y > 0 { y - pad } else { 1 };
+    let sheet_h = if y > border { y - shape + border } else { 1 };
     let (sheet_w, sheet_h) = (sheet_w.max(1), sheet_h.max(1));
     if sheet_w > 2048 || sheet_h > 2048 {
         return Err(PxlError::semantic(format!(
@@ -118,17 +149,19 @@ pub fn pack_sheet(rows: &[Vec<SheetCell>], layout: &str, pad: u32) -> PxlResult<
     let mut out_places = Vec::new();
     for (x, y, cell) in placements {
         let (x, y) = (x as i32, y as i32);
+        let ox = x + pad.inner as i32;
+        let oy = y + pad.inner as i32;
         for py in 0..cell.frame.h as i32 {
             for px in 0..cell.frame.w as i32 {
-                image.set(x + px, y + py, cell.frame.get(px, py));
+                image.set(ox + px, oy + py, cell.frame.get(px, py));
             }
         }
         out_places.push(Placement {
             name: cell.name.clone(),
             x: x as u32,
             y: y as u32,
-            w: cell.frame.w as u32,
-            h: cell.frame.h as u32,
+            w: (cell.frame.w as u32) + pad.inner * 2,
+            h: (cell.frame.h as u32) + pad.inner * 2,
             duration_ms: cell.duration_ms,
             tag: cell.tag.clone(),
         });
@@ -182,33 +215,62 @@ pub fn sheet_budget_json(packed: &PackedSheet) -> Value {
 }
 
 pub fn sheet_json(packed: &PackedSheet, image_name: &str, pxl: Value) -> PxlResult<String> {
-    let mut frames = Map::new();
+    sheet_json_format(packed, image_name, pxl, "json-hash")
+}
+
+/// `format`: `json-hash` (frames object, default) or `json-array` (frames array).
+pub fn sheet_json_format(
+    packed: &PackedSheet,
+    image_name: &str,
+    pxl: Value,
+    format: &str,
+) -> PxlResult<String> {
+    let as_array = match format {
+        "json-array" | "array" => true,
+        "json-hash" | "hash" | "" => false,
+        other => {
+            return Err(PxlError::usage(format!(
+                "unknown sheet data format '{other}' (json-hash|json-array)"
+            )));
+        }
+    };
+    let mut frames_map = Map::new();
+    let mut frames_arr: Vec<Value> = Vec::new();
     let mut tags: Vec<FrameTag> = Vec::new();
     let mut current: Option<(String, u32)> = None;
-    for (i, p) in packed.placements.iter().enumerate() {
+    for (i, pl) in packed.placements.iter().enumerate() {
         let entry = AseFrame {
             frame: AseRect {
-                x: p.x,
-                y: p.y,
-                w: p.w,
-                h: p.h,
+                x: pl.x,
+                y: pl.y,
+                w: pl.w,
+                h: pl.h,
             },
             rotated: false,
             trimmed: false,
             sprite_source_size: AseRect {
                 x: 0,
                 y: 0,
-                w: p.w,
-                h: p.h,
+                w: pl.w,
+                h: pl.h,
             },
-            source_size: Size { w: p.w, h: p.h },
-            duration: p.duration_ms,
+            source_size: Size { w: pl.w, h: pl.h },
+            duration: pl.duration_ms,
         };
-        frames.insert(
-            p.name.clone(),
-            serde_json::to_value(entry).map_err(|e| PxlError::io(e.to_string()))?,
-        );
-        match (&current, &p.tag) {
+        let val = serde_json::to_value(entry).map_err(|e| PxlError::io(e.to_string()))?;
+        if as_array {
+            let mut obj = Map::new();
+            obj.insert("filename".into(), Value::String(pl.name.clone()));
+            if let Value::Object(m) = val {
+                for (k, v) in m {
+                    obj.insert(k, v);
+                }
+            }
+            frames_arr.push(Value::Object(obj));
+        } else {
+            frames_map.insert(pl.name.clone(), val);
+        }
+        match (&current, &pl.tag) {
             (None, Some(tag)) => current = Some((tag.clone(), i as u32)),
             (Some((name, _from)), Some(tag)) if name == tag => {}
             (Some((name, from)), _) => {
@@ -218,7 +280,7 @@ pub fn sheet_json(packed: &PackedSheet, image_name: &str, pxl: Value) -> PxlResu
                     to: i as u32 - 1,
                     direction: "forward".into(),
                 });
-                current = p.tag.clone().map(|t| (t, i as u32));
+                current = pl.tag.clone().map(|tg| (tg, i as u32));
             }
             (None, None) => {}
         }
@@ -241,14 +303,20 @@ pub fn sheet_json(packed: &PackedSheet, image_name: &str, pxl: Value) -> PxlResu
         "frameTags": tags,
         "pxl": pxl,
     });
+    let frames_value = if as_array {
+        Value::Array(frames_arr)
+    } else {
+        Value::Object(frames_map)
+    };
     let doc = serde_json::json!({
-        "frames": frames,
+        "frames": frames_value,
         "meta": meta,
     });
     let mut s = serde_json::to_string_pretty(&doc).map_err(|e| PxlError::io(e.to_string()))?;
-    s.push('\n');
+    s.push_str("\n");
     Ok(s)
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -278,6 +346,20 @@ mod tests {
     fn budget_reports_rgba8_estimate_not_png_size() {
         let rows = vec![vec![cell("a", 4), cell("b", 4)]];
         let packed = pack_sheet(&rows, "rows-by-anim", 1).unwrap();
+        let triad = pack_sheet_padded(
+            &rows,
+            "rows-by-anim",
+            SheetPadding {
+                border: 2,
+                shape: 3,
+                inner: 1,
+            },
+        )
+        .unwrap();
+        assert!(triad.image.w > packed.image.w);
+        assert_eq!(triad.placements[0].x, 2);
+        assert_eq!(triad.placements[0].w, rows[0][0].frame.w as u32 + 2);
+
         let budget = SheetBudget::of(&packed);
         // 9x4 sheet: the RGBA8 estimate is w*h*4, not the indexed PNG size.
         assert_eq!(budget.rgba8_bytes, 9 * 4 * 4);
@@ -293,5 +375,19 @@ mod tests {
         };
         assert_eq!(SheetBudget::of(&full).rgba8_bytes, 2048 * 2048 * 4);
         assert_eq!(SheetBudget::of(&full).rgba8_mib, 16.0);
+    }
+
+
+    #[test]
+    fn json_array_frames_is_array_hash_is_object() {
+        let rows = vec![vec![cell("a", 4), cell("b", 4)]];
+        let packed = pack_sheet(&rows, "rows-by-anim", 0).unwrap();
+        let hash = sheet_json_format(&packed, "s.png", serde_json::json!({}), "json-hash").unwrap();
+        let arr = sheet_json_format(&packed, "s.png", serde_json::json!({}), "json-array").unwrap();
+        let hv: serde_json::Value = serde_json::from_str(&hash).unwrap();
+        let av: serde_json::Value = serde_json::from_str(&arr).unwrap();
+        assert!(hv["frames"].is_object());
+        assert!(av["frames"].is_array());
+        assert_eq!(av["frames"].as_array().unwrap().len(), 2);
     }
 }

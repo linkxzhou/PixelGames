@@ -91,6 +91,8 @@ pub struct Sprite {
     pub pixel_ratio: PixelRatio,
     /// Raw Color Profile chunk body (0x2007), passthrough — not parsed.
     pub color_profile_raw: Option<Vec<u8>>,
+    /// Raw External Files chunk body (0x2008), passthrough.
+    pub external_files_raw: Option<Vec<u8>>,
     /// Notes collected while reading (skipped chunks / dropped fields). Cleared by callers if undesired.
     pub read_loss_notes: Vec<String>,
     next_image_id: u32,
@@ -114,6 +116,7 @@ impl Sprite {
             header_flags: 1, // layer opacity valid
             pixel_ratio: PixelRatio::default(),
             color_profile_raw: None,
+            external_files_raw: None,
             read_loss_notes: Vec::new(),
             next_image_id: 1,
         }
