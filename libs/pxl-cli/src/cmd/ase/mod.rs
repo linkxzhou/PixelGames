@@ -17,6 +17,8 @@ mod args;
 mod gc_flags;
 mod convert;
 mod ops;
+mod edit_args;
+mod edit_cmd;
 mod util;
 
 pub use args::*;
@@ -48,6 +50,28 @@ pub enum AseCmd {
     Run(AseRunArgs),
     /// Run a Rhai script (`ase script path.rhai --script-param k=v`).
     Script(AseScriptArgs),
+    /// 非官方：frame CRUD
+    #[command(subcommand)]
+    Frame(edit_args::FrameCmd),
+    /// 非官方：tag CRUD
+    #[command(subcommand)]
+    Tag(edit_args::TagCmd),
+    /// 非官方：layer CRUD
+    #[command(subcommand)]
+    Layer(edit_args::LayerCmd),
+    /// 非官方：cel move/unlink/clear/set
+    #[command(subcommand)]
+    Cel(edit_args::CelCmd),
+    /// 非官方：flatten layers write-back
+    Flatten(edit_args::FlattenArgs),
+    /// 非官方：sprite attrs
+    #[command(subcommand)]
+    Sprite(edit_args::SpriteCmd),
+    /// 非官方：palette sort
+    #[command(subcommand)]
+    Palette(edit_args::PaletteCmd),
+    /// Export tileset atlas PNG (GE-5)
+    ExportTileset(edit_args::ExportTilesetArgs),
 }
 
 
@@ -95,5 +119,13 @@ pub fn ase_cmd(ctx: &Ctx, action: AseCmd) -> CmdResult<()> {
         AseCmd::Import(a) => ops::import_cmd(ctx, a),
         AseCmd::Run(a) => ops::run_cmd(ctx, a),
         AseCmd::Script(a) => ops::script_cmd(ctx, a),
+        AseCmd::Frame(c) => edit_cmd::run_frame(ctx, c),
+        AseCmd::Tag(c) => edit_cmd::run_tag(ctx, c),
+        AseCmd::Layer(c) => edit_cmd::run_layer(ctx, c),
+        AseCmd::Cel(c) => edit_cmd::run_cel(ctx, c),
+        AseCmd::Flatten(a) => edit_cmd::run_flatten(ctx, a),
+        AseCmd::Sprite(c) => edit_cmd::run_sprite(ctx, c),
+        AseCmd::Palette(c) => edit_cmd::run_palette(ctx, c),
+        AseCmd::ExportTileset(a) => edit_cmd::run_export_tileset(ctx, a),
     }
 }

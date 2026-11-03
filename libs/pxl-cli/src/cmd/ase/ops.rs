@@ -182,10 +182,47 @@ pub(crate) fn filter(ctx: &Ctx, a: AseFilterArgs) -> CmdResult<()> {
             pxl_ase::filters::hue_saturation(&mut doc.sprite, a.hue, a.sat, a.value)
                 .map_err(map_err)?;
         }
+        "convolve" | "convolution" => {
+            let kernel = if let Some(js) = &a.kernel_json {
+                let v: serde_json::Value = serde_json::from_str(js)
+                    .map_err(|e| PxlError::usage(format!("bad --kernel-json: {e}")))?;
+                pxl_ase::filters::Kernel::from_json(&v).map_err(map_err)?
+            } else {
+                pxl_ase::filters::Kernel::named(&a.kernel).map_err(map_err)?
+            };
+            pxl_ase::filters::convolve_sprite(&mut doc.sprite, &kernel).map_err(map_err)?;
+        }
+        "median" => {
+            pxl_ase::filters::median_sprite(&mut doc.sprite, a.radius).map_err(map_err)?;
+        }
+        "curve" | "color-curve" => {
+            let lut = if let Some(js) = &a.curve_json {
+                let v: serde_json::Value = serde_json::from_str(js)
+                    .map_err(|e| PxlError::usage(format!("bad --curve-json: {e}")))?;
+                let pts = v
+                    .as_array()
+                    .ok_or_else(|| PxlError::usage("--curve-json must be [[x,y],...]"))?;
+                let mut pairs = Vec::new();
+                for p in pts {
+                    let a = p.as_array().ok_or_else(|| PxlError::usage("curve point"))?;
+                    if a.len() != 2 {
+                        return Err(PxlError::usage("curve point needs [x,y]").into());
+                    }
+                    pairs.push((
+                        a[0].as_u64().unwrap_or(0) as u8,
+                        a[1].as_u64().unwrap_or(0) as u8,
+                    ));
+                }
+                pxl_ase::filters::lut_from_points(&pairs).map_err(map_err)?
+            } else {
+                pxl_ase::filters::contrast_curve_lut()
+            };
+            pxl_ase::filters::apply_curve_lut(&mut doc.sprite, &lut).map_err(map_err)?;
+        }
         other => {
             return Err(PxlError::usage(format!("unknown filter '{other}'"))
                 .with_hint(
-                    "outline | replace-index | replace-color | invert | brightness-contrast | hue-saturation",
+                    "outline | replace-index | replace-color | invert | brightness-contrast | hue-saturation | convolve | median | curve",
                 )
                 .into());
         }

@@ -220,6 +220,18 @@ pub struct AseFilterArgs {
     /// Outline every frame (default: frame 0 only for outline).
     #[arg(long = "all-frames")]
     pub all_frames: bool,
+    /// Named convolution kernel: identity|sharpen|blur
+    #[arg(long, default_value = "sharpen")]
+    pub kernel: String,
+    /// JSON kernel object {width,height,values,divisor?,bias?}
+    #[arg(long = "kernel-json")]
+    pub kernel_json: Option<String>,
+    /// Median radius (cap 3)
+    #[arg(long, default_value_t = 1)]
+    pub radius: u32,
+    /// Color-curve control points JSON `[[x,y],...]`
+    #[arg(long = "curve-json")]
+    pub curve_json: Option<String>,
     #[arg(long = "hue", default_value_t = 0)]
     pub hue: i32,
     #[arg(long = "sat", default_value_t = 0)]

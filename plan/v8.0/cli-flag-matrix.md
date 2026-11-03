@@ -76,7 +76,7 @@
 | `--layout` | 已实现 | 扩展别名 → `pxl-export` layouts | 对应 `--sheet-type` 子集 |
 | `--list-layers` | 已实现 | `ase list-layers` | 上表已有 |
 | `--list-layer-hierarchy` | 缺失 | `listLayerHierarchy()`；仅扁平 `list-layers` | GC-2/树形输出未做 |
-| `--export-tileset` | 缺失 | `exportTileset()`；tileset IO 仍跳过（GE-5） | 矩阵如实：缺失；实现依赖 tilemap P2 |
+| `--export-tileset` | 已实现（命令） | `ase export-tileset -o … [--index N]`；读 0x2023 像素图集 | 非官方 CLI 名；tilemap 层合成仍跳过 |
 | `--layer` / `--all-layers` | 已实现 | convert/sheet 可见性 | 上表已有；非 `--ignore-layer` |
 
 ### 扩展别名速查
@@ -88,3 +88,25 @@
 | `--border-padding` / `--shape-padding` / `--inner-padding` | 分立旗标 + `--padding` 别名 | 三元组已实现；`--padding`→shape 缺省 |
 | `--format json-hash\|json-array` | `--format` + `--data <path>` | format 已暴露；data 仍为侧车路径 |
 | `--trim-sprite` | `convert --trim` / `ase op trim` | 语义近；旗标名不同 |
+
+
+## GD 文档编辑（非官方扩展）
+
+| 命令 | 状态 | 说明 |
+|---|---|---|
+| `ase frame add/remove/copy/set-duration` | 已实现 | tag 边界按 07 §10 |
+| `ase tag add/remove/rename/set` | 已实现 | |
+| `ase layer add/remove/rename/set` | 已实现 | |
+| `ase cel move/unlink/clear/set` | 已实现 | linked 需先 unlink 再改 position/opacity |
+| `ase flatten` | 已实现 | 写回单 RGBA 层 |
+| `ase sprite set` | 已实现 | transparent-index / pixel-ratio / grid |
+| `ase palette sort --by` | 已实现 | hue\|sat\|lum；默认 keep-zero |
+
+## GE 滤镜 / tileset
+
+| 项 | 状态 | 说明 |
+|---|---|---|
+| `ase filter convolve` | 已实现 | `--kernel` / `--kernel-json` |
+| `ase filter median` | 已实现 | `--radius` ≤3 |
+| `ase filter curve` | 已实现 | `--curve-json` 或默认 S 曲线 |
+| `ase export-tileset` | 已实现 | 需 tileset 内嵌像素 |

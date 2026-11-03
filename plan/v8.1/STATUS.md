@@ -10,14 +10,24 @@
 | GA-2 Color Profile | P1 | 已完成 | `color_profile_raw` roundtrip |
 | GA-3 Cel Extra | P1 | 已完成 | `CelExtra` roundtrip |
 | GA-4 header/layer/pixel ratio | P1 | 已完成 | flags / UUID / `PixelRatio` |
-| GA-5 External Files | P1/P2 | 已完成 | `external_files_raw` 透传；`external_files_passthrough_roundtrip` |
-| GB-2 blend 全集 | P1 | 已完成 | 19 种 `BlendMode` 均有路径（`render/blend/`）；单测 smoke + HSL |
-| GB-3 组层合成 | P1 | 已完成 | header bit2 / Group：子层先合成再按组 blend；`group_composites_children_then_blends` |
+| GA-5 External Files | P1/P2 | 已完成 | `external_files_raw` 透传 |
+| GB-2 blend 全集 | P1 | 已完成 | 19 种 `BlendMode` |
+| GB-3 组层合成 | P1 | 已完成 | header bit2 / Group |
 | GB-4 Playback | P1 | 已完成 | `playback.md` + expand_tag_frames |
-| GB-5 `--shrink-to` | P2 | 已完成 | `ops::shrink_sprite_to` + convert/sheet CLI；aspect 适配、不放大；`shrink_to_fits_without_upscale` |
-| GC-2 split/slice/… | P1 | 已完成 | split/slice/ignore/trim + **padding 三元组** + **`--split-grid`**（依赖 sprite.grid） |
-| GC-3 `--format json-array` | P1 | 已完成 | `sheet_json_format`；默认 `json-hash` 不变；`ase sheet --format` |
-| GC-4 sheet 高级旗标 | P2 | 部分→已实现子集 | `--sheet-type/pack/width/height/columns/rows`、`--power-of-two-size`、`--tagname-format` → `SheetPackOpts`；无多页 pack |
-| GD / GE | P2 | 未开始 | tileset / 其余冷门未做 |
+| GB-5 `--shrink-to` | P2 | 已完成 | `ops::shrink_sprite_to` |
+| GC-2..4 | P1–P2 | 已完成 | split/padding/format/sheet 高级旗标 |
+| GD-1 frame CRUD | P1 | 已完成 | `edit::frame_*` + `ase frame …`（非官方）；tag 边界单测 |
+| GD-2 tag CRUD | P1 | 已完成 | `ase tag add/remove/rename/set` |
+| GD-3 layer CRUD | P1 | 已完成 | `ase layer add/remove/rename/set` |
+| GD-4 cel ops | P1 | 已完成 | `ase cel move/unlink/clear/set` |
+| GD-5 flatten | P1 | 已完成 | `ase flatten` 写回单层 |
+| GD-6 sprite attrs | P2 | 已完成 | `ase sprite set` transparent/pixel-ratio/grid |
+| GD-7 帧级 palette | P2 | 不做 | 模型仍为文档级 `sprite.palette` |
+| GD-8 palette sort | P2 | 已完成 | `ase palette sort --by hue\|sat\|lum` |
+| GE-1 convolution | P1 | 已完成 | `ase filter convolve` + Kernel JSON |
+| GE-2 median | P1 | 已完成 | `ase filter median`；半径 cap=3 |
+| GE-3 color curve | P2 | 已完成（最小） | `ase filter curve` + `--curve-json` |
+| GE-4 target/tiled 文档 | P2 | 已完成 | `plan/v8.1/ge4-filter-boundary.md`（clamp，非 wrap） |
+| GE-5 tileset 最小 | P2 | 已完成 | 读 0x2023 + cel type3；`ase export-tileset`；tilemap 层渲染仍跳过 |
 
-验证：`cargo +1.95.0 test -p pxl-export -p pxl-ase --lib`；`check -p pxl-cli`。
+验证：`cargo +1.95.0 test -p pxl-ase-doc -p pxl-ase-io -p pxl-ase --lib`；`check -p pxl-cli`。
