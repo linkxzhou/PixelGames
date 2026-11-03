@@ -1,7 +1,7 @@
 use std::io::{Cursor, Read};
 use std::path::Path;
 
-use pxl_ase_doc::{AseDoc, ColorMode, Grid, Sprite, UserData};
+use pxl_ase_doc::{AseDoc, ColorMode, Grid, PixelRatio, Sprite, UserData};
 use pxl_core::Rgba;
 
 use crate::chunks::{
@@ -9,6 +9,7 @@ use crate::chunks::{
     read_tags_chunk,
 };
 use crate::error::{IoError, IoResult};
+use crate::passthrough::{read_cel_extra, read_raw_body};
 use crate::user_data::decode_user_data;
 
 #[derive(Clone, Debug, Default)]
@@ -95,7 +96,7 @@ pub fn read_aseprite_bytes(bytes: &[u8], opts: &ReadOptions) -> IoResult<AseDoc>
     let color_mode = ColorMode::from_bpp(bpp).ok_or_else(|| {
         IoError::new(format!("unsupported color depth {bpp}")).with_hint("need 8/16/32")
     })?;
-    let _flags = read_u32(&mut c)?;
+    let header_flags = read_u32(&mut c)?;
     let speed = read_u16(&mut c)?;
     let _ = read_u32(&mut c)?;
     let _ = read_u32(&mut c)?;
@@ -114,17 +115,14 @@ pub fn read_aseprite_bytes(bytes: &[u8], opts: &ReadOptions) -> IoResult<AseDoc>
 
     let mut sprite = Sprite::new(width, height, color_mode);
     sprite.transparent_index = transparent_index;
+    sprite.header_flags = header_flags;
+    sprite.pixel_ratio = PixelRatio::new(px_w, px_h);
     sprite.grid = Grid {
         x: grid_x,
         y: grid_y,
         w: grid_w,
         h: grid_h,
     };
-    if px_w != 1 || px_h != 1 {
-        sprite.read_loss_notes.push(format!(
-            "pixel ratio {px_w}:{px_h} read but not modelled; write-back uses 1:1"
-        ));
-    }
     if num_colors > 0 {
         sprite.palette = vec![Rgba::TRANSPARENT; num_colors as usize];
     }
@@ -211,12 +209,19 @@ pub fn read_aseprite_bytes(bytes: &[u8], opts: &ReadOptions) -> IoResult<AseDoc>
                     attach_user_data(&mut sprite, &mut ud_target, ud);
                 }
                 0x2006 => {
-                    note_skip(&mut sprite, "Cel Extra chunk (0x2006)");
-                    c.set_position(data_end);
+                    let extra = read_cel_extra(&mut c)?;
+                    if let UdTarget::Cel { layer, frame } = &ud_target {
+                        if let Some(l) = sprite.layers.get_mut(*layer) {
+                            if let Some(cel) = l.cels.get_mut(frame) {
+                                cel.set_extra(extra);
+                            }
+                        }
+                    } else {
+                        note_skip(&mut sprite, "Cel Extra chunk (0x2006) with no prior cel");
+                    }
                 }
                 0x2007 => {
-                    note_skip(&mut sprite, "Color Profile chunk (0x2007)");
-                    c.set_position(data_end);
+                    sprite.color_profile_raw = Some(read_raw_body(&mut c, data_end)?);
                 }
                 0x2008 => {
                     note_skip(&mut sprite, "External Files chunk (0x2008)");

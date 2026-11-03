@@ -2,6 +2,7 @@
 //! Does not include or generate code from Aseprite C++ sources.
 
 mod chunks;
+mod passthrough;
 mod error;
 mod read;
 mod user_data;
@@ -117,4 +118,41 @@ mod tests {
         assert!(!src.read_loss_notes.is_empty());
     }
 
+    #[test]
+    fn color_profile_passthrough_roundtrip() {
+        let mut src = mini_indexed();
+        let mut body = Vec::new();
+        body.extend_from_slice(&1u16.to_le_bytes());
+        body.extend_from_slice(&0u16.to_le_bytes());
+        body.extend_from_slice(&0i32.to_le_bytes());
+        body.extend_from_slice(&[0u8; 8]);
+        src.color_profile_raw = Some(body.clone());
+        src.pixel_ratio = pxl_ase_doc::PixelRatio::new(2, 1);
+        let bytes = write_aseprite_bytes(&src, &WriteOptions::default()).unwrap();
+        let dst = read_aseprite_bytes(&bytes, &ReadOptions::default()).unwrap().sprite;
+        assert_eq!(dst.color_profile_raw.as_ref(), Some(&body));
+        assert_eq!((dst.pixel_ratio.width, dst.pixel_ratio.height), (2, 1));
+    }
+
+    #[test]
+    fn cel_extra_roundtrip() {
+        use pxl_ase_doc::CelExtra;
+        let mut src = mini_indexed();
+        if let Some(cel) = src.layers[0].cels.get_mut(&0) {
+            cel.set_extra(CelExtra {
+                flags: 1,
+                precise_x: 1 << 16,
+                precise_y: 2 << 16,
+                width: 3 << 16,
+                height: 4 << 16,
+            });
+        }
+        let bytes = write_aseprite_bytes(&src, &WriteOptions::default()).unwrap();
+        let dst = read_aseprite_bytes(&bytes, &ReadOptions::default()).unwrap().sprite;
+        let extra = dst.layers[0].cels.get(&0).and_then(|c| c.extra().copied());
+        assert_eq!(
+            extra.map(|e| (e.flags, e.precise_x, e.width)),
+            Some((1, 1 << 16, 3 << 16))
+        );
+    }
 }

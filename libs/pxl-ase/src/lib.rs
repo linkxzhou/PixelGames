@@ -357,7 +357,8 @@ mod z_index_render_tests {
                 opacity: 255,
                 z_index: 0,
                 user_data: Default::default(),
-            },
+            extra: None,
+        },
         );
         s.set_cel(
             l1,
@@ -369,7 +370,8 @@ mod z_index_render_tests {
                 opacity: 255,
                 z_index: 0,
                 user_data: Default::default(),
-            },
+            extra: None,
+        },
         );
         let flat = flatten_frame_rgba(&s, 0).unwrap();
         assert_eq!(&flat[0..4], &[0, 0, 255, 255], "default: later layer on top");

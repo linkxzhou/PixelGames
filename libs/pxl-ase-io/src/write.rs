@@ -6,6 +6,7 @@ use flate2::Compression;
 use pxl_ase_doc::{Cel, ColorMode, ImageBuffer, LayerKind, Sprite, TagDirection, UserData};
 
 use crate::error::{IoError, IoResult};
+use crate::passthrough::encode_cel_extra;
 use crate::user_data::encode_user_data_body;
 
 #[derive(Clone, Debug)]
@@ -36,13 +37,16 @@ pub fn write_aseprite_bytes(sprite: &Sprite, opts: &WriteOptions) -> IoResult<Ve
         let mut chunks: Vec<Vec<u8>> = Vec::new();
         if fi == 0 {
             for layer in &sprite.layers {
-                chunks.push(encode_layer_chunk(layer));
+                chunks.push(encode_layer_chunk(layer, sprite.header_flags));
                 if !layer.user_data.is_empty() {
                     chunks.push(wrap_chunk(0x2020, &encode_user_data_body(&layer.user_data)));
                 }
             }
             if !sprite.palette.is_empty() || sprite.color_mode == ColorMode::Indexed {
                 chunks.push(encode_palette_chunk(sprite));
+            }
+            if let Some(raw) = &sprite.color_profile_raw {
+                chunks.push(wrap_chunk(0x2007, raw));
             }
             if !sprite.user_data.is_empty() {
                 chunks.push(wrap_chunk(0x2020, &encode_user_data_body(&sprite.user_data)));
@@ -65,6 +69,9 @@ pub fn write_aseprite_bytes(sprite: &Sprite, opts: &WriteOptions) -> IoResult<Ve
         for layer in &sprite.layers {
             if let Some(cel) = layer.cels.get(&(fi as u16)) {
                 chunks.push(encode_cel_chunk(layer.id.0, cel, sprite, opts)?);
+                if let Some(extra) = cel.extra() {
+                    chunks.push(wrap_chunk(0x2006, &encode_cel_extra(extra)));
+                }
                 if !cel.user_data().is_empty() {
                     chunks.push(wrap_chunk(0x2020, &encode_user_data_body(cel.user_data())));
                 }
@@ -86,7 +93,7 @@ pub fn write_aseprite_bytes(sprite: &Sprite, opts: &WriteOptions) -> IoResult<Ve
     out.extend_from_slice(&sprite.width.to_le_bytes());
     out.extend_from_slice(&sprite.height.to_le_bytes());
     out.extend_from_slice(&sprite.color_mode.bits_per_pixel().to_le_bytes());
-    out.extend_from_slice(&1u32.to_le_bytes()); // layer opacity valid
+    out.extend_from_slice(&sprite.header_flags.to_le_bytes());
     out.extend_from_slice(&100u16.to_le_bytes()); // deprecated speed
     out.extend_from_slice(&0u32.to_le_bytes());
     out.extend_from_slice(&0u32.to_le_bytes());
@@ -98,8 +105,9 @@ pub fn write_aseprite_bytes(sprite: &Sprite, opts: &WriteOptions) -> IoResult<Ve
         sprite.palette.len().min(65535) as u16
     };
     out.extend_from_slice(&ncolors.to_le_bytes());
-    out.push(1); // pixel width
-    out.push(1); // pixel height
+    let (px_w, px_h) = sprite.pixel_ratio.effective();
+    out.push(px_w);
+    out.push(px_h);
     out.extend_from_slice(&sprite.grid.x.to_le_bytes());
     out.extend_from_slice(&sprite.grid.y.to_le_bytes());
     out.extend_from_slice(&sprite.grid.w.to_le_bytes());
@@ -129,7 +137,7 @@ fn encode_frame(chunks: &[Vec<u8>], duration: u16) -> Vec<u8> {
     out
 }
 
-fn encode_layer_chunk(layer: &pxl_ase_doc::Layer) -> Vec<u8> {
+fn encode_layer_chunk(layer: &pxl_ase_doc::Layer, header_flags: u32) -> Vec<u8> {
     let mut body = Vec::new();
     body.extend_from_slice(&layer.flags.to_bits().to_le_bytes());
     body.extend_from_slice(&layer.kind.to_u16().to_le_bytes());
@@ -142,6 +150,9 @@ fn encode_layer_chunk(layer: &pxl_ase_doc::Layer) -> Vec<u8> {
     write_string(&mut body, &layer.name);
     if layer.kind == LayerKind::Tilemap {
         body.extend_from_slice(&layer.tileset_index.unwrap_or(0).to_le_bytes());
+    }
+    if header_flags & 4 != 0 {
+        body.extend_from_slice(&layer.uuid.unwrap_or([0u8; 16]));
     }
     wrap_chunk(0x2004, &body)
 }
@@ -248,9 +259,7 @@ fn encode_cel_chunk(
             x,
             y,
             opacity,
-            z_index,
-            ..
-        } => {
+            z_index, .. } => {
             body.extend_from_slice(&x.to_le_bytes());
             body.extend_from_slice(&y.to_le_bytes());
             body.push(*opacity);

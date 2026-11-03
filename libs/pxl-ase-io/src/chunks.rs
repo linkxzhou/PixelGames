@@ -38,6 +38,7 @@ pub(crate) fn read_layer_chunk(c: &mut Cursor<&[u8]>, sprite: &mut Sprite) -> Io
         opacity,
         cels: Default::default(),
         tileset_index,
+        uuid: None,
         user_data: UserData::default(),
     });
     Ok(())
@@ -74,7 +75,8 @@ pub(crate) fn read_cel_chunk(
                     frame: link,
                     z_index,
                     user_data: UserData::default(),
-                },
+            extra: None,
+        },
             );
         }
         0 | 2 => {
@@ -108,7 +110,8 @@ pub(crate) fn read_cel_chunk(
                     opacity,
                     z_index,
                     user_data: UserData::default(),
-                },
+            extra: None,
+        },
             );
         }
         3 => {

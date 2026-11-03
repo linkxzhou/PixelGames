@@ -10,6 +10,7 @@ use crate::error::{AseError, AseResult};
 use crate::image::ImageBuffer;
 use crate::layer::{Cel, CelPixels, Layer, LayerKind};
 use crate::types::{FrameIndex, ImageId, LayerId};
+use crate::pixel_ratio::PixelRatio;
 use crate::user_data::UserData;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -85,6 +86,11 @@ pub struct Sprite {
     pub slices: Vec<Slice>,
     pub grid: Grid,
     pub user_data: UserData,
+    /// ASE header flags (layer opacity valid / group blend / UUID layers / …).
+    pub header_flags: u32,
+    pub pixel_ratio: PixelRatio,
+    /// Raw Color Profile chunk body (0x2007), passthrough — not parsed.
+    pub color_profile_raw: Option<Vec<u8>>,
     /// Notes collected while reading (skipped chunks / dropped fields). Cleared by callers if undesired.
     pub read_loss_notes: Vec<String>,
     next_image_id: u32,
@@ -105,6 +111,9 @@ impl Sprite {
             slices: Vec::new(),
             grid: Grid::default(),
             user_data: UserData::default(),
+            header_flags: 1, // layer opacity valid
+            pixel_ratio: PixelRatio::default(),
+            color_profile_raw: None,
             read_loss_notes: Vec::new(),
             next_image_id: 1,
         }
@@ -163,9 +172,7 @@ impl Sprite {
                 image,
                 x,
                 y,
-                opacity,
-                ..
-            } => {
+                opacity, .. } => {
                 let buf = self
                     .images
                     .get(image)

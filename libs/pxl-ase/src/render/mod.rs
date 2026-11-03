@@ -1,5 +1,7 @@
 //! Layer flatten / composite (merged `pxl-ase-render`).
 
+mod blend;
+
 use pxl_ase_doc::{CelPixels, ColorMode, LayerKind, Sprite};
 use pxl_core::Rgba;
 
@@ -43,7 +45,7 @@ pub fn flatten_frame_rgba(sprite: &Sprite, frame: u16) -> Result<Vec<u8>> {
         let Ok(cel) = sprite.cel_pixels(layer.id, frame) else {
             continue;
         };
-        blit_cel(&mut out, w, h, &cel, sprite, layer.opacity);
+        blit_cel(&mut out, w, h, &cel, sprite, layer.opacity, layer.blend);
     }
     Ok(out)
 }
@@ -55,6 +57,7 @@ fn blit_cel(
     cel: &CelPixels,
     sprite: &Sprite,
     layer_opacity: u8,
+    layer_blend: pxl_ase_doc::BlendMode,
 ) {
     match cel {
         CelPixels::Rgba {
@@ -84,7 +87,7 @@ fn blit_cel(
                         continue;
                     }
                     let di = (dy as usize * canvas_w + dx as usize) * 4;
-                    blend_over(out, di, src.r, src.g, src.b, a);
+                    blend::blend_pixel(layer_blend, out, di, src.r, src.g, src.b, a);
                 }
             }
         }
@@ -117,7 +120,7 @@ fn blit_cel(
                         continue;
                     }
                     let di = (dy as usize * canvas_w + dx as usize) * 4;
-                    blend_over(out, di, color.r, color.g, color.b, a);
+                    blend::blend_pixel(layer_blend, out, di, color.r, color.g, color.b, a);
                 }
             }
         }
@@ -143,7 +146,7 @@ fn blit_cel(
                         continue;
                     }
                     let di = (dy as usize * canvas_w + dx as usize) * 4;
-                    blend_over(out, di, v, v, v, a);
+                    blend::blend_pixel(layer_blend, out, di, v, v, v, a);
                 }
             }
         }
@@ -156,30 +159,6 @@ fn scale_alpha(a: u8, cel: u8, layer: u8) -> u8 {
     v.min(255) as u8
 }
 
-fn blend_over(out: &mut [u8], di: usize, r: u8, g: u8, b: u8, a: u8) {
-    if a == 255 {
-        out[di] = r;
-        out[di + 1] = g;
-        out[di + 2] = b;
-        out[di + 3] = 255;
-        return;
-    }
-    let da = out[di + 3] as u32;
-    let sa = a as u32;
-    let out_a = sa + da * (255 - sa) / 255;
-    if out_a == 0 {
-        out[di] = 0;
-        out[di + 1] = 0;
-        out[di + 2] = 0;
-        out[di + 3] = 0;
-        return;
-    }
-    let inv = 255 - sa;
-    out[di] = ((r as u32 * sa + out[di] as u32 * da * inv / 255) / out_a) as u8;
-    out[di + 1] = ((g as u32 * sa + out[di + 1] as u32 * da * inv / 255) / out_a) as u8;
-    out[di + 2] = ((b as u32 * sa + out[di + 2] as u32 * da * inv / 255) / out_a) as u8;
-    out[di + 3] = out_a as u8;
-}
 
 pub fn flatten_all_frames(sprite: &Sprite) -> Result<Vec<Vec<u8>>> {
     let mut frames = Vec::new();
