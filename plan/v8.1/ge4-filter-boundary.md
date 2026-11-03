@@ -1,21 +1,21 @@
 # GE-4 滤镜目标通道与平铺边界策略
 
 > 日期：2026-11-03（Asia/Shanghai）  
-> 状态：文档化（实现仍为整幅 RGBA；无 per-channel mask CLI）
+> 状态：**已实现**（`FilterOpts` + CLI `--channels` / `--tiled`）
 
-## Target channel（对照 `filters/target.h`）
+## Target channel
 
-- 官方可按 R/G/B/A 掩码选择写入通道。
-- **本实现**：convolution / median / color-curve **只改 RGB，保留源 alpha**；indexed/gray 缓冲跳过。
-- 未暴露 `--target-channel`；若需要可在后续以位掩码扩展 `Kernel`/`median` 写回。
+- `ChannelMask`：`r/g/b/a` 布尔；默认 **RGB**（保留源 alpha）。
+- CLI：`ase filter … --channels rgb|rgba|r|g|b|a…`
+- 作用于 `convolve` / `median` / `curve`：仅写回被选中的通道。
 
-## Tiled mode（对照 `tiled_mode.h`）
+## Tiled / boundary
 
-- 官方：滤镜采样可在文档边界外按 X/Y/both 平铺回卷。
-- **本实现**：边界策略为 **clamp**（重复边缘像素），不是 wrap。
-- 原因：当前无 document tiled flags 写回路；clamp 对单帧 sprite 导出最安全。
+- `BoundaryMode`：`Clamp`（默认）| `WrapX` | `WrapY` | `Wrap`（both）。
+- CLI：`ase filter … --tiled clamp|x|y|both`
+- 采样在核/邻域越界时按模式 clamp 或环绕；不再仅文档声明。
 
-## 验收口径
+## 验收
 
-- 奇异 convolution 核（偶数边 / divisor=0）拒绝。
-- median 半径 `> MAX_MEDIAN_RADIUS(3)` 拒绝。
+- 奇异 convolution 核拒绝；median 半径 `>3` 拒绝。
+- `--channels r` 时 G/B/A 不变；`--tiled both` 时角点采样环绕。

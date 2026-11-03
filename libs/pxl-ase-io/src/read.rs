@@ -187,7 +187,7 @@ pub fn read_aseprite_bytes(bytes: &[u8], opts: &ReadOptions) -> IoResult<AseDoc>
                     ud_target = UdTarget::TagCursor { next: 0 };
                 }
                 0x2019 => {
-                    read_palette_chunk(&mut c, &mut sprite)?;
+                    read_palette_chunk(&mut c, &mut sprite, frame_index as u16)?;
                     saw_new_palette = true;
                     if frame_index == 0 {
                         ud_target = UdTarget::Sprite;

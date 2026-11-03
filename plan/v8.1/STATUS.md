@@ -16,18 +16,10 @@
 | GB-4 Playback | P1 | 已完成 | `playback.md` + expand_tag_frames |
 | GB-5 `--shrink-to` | P2 | 已完成 | `ops::shrink_sprite_to` |
 | GC-2..4 | P1–P2 | 已完成 | split/padding/format/sheet 高级旗标 |
-| GD-1 frame CRUD | P1 | 已完成 | `edit::frame_*` + `ase frame …`（非官方）；tag 边界单测 |
-| GD-2 tag CRUD | P1 | 已完成 | `ase tag add/remove/rename/set` |
-| GD-3 layer CRUD | P1 | 已完成 | `ase layer add/remove/rename/set` |
-| GD-4 cel ops | P1 | 已完成 | `ase cel move/unlink/clear/set` |
-| GD-5 flatten | P1 | 已完成 | `ase flatten` 写回单层 |
-| GD-6 sprite attrs | P2 | 已完成 | `ase sprite set` transparent/pixel-ratio/grid |
-| GD-7 帧级 palette | P2 | 不做 | 模型仍为文档级 `sprite.palette` |
-| GD-8 palette sort | P2 | 已完成 | `ase palette sort --by hue\|sat\|lum` |
-| GE-1 convolution | P1 | 已完成 | `ase filter convolve` + Kernel JSON |
-| GE-2 median | P1 | 已完成 | `ase filter median`；半径 cap=3 |
-| GE-3 color curve | P2 | 已完成（最小） | `ase filter curve` + `--curve-json` |
-| GE-4 target/tiled 文档 | P2 | 已完成 | `plan/v8.1/ge4-filter-boundary.md`（clamp，非 wrap） |
-| GE-5 tileset 最小 | P2 | 已完成 | 读 0x2023 + cel type3；`ase export-tileset`；tilemap 层渲染仍跳过 |
+| GD-1..6 / GD-8 | P1–P2 | 已完成 | frame/tag/layer/cel/flatten/sprite/palette-sort |
+| GD-7 帧级 palette | P2 | 已完成 | `frame_palettes` 读写；`ase palette set/add/remove/clear-frame --frame`；`frame_palette_roundtrip` |
+| GE-1..3 | P1–P2 | 已完成 | convolve/median/curve |
+| GE-4 target/tiled | P2 | 已完成 | `FilterOpts` + `--channels`/`--tiled`；见 `ge4-filter-boundary.md` |
+| GE-5 tileset + 渲染 | P2 | 已完成 | 读 0x2023/cel3；`export-tileset`；**tilemap 层参与 flatten**（`tilemap_paints_tiles_into_flatten`） |
 
 验证：`cargo +1.95.0 test -p pxl-ase-doc -p pxl-ase-io -p pxl-ase --lib`；`check -p pxl-cli`。

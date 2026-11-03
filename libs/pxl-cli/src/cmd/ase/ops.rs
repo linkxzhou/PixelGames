@@ -183,6 +183,7 @@ pub(crate) fn filter(ctx: &Ctx, a: AseFilterArgs) -> CmdResult<()> {
                 .map_err(map_err)?;
         }
         "convolve" | "convolution" => {
+            let opts = filter_opts_from_args(&a)?;
             let kernel = if let Some(js) = &a.kernel_json {
                 let v: serde_json::Value = serde_json::from_str(js)
                     .map_err(|e| PxlError::usage(format!("bad --kernel-json: {e}")))?;
@@ -190,10 +191,11 @@ pub(crate) fn filter(ctx: &Ctx, a: AseFilterArgs) -> CmdResult<()> {
             } else {
                 pxl_ase::filters::Kernel::named(&a.kernel).map_err(map_err)?
             };
-            pxl_ase::filters::convolve_sprite(&mut doc.sprite, &kernel).map_err(map_err)?;
+            pxl_ase::filters::convolve_sprite_opts(&mut doc.sprite, &kernel, opts).map_err(map_err)?;
         }
         "median" => {
-            pxl_ase::filters::median_sprite(&mut doc.sprite, a.radius).map_err(map_err)?;
+            let opts = filter_opts_from_args(&a)?;
+            pxl_ase::filters::median_sprite_opts(&mut doc.sprite, a.radius, opts).map_err(map_err)?;
         }
         "curve" | "color-curve" => {
             let lut = if let Some(js) = &a.curve_json {
@@ -217,7 +219,8 @@ pub(crate) fn filter(ctx: &Ctx, a: AseFilterArgs) -> CmdResult<()> {
             } else {
                 pxl_ase::filters::contrast_curve_lut()
             };
-            pxl_ase::filters::apply_curve_lut(&mut doc.sprite, &lut).map_err(map_err)?;
+            let opts = filter_opts_from_args(&a)?;
+            pxl_ase::filters::apply_curve_lut_opts(&mut doc.sprite, &lut, opts).map_err(map_err)?;
         }
         other => {
             return Err(PxlError::usage(format!("unknown filter '{other}'"))
@@ -387,6 +390,15 @@ pub(crate) fn split_slices_cmd(ctx: &Ctx, a: AseSplitSlicesArgs) -> CmdResult<()
         }
     }
     Ok(())
+}
+
+
+fn filter_opts_from_args(a: &AseFilterArgs) -> CmdResult<pxl_ase::filters::FilterOpts> {
+    let channels = pxl_ase::filters::ChannelMask::parse(&a.channels)
+        .map_err(|e| PxlError::usage(e))?;
+    let boundary = pxl_ase::filters::BoundaryMode::parse(&a.tiled)
+        .map_err(|e| PxlError::usage(e))?;
+    Ok(pxl_ase::filters::FilterOpts { channels, boundary })
 }
 
 pub(crate) fn write_filter_out(ctx: &Ctx, doc: &pxl_ase::doc::AseDoc, out_s: &str) -> CmdResult<()> {

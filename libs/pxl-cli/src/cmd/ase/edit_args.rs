@@ -220,6 +220,14 @@ pub struct SpriteSetArgs {
 #[derive(Subcommand, Debug)]
 pub enum PaletteCmd {
     Sort(PaletteSortArgs),
+    /// Set palette entry color (`#RRGGBB` / `#RRGGBBAA`). Optional `--frame` for frame palette.
+    Set(PaletteSetArgs),
+    /// Append a color to the (frame) palette.
+    Add(PaletteAddArgs),
+    /// Remove palette entry by index.
+    Remove(PaletteRemoveArgs),
+    /// Drop a frame-level palette override.
+    ClearFrame(PaletteClearFrameArgs),
 }
 
 #[derive(Args, Debug)]
@@ -240,4 +248,45 @@ pub struct ExportTilesetArgs {
     pub out: String,
     #[arg(long, default_value_t = 0)]
     pub index: usize,
+}
+
+
+#[derive(Args, Debug)]
+pub struct PaletteSetArgs {
+    pub file: String,
+    pub index: usize,
+    /// `#RRGGBB` or `#RRGGBBAA`
+    pub color: String,
+    #[arg(long)]
+    pub frame: Option<u16>,
+    #[arg(long, short = 'o')]
+    pub out: Option<String>,
+}
+
+#[derive(Args, Debug)]
+pub struct PaletteAddArgs {
+    pub file: String,
+    pub color: String,
+    #[arg(long)]
+    pub frame: Option<u16>,
+    #[arg(long, short = 'o')]
+    pub out: Option<String>,
+}
+
+#[derive(Args, Debug)]
+pub struct PaletteRemoveArgs {
+    pub file: String,
+    pub index: usize,
+    #[arg(long)]
+    pub frame: Option<u16>,
+    #[arg(long, short = 'o')]
+    pub out: Option<String>,
+}
+
+#[derive(Args, Debug)]
+pub struct PaletteClearFrameArgs {
+    pub file: String,
+    pub frame: u16,
+    #[arg(long, short = 'o')]
+    pub out: Option<String>,
 }

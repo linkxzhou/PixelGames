@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use pxl_ase_doc::{ImageBuffer, Sprite};
 
+use super::opts::{ChannelMask, FilterOpts};
 use crate::{AseErr, Result};
 
 /// Build a 256-entry LUT from control points `[[x,y],...]` with x,y in 0..=255.
@@ -40,14 +41,35 @@ pub fn lut_from_points(points: &[(u8, u8)]) -> Result<[u8; 256]> {
 }
 
 pub fn apply_curve_lut(sprite: &mut Sprite, lut: &[u8; 256]) -> Result<usize> {
+    apply_curve_lut_opts(sprite, lut, FilterOpts::default())
+}
+
+pub fn apply_curve_lut_opts(
+    sprite: &mut Sprite,
+    lut: &[u8; 256],
+    opts: FilterOpts,
+) -> Result<usize> {
     let mut n = 0usize;
+    let ch = opts.channels;
     for img in sprite.images.values_mut() {
         if let ImageBuffer::Rgba(buf) = img {
             let mut px = buf.pixels.as_ref().clone();
             for chunk in px.chunks_exact_mut(4) {
-                chunk[0] = lut[chunk[0] as usize];
-                chunk[1] = lut[chunk[1] as usize];
-                chunk[2] = lut[chunk[2] as usize];
+                let mut filtered = [chunk[0], chunk[1], chunk[2], chunk[3]];
+                if ch.r {
+                    filtered[0] = lut[chunk[0] as usize];
+                }
+                if ch.g {
+                    filtered[1] = lut[chunk[1] as usize];
+                }
+                if ch.b {
+                    filtered[2] = lut[chunk[2] as usize];
+                }
+                if ch.a {
+                    filtered[3] = lut[chunk[3] as usize];
+                }
+                let _ = ChannelMask::default();
+                chunk.copy_from_slice(&filtered);
             }
             buf.pixels = Arc::new(px);
             n += 1;

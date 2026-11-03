@@ -5,6 +5,7 @@ use std::sync::Arc;
 use pxl_ase_doc::{ImageBuffer, Sprite};
 use serde_json::Value;
 
+use super::opts::FilterOpts;
 use crate::{AseErr, Result};
 
 #[derive(Clone, Debug)]
@@ -99,7 +100,7 @@ impl Kernel {
     }
 }
 
-fn convolve_rgba(w: u16, h: u16, src: &[u8], k: &Kernel) -> Vec<u8> {
+fn convolve_rgba(w: u16, h: u16, src: &[u8], k: &Kernel, opts: FilterOpts) -> Vec<u8> {
     let (w, h) = (w as i32, h as i32);
     let kw = k.width as i32;
     let kh = k.height as i32;
@@ -111,8 +112,7 @@ fn convolve_rgba(w: u16, h: u16, src: &[u8], k: &Kernel) -> Vec<u8> {
             let mut acc = [0.0f32; 4];
             for ky in 0..kh {
                 for kx in 0..kw {
-                    let sx = (x + kx - ox).clamp(0, w - 1);
-                    let sy = (y + ky - oy).clamp(0, h - 1);
+                    let (sx, sy) = opts.boundary.sample(x + kx - ox, y + ky - oy, w, h);
                     let si = ((sy * w + sx) * 4) as usize;
                     let kv = k.values[(ky * kw + kx) as usize];
                     for c in 0..4 {
@@ -121,12 +121,16 @@ fn convolve_rgba(w: u16, h: u16, src: &[u8], k: &Kernel) -> Vec<u8> {
                 }
             }
             let di = ((y * w + x) * 4) as usize;
-            for c in 0..3 {
+            let mut filtered = [0u8; 4];
+            for c in 0..4 {
                 let v = (acc[c] / k.divisor + k.bias).round().clamp(0.0, 255.0);
-                out[di + c] = v as u8;
+                filtered[c] = v as u8;
             }
-            // Keep alpha from source center (Aseprite-ish).
-            out[di + 3] = src[di + 3];
+            // Default keeps source alpha unless channels.a.
+            if !opts.channels.a {
+                filtered[3] = src[di + 3];
+            }
+            opts.channels.write_into(&mut out[di..di + 4], &filtered);
         }
     }
     out
@@ -134,10 +138,18 @@ fn convolve_rgba(w: u16, h: u16, src: &[u8], k: &Kernel) -> Vec<u8> {
 
 /// Apply convolution to every RGBA image buffer. Indexed/gray skipped.
 pub fn convolve_sprite(sprite: &mut Sprite, kernel: &Kernel) -> Result<usize> {
+    convolve_sprite_opts(sprite, kernel, FilterOpts::default())
+}
+
+pub fn convolve_sprite_opts(
+    sprite: &mut Sprite,
+    kernel: &Kernel,
+    opts: FilterOpts,
+) -> Result<usize> {
     let mut n = 0usize;
     for img in sprite.images.values_mut() {
         if let ImageBuffer::Rgba(buf) = img {
-            let px = convolve_rgba(buf.width, buf.height, buf.pixels.as_ref(), kernel);
+            let px = convolve_rgba(buf.width, buf.height, buf.pixels.as_ref(), kernel, opts);
             buf.pixels = Arc::new(px);
             n += 1;
         }

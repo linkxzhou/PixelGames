@@ -5,8 +5,10 @@ use pxl_ase::doc::{BlendMode, Grid, TagDirection};
 use pxl_ase::edit::{
     cel_clear, cel_move, cel_set_opacity, cel_set_position, cel_unlink, flatten_layers, frame_add,
     frame_copy, frame_remove, frame_set_duration, layer_add, layer_remove, layer_rename, layer_set,
-    palette_sort, sprite_set_attrs, tag_add, tag_remove, tag_rename, tag_set, SpriteAttrPatch,
+    palette_add_entry, palette_clear_frame, palette_remove_entry, palette_set_entry, palette_sort,
+    sprite_set_attrs, tag_add, tag_remove, tag_rename, tag_set, SpriteAttrPatch,
 };
+use pxl_core::parse_hex;
 use pxl_ase::{export_tileset_png, open};
 use pxl_core::PxlError;
 use serde_json::json;
@@ -200,6 +202,28 @@ pub(crate) fn run_palette(ctx: &Ctx, cmd: PaletteCmd) -> CmdResult<()> {
         PaletteCmd::Sort(a) => {
             let mut doc = open(&a.file, false).map_err(map_err)?;
             palette_sort(&mut doc.sprite, &a.by, a.keep_zero).map_err(map_err)?;
+            save(ctx, &a.file, a.out.as_deref(), &doc.sprite)
+        }
+        PaletteCmd::Set(a) => {
+            let mut doc = open(&a.file, false).map_err(map_err)?;
+            let color = parse_hex(&a.color)?;
+            palette_set_entry(&mut doc.sprite, a.frame, a.index, color).map_err(map_err)?;
+            save(ctx, &a.file, a.out.as_deref(), &doc.sprite)
+        }
+        PaletteCmd::Add(a) => {
+            let mut doc = open(&a.file, false).map_err(map_err)?;
+            let color = parse_hex(&a.color)?;
+            let _ = palette_add_entry(&mut doc.sprite, a.frame, color).map_err(map_err)?;
+            save(ctx, &a.file, a.out.as_deref(), &doc.sprite)
+        }
+        PaletteCmd::Remove(a) => {
+            let mut doc = open(&a.file, false).map_err(map_err)?;
+            palette_remove_entry(&mut doc.sprite, a.frame, a.index).map_err(map_err)?;
+            save(ctx, &a.file, a.out.as_deref(), &doc.sprite)
+        }
+        PaletteCmd::ClearFrame(a) => {
+            let mut doc = open(&a.file, false).map_err(map_err)?;
+            palette_clear_frame(&mut doc.sprite, a.frame).map_err(map_err)?;
             save(ctx, &a.file, a.out.as_deref(), &doc.sprite)
         }
     }

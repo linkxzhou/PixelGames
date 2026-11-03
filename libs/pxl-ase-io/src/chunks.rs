@@ -183,15 +183,17 @@ pub(crate) fn read_tags_chunk(c: &mut Cursor<&[u8]>, sprite: &mut Sprite) -> IoR
     Ok(())
 }
 
-pub(crate) fn read_palette_chunk(c: &mut Cursor<&[u8]>, sprite: &mut Sprite) -> IoResult<()> {
+pub(crate) fn read_palette_chunk(
+    c: &mut Cursor<&[u8]>,
+    sprite: &mut Sprite,
+    frame: u16,
+) -> IoResult<()> {
     let size = read_u32(c)? as usize;
     let first = read_u32(c)? as usize;
     let last = read_u32(c)? as usize;
     let mut pad = [0u8; 8];
     c.read_exact(&mut pad)?;
-    if sprite.palette.len() < size {
-        sprite.palette.resize(size, Rgba::TRANSPARENT);
-    }
+    let mut entries = Vec::new();
     for i in first..=last {
         let flags = read_u16(c)?;
         let r = read_u8(c)?;
@@ -205,9 +207,23 @@ pub(crate) fn read_palette_chunk(c: &mut Cursor<&[u8]>, sprite: &mut Sprite) -> 
                 sprite.read_loss_notes.push(note.into());
             }
         }
-        if i < sprite.palette.len() {
-            sprite.palette[i] = Rgba { r, g, b, a };
+        entries.push((i, Rgba { r, g, b, a }));
+    }
+    let apply = |pal: &mut Vec<Rgba>| {
+        if pal.len() < size {
+            pal.resize(size, Rgba::TRANSPARENT);
         }
+        for (i, rgba) in entries.iter() {
+            if *i < pal.len() {
+                pal[*i] = *rgba;
+            }
+        }
+    };
+    if frame == 0 {
+        apply(&mut sprite.palette);
+    } else {
+        let _ = sprite.ensure_frame_palette(frame);
+        apply(sprite.frame_palettes.get_mut(&frame).unwrap());
     }
     Ok(())
 }

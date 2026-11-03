@@ -97,6 +97,8 @@ pub struct Sprite {
     pub layers: Vec<Layer>,
     pub images: BTreeMap<ImageId, ImageBuffer>,
     pub palette: Vec<Rgba>,
+    /// Per-frame palette overrides (ASE 0x2019 on frame >0).
+    pub frame_palettes: BTreeMap<FrameIndex, Vec<Rgba>>,
     pub tags: Vec<Tag>,
     pub slices: Vec<Slice>,
     pub grid: Grid,
@@ -126,6 +128,7 @@ impl Sprite {
             layers: Vec::new(),
             images: BTreeMap::new(),
             palette: Vec::new(),
+            frame_palettes: BTreeMap::new(),
             tags: Vec::new(),
             slices: Vec::new(),
             grid: Grid::default(),
@@ -225,6 +228,27 @@ impl Sprite {
         }
     }
 
+
+    /// Palette used when indexing pixels on `frame` (frame override or document palette).
+    pub fn palette_for_frame(&self, frame: FrameIndex) -> &[Rgba] {
+        self.frame_palettes
+            .get(&frame)
+            .map(|p| p.as_slice())
+            .unwrap_or(self.palette.as_slice())
+    }
+
+    /// Ensure `frame_palettes[frame]` exists as a clone of the document palette (or empty).
+    pub fn ensure_frame_palette(&mut self, frame: FrameIndex) -> &mut Vec<Rgba> {
+        if !self.frame_palettes.contains_key(&frame) {
+            let base = if self.palette.is_empty() {
+                vec![Rgba::TRANSPARENT; 256]
+            } else {
+                self.palette.clone()
+            };
+            self.frame_palettes.insert(frame, base);
+        }
+        self.frame_palettes.get_mut(&frame).unwrap()
+    }
     pub fn visible_image_layers(&self) -> impl Iterator<Item = &Layer> {
         self.layers
             .iter()

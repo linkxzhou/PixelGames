@@ -78,3 +78,102 @@ mod tests {
         assert!(s.palette[1].r < s.palette[2].r && s.palette[2].r < s.palette[3].r);
     }
 }
+
+
+/// Set one palette entry. `frame=None` → document palette; `Some(f)` → frame override.
+pub fn palette_set_entry(
+    sprite: &mut Sprite,
+    frame: Option<u16>,
+    index: usize,
+    color: Rgba,
+) -> Result<()> {
+    let pal = match frame {
+        None => {
+            if sprite.palette.len() <= index {
+                sprite.palette.resize(index + 1, Rgba::TRANSPARENT);
+            }
+            &mut sprite.palette
+        }
+        Some(f) => {
+            let p = sprite.ensure_frame_palette(f);
+            if p.len() <= index {
+                p.resize(index + 1, Rgba::TRANSPARENT);
+            }
+            sprite.frame_palettes.get_mut(&f).unwrap()
+        }
+    };
+    if index >= 256 {
+        return Err(AseErr("palette index must be < 256".into()));
+    }
+    pal[index] = color;
+    Ok(())
+}
+
+pub fn palette_add_entry(
+    sprite: &mut Sprite,
+    frame: Option<u16>,
+    color: Rgba,
+) -> Result<usize> {
+    let pal = match frame {
+        None => &mut sprite.palette,
+        Some(f) => {
+            let _ = sprite.ensure_frame_palette(f);
+            sprite.frame_palettes.get_mut(&f).unwrap()
+        }
+    };
+    if pal.len() >= 256 {
+        return Err(AseErr("palette already has 256 colors".into()));
+    }
+    pal.push(color);
+    Ok(pal.len() - 1)
+}
+
+pub fn palette_remove_entry(
+    sprite: &mut Sprite,
+    frame: Option<u16>,
+    index: usize,
+) -> Result<()> {
+    match frame {
+        None => {
+            if index >= sprite.palette.len() {
+                return Err(AseErr(format!("palette index {index} out of range")));
+            }
+            sprite.palette.remove(index);
+        }
+        Some(f) => {
+            let Some(pal) = sprite.frame_palettes.get_mut(&f) else {
+                return Err(AseErr(format!("no frame palette on frame {f}")));
+            };
+            if index >= pal.len() {
+                return Err(AseErr(format!("frame palette index {index} out of range")));
+            }
+            pal.remove(index);
+            if pal.is_empty() {
+                sprite.frame_palettes.remove(&f);
+            }
+        }
+    }
+    Ok(())
+}
+
+pub fn palette_clear_frame(sprite: &mut Sprite, frame: u16) -> Result<()> {
+    if sprite.frame_palettes.remove(&frame).is_none() {
+        return Err(AseErr(format!("no frame palette on frame {frame}")));
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod frame_palette_tests {
+    use super::*;
+    use pxl_ase_doc::ColorMode;
+
+    #[test]
+    fn frame_palette_overrides_document() {
+        let mut s = Sprite::new(1, 1, ColorMode::Indexed);
+        s.palette = vec![Rgba::rgb(1, 2, 3), Rgba::rgb(4, 5, 6)];
+        palette_set_entry(&mut s, Some(1), 0, Rgba::rgb(9, 9, 9)).unwrap();
+        assert_eq!(s.palette_for_frame(0)[0], Rgba::rgb(1, 2, 3));
+        assert_eq!(s.palette_for_frame(1)[0], Rgba::rgb(9, 9, 9));
+    }
+}

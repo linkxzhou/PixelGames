@@ -4,12 +4,13 @@ use std::sync::Arc;
 
 use pxl_ase_doc::{ImageBuffer, Sprite};
 
+use super::opts::FilterOpts;
 use crate::{AseErr, Result};
 
 /// Hard cap — keeps cost O(n * r² log) bounded for CLI.
 pub const MAX_MEDIAN_RADIUS: u32 = 3;
 
-fn median_rgba(w: u16, h: u16, src: &[u8], radius: u32) -> Vec<u8> {
+fn median_rgba(w: u16, h: u16, src: &[u8], radius: u32, opts: FilterOpts) -> Vec<u8> {
     let (w, h) = (w as i32, h as i32);
     let r = radius as i32;
     let mut out = src.to_vec();
@@ -17,26 +18,34 @@ fn median_rgba(w: u16, h: u16, src: &[u8], radius: u32) -> Vec<u8> {
     for y in 0..h {
         for x in 0..w {
             let di = ((y * w + x) * 4) as usize;
-            for c in 0..3 {
+            let mut filtered = src[di..di + 4].to_vec();
+            for c in 0..4 {
+                let want = [opts.channels.r, opts.channels.g, opts.channels.b, opts.channels.a][c];
+                if !want {
+                    continue;
+                }
                 channel.clear();
                 for dy in -r..=r {
                     for dx in -r..=r {
-                        let sx = (x + dx).clamp(0, w - 1);
-                        let sy = (y + dy).clamp(0, h - 1);
+                        let (sx, sy) = opts.boundary.sample(x + dx, y + dy, w, h);
                         let si = ((sy * w + sx) * 4) as usize;
                         channel.push(src[si + c]);
                     }
                 }
                 channel.sort_unstable();
-                out[di + c] = channel[channel.len() / 2];
+                filtered[c] = channel[channel.len() / 2];
             }
-            out[di + 3] = src[di + 3];
+            opts.channels.write_into(&mut out[di..di + 4], &filtered);
         }
     }
     out
 }
 
 pub fn median_sprite(sprite: &mut Sprite, radius: u32) -> Result<usize> {
+    median_sprite_opts(sprite, radius, FilterOpts::default())
+}
+
+pub fn median_sprite_opts(sprite: &mut Sprite, radius: u32, opts: FilterOpts) -> Result<usize> {
     if radius == 0 {
         return Ok(0);
     }
@@ -48,7 +57,7 @@ pub fn median_sprite(sprite: &mut Sprite, radius: u32) -> Result<usize> {
     let mut n = 0usize;
     for img in sprite.images.values_mut() {
         if let ImageBuffer::Rgba(buf) = img {
-            let px = median_rgba(buf.width, buf.height, buf.pixels.as_ref(), radius);
+            let px = median_rgba(buf.width, buf.height, buf.pixels.as_ref(), radius, opts);
             buf.pixels = Arc::new(px);
             n += 1;
         }

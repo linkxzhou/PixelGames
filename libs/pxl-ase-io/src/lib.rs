@@ -109,6 +109,28 @@ mod tests {
     }
 
     #[test]
+    fn frame_palette_roundtrip() {
+        use pxl_ase_doc::{Cel, ColorMode, ImageBuffer, IndexedImage};
+        use pxl_core::Rgba;
+        let mut src = Sprite::new(1, 1, ColorMode::Indexed);
+        src.frame_durations_ms = vec![100, 100];
+        src.palette = vec![Rgba::TRANSPARENT, Rgba::rgb(10, 20, 30)];
+        src.frame_palettes.insert(1, vec![Rgba::TRANSPARENT, Rgba::rgb(200, 100, 50)]);
+        let layer = src.add_image_layer("L");
+        let img = IndexedImage::from_indices(1, 1, vec![1]);
+        let id = src.insert_image(ImageBuffer::Indexed(img));
+        src.set_cel(layer, 0, Cel::image(id, 0, 0, 255));
+        src.set_cel(layer, 1, Cel::linked(0));
+        let bytes = write_aseprite_bytes(&src, &WriteOptions::default()).unwrap();
+        let dst = read_aseprite_bytes(&bytes, &ReadOptions::default()).unwrap().sprite;
+        assert_eq!(dst.palette[1], Rgba::rgb(10, 20, 30));
+        assert_eq!(
+            dst.frame_palettes.get(&1).map(|p| p[1]),
+            Some(Rgba::rgb(200, 100, 50))
+        );
+    }
+
+    #[test]
     fn write_emits_loss_warnings_for_skipped_chunks() {
         let mut src = mini_indexed();
         src.read_loss_notes.push("skipped Color Profile chunk (0x2007); write-back will drop it".into());

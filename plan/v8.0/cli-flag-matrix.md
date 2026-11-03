@@ -100,7 +100,9 @@
 | `ase cel move/unlink/clear/set` | 已实现 | linked 需先 unlink 再改 position/opacity |
 | `ase flatten` | 已实现 | 写回单 RGBA 层 |
 | `ase sprite set` | 已实现 | transparent-index / pixel-ratio / grid |
-| `ase palette sort --by` | 已实现 | hue\|sat\|lum；默认 keep-zero |
+| `ase palette sort --by` | 已实现 | hue|sat|lum；默认 keep-zero |
+| `ase palette set/add/remove` | 已实现 | 可选 `--frame` → 帧级 palette |
+| `ase palette clear-frame` | 已实现 | 删除帧级覆盖 |
 
 ## GE 滤镜 / tileset
 
@@ -109,4 +111,5 @@
 | `ase filter convolve` | 已实现 | `--kernel` / `--kernel-json` |
 | `ase filter median` | 已实现 | `--radius` ≤3 |
 | `ase filter curve` | 已实现 | `--curve-json` 或默认 S 曲线 |
+| `--channels` / `--tiled` | 已实现 | filter 通道掩码 + clamp/wrap |
 | `ase export-tileset` | 已实现 | 需 tileset 内嵌像素 |

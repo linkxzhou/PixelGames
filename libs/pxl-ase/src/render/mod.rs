@@ -1,8 +1,9 @@
 //! Layer flatten / composite (merged `pxl-ase-render`).
 
 mod blend;
+mod tilemap;
 
-use pxl_ase_doc::{BlendMode, CelPixels, ColorMode, Layer, LayerKind, Sprite};
+use pxl_ase_doc::{BlendMode, CelPixels, ColorMode, LayerKind, Sprite};
 use pxl_core::Rgba;
 
 use crate::{AseErr, Result};
@@ -29,10 +30,15 @@ fn flatten_flat(sprite: &Sprite, frame: u16, w: usize, h: usize) -> Result<Vec<u
     let mut out = vec![0u8; w * h * 4];
     let mut plan: Vec<(i32, i16, usize)> = Vec::new();
     for (layer_index, layer) in sprite.layers.iter().enumerate() {
-        if layer.kind != LayerKind::Image || !layer.flags.visible || layer.opacity == 0 {
+        if !layer.flags.visible || layer.opacity == 0 {
             continue;
         }
-        if sprite.cel_pixels(layer.id, frame).is_err() {
+        let has = match layer.kind {
+            LayerKind::Image => sprite.cel_pixels(layer.id, frame).is_ok(),
+            LayerKind::Tilemap => layer.cels.get(&frame).is_some(),
+            LayerKind::Group => false,
+        };
+        if !has {
             continue;
         }
         let z = layer.cels.get(&frame).map(|c| c.z_index()).unwrap_or(0);
@@ -41,8 +47,16 @@ fn flatten_flat(sprite: &Sprite, frame: u16, w: usize, h: usize) -> Result<Vec<u
     plan.sort_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
     for (_, _, layer_index) in plan {
         let layer = &sprite.layers[layer_index];
-        if let Ok(cel) = sprite.cel_pixels(layer.id, frame) {
-            blit_cel(&mut out, w, h, &cel, sprite, layer.opacity, layer.blend);
+        match layer.kind {
+            LayerKind::Image => {
+                if let Ok(cel) = sprite.cel_pixels(layer.id, frame) {
+                    blit_cel(&mut out, w, h, &cel, sprite, frame, layer.opacity, layer.blend);
+                }
+            }
+            LayerKind::Tilemap => {
+                tilemap::blit_tilemap_layer(&mut out, w, h, layer, frame, sprite);
+            }
+            LayerKind::Group => {}
         }
     }
     Ok(out)
@@ -100,7 +114,7 @@ fn paint_node(
     match layer.kind {
         LayerKind::Image => {
             if let Ok(cel) = sprite.cel_pixels(layer.id, frame) {
-                blit_cel(out, w, h, &cel, sprite, layer.opacity, layer.blend);
+                blit_cel(out, w, h, &cel, sprite, frame, layer.opacity, layer.blend);
             }
         }
         LayerKind::Group => {
@@ -111,7 +125,9 @@ fn paint_node(
             composite_range(sprite, frame, idx + 1, child_end, &mut tmp, w, h)?;
             blit_buffer(out, &tmp, layer.opacity, layer.blend);
         }
-        LayerKind::Tilemap => {}
+        LayerKind::Tilemap => {
+            tilemap::blit_tilemap_layer(out, w, h, layer, frame, sprite);
+        }
     }
     Ok(())
 }
@@ -132,6 +148,7 @@ fn blit_cel(
     canvas_h: usize,
     cel: &CelPixels,
     sprite: &Sprite,
+    frame: u16,
     layer_opacity: u8,
     layer_blend: BlendMode,
 ) {
@@ -153,7 +170,11 @@ fn blit_cel(
                     if idx == sprite.transparent_index {
                         continue;
                     }
-                    let color = sprite.palette.get(idx as usize).copied().unwrap_or(Rgba::TRANSPARENT);
+                    let color = sprite
+                        .palette_for_frame(frame)
+                        .get(idx as usize)
+                        .copied()
+                        .unwrap_or(Rgba::TRANSPARENT);
                     let a = scale_alpha(color.a, *opacity, layer_opacity);
                     if a == 0 {
                         continue;
@@ -314,5 +335,81 @@ mod group_tests {
         let flat = flatten_frame_rgba(&s, 0).unwrap();
         assert!(flat[0] < 200, "{flat:?}");
         assert_eq!(flat[1], 0);
+    }
+}
+
+
+#[cfg(test)]
+mod tilemap_tests {
+    use super::*;
+    use pxl_ase_doc::{Cel, ColorMode, LayerFlags, LayerId, LayerKind, Tileset, UserData};
+
+    #[test]
+    fn tilemap_paints_tiles_into_flatten() {
+        let mut s = Sprite::new(4, 2, ColorMode::Rgba);
+        // One red 2x2 tile, one green 2x2 tile stacked in tileset atlas (2x4).
+        let mut px = vec![0u8; 2 * 4 * 4];
+        for y in 0..2 {
+            for x in 0..2 {
+                let i = (y * 2 + x) * 4;
+                px[i] = 255;
+                px[i + 3] = 255; // red tile 0
+                let j = ((2 + y) * 2 + x) * 4;
+                px[j + 1] = 255;
+                px[j + 3] = 255; // green tile 1
+            }
+        }
+        s.tilesets.push(Tileset {
+            id: 1,
+            flags: 2,
+            ntiles: 2,
+            tile_width: 2,
+            tile_height: 2,
+            base_index: 0,
+            name: "t".into(),
+            pixels: px,
+            raw: None,
+        });
+        s.layers.push(pxl_ase_doc::Layer {
+            id: LayerId(0),
+            name: "tm".into(),
+            kind: LayerKind::Tilemap,
+            flags: LayerFlags {
+                visible: true,
+                editable: true,
+                lock_move: false,
+                background: false,
+                prefer_linked: false,
+                collapsed: false,
+                reference: false,
+            },
+            child_level: 0,
+            blend: BlendMode::Normal,
+            opacity: 255,
+            cels: Default::default(),
+            tileset_index: Some(1),
+            uuid: None,
+            user_data: UserData::default(),
+        });
+        s.layers[0].cels.insert(
+            0,
+            Cel::Tilemap {
+                x: 0,
+                y: 0,
+                opacity: 255,
+                z_index: 0,
+                w: 2,
+                h: 1,
+                tiles: vec![0, 1],
+                user_data: UserData::default(),
+                extra: None,
+            },
+        );
+        let rgba = flatten_frame_rgba(&s, 0).unwrap();
+        // left tile red at (0,0)
+        assert_eq!(&rgba[0..4], &[255, 0, 0, 255]);
+        // right tile green at (2,0)
+        let i = (0 * 4 + 2) * 4;
+        assert_eq!(&rgba[i..i + 4], &[0, 255, 0, 255]);
     }
 }

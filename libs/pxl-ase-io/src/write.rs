@@ -83,6 +83,11 @@ pub fn write_aseprite_bytes(sprite: &Sprite, opts: &WriteOptions) -> IoResult<Ve
                 }
             }
         }
+        if fi > 0 {
+            if let Some(pal) = sprite.frame_palettes.get(&(fi as u16)) {
+                chunks.push(encode_palette_colors(pal));
+            }
+        }
         let duration = sprite
             .frame_durations_ms
             .get(fi)
@@ -164,10 +169,14 @@ fn encode_layer_chunk(layer: &pxl_ase_doc::Layer, header_flags: u32) -> Vec<u8> 
 }
 
 fn encode_palette_chunk(sprite: &Sprite) -> Vec<u8> {
-    let colors = if sprite.palette.is_empty() {
+    encode_palette_colors(&sprite.palette)
+}
+
+fn encode_palette_colors(colors: &[pxl_core::Rgba]) -> Vec<u8> {
+    let colors = if colors.is_empty() {
         vec![pxl_core::Rgba::TRANSPARENT]
     } else {
-        sprite.palette.clone()
+        colors.to_vec()
     };
     let mut body = Vec::new();
     body.extend_from_slice(&(colors.len() as u32).to_le_bytes());

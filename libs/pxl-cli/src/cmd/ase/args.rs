@@ -232,6 +232,12 @@ pub struct AseFilterArgs {
     /// Color-curve control points JSON `[[x,y],...]`
     #[arg(long = "curve-json")]
     pub curve_json: Option<String>,
+    /// Target channels for convolve/median/curve: `rgb` (default) | `rgba` | `r`…
+    #[arg(long, default_value = "rgb")]
+    pub channels: String,
+    /// Boundary: `clamp` (default) | `x` | `y` | `both` (tiled wrap)
+    #[arg(long = "tiled", default_value = "clamp")]
+    pub tiled: String,
     #[arg(long = "hue", default_value_t = 0)]
     pub hue: i32,
     #[arg(long = "sat", default_value_t = 0)]
