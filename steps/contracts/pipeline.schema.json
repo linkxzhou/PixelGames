@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pxl/pipeline/v2",
+  "title": "pipeline.json",
+  "description": "Contract lock written by `step-100 init`; every later step reads it. A step version bump invalidates downstream input fingerprints.",
+  "type": "object",
+  "required": ["schema_version", "contract_version", "game_id", "steps"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 2 },
+    "contract_version": { "const": "pipeline/v2" },
+    "game_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,31}$"
+    },
+    "slice": {
+      "type": "object",
+      "description": "The vertical-slice scope: which assets and levels make up the 1-character + 1-level run.",
+      "required": ["assets", "levels"],
+      "additionalProperties": false,
+      "properties": {
+        "assets": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "levels": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "steps": {
+      "type": "object",
+      "required": [
+        "step-100-design",
+        "step-200-art-spec",
+        "step-300-asset-build",
+        "step-400-package",
+        "step-500-engine"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^step-[0-9]{3}-[a-z0-9-]+$": {
+          "type": "object",
+          "required": ["version", "contract"],
+          "additionalProperties": false,
+          "properties": {
+            "version": { "type": "string" },
+            "contract": { "type": "string", "pattern": "^[a-z0-9-]+/v[0-9]+$" }
+          }
+        }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "engine": { "type": "string" }
+      }
+    }
+  }
+}

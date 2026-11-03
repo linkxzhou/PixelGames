@@ -1,0 +1,115 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pxl/step/v1",
+  "title": "step.json envelope",
+  "description": "Every step writes this envelope at the root of its --out directory. Hard rule: no timestamps, no durations, no absolute paths, no host names.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "step",
+    "step_version",
+    "contract",
+    "status",
+    "verdict",
+    "inputs",
+    "outputs",
+    "gates"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "step": {
+      "type": "string",
+      "pattern": "^step-[0-9]{3}-[a-z0-9-]+$",
+      "description": "The step id, e.g. step-200-art-spec."
+    },
+    "step_version": { "type": "string" },
+    "contract": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+/v[0-9]+$",
+      "description": "The contract id this run produced under, e.g. art-spec/v3."
+    },
+    "status": {
+      "enum": [
+        "ok",
+        "draft",
+        "schema_error",
+        "semantic_error",
+        "gate_failed",
+        "blocked",
+        "waiting_approval",
+        "failed",
+        "budget_exhausted",
+        "integrity_error"
+      ]
+    },
+    "scope": {
+      "enum": ["all", "slice"],
+      "default": "all",
+      "description": "Slice runs write into <step>/.slice/ and stay separate from the full run."
+    },
+    "inputs": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/digest_entry" }
+    },
+    "outputs": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/digest_entry" }
+    },
+    "verdict": { "$ref": "#/definitions/verdict" },
+    "gates": {
+      "type": "object",
+      "required": ["required_artifacts", "quality_checks", "not_assessed"],
+      "additionalProperties": false,
+      "properties": {
+        "required_artifacts": {
+          "type": "array",
+          "description": "Machine-checkable paths and fields.",
+          "items": { "$ref": "#/definitions/gate_check" }
+        },
+        "quality_checks": {
+          "type": "array",
+          "description": "Checks that needed content judgement or could not run.",
+          "items": { "$ref": "#/definitions/gate_check" }
+        },
+        "not_assessed": {
+          "type": "array",
+          "description": "Ids that could not be checked. Non-empty forces verdict NOT_ASSESSED.",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "error": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    }
+  },
+  "definitions": {
+    "gate_check": {
+      "type": "object",
+      "required": ["id", "result", "detail"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "result": { "enum": ["pass", "warning", "fail", "not_assessed"] },
+        "detail": { "type": ["string", "null"] }
+      }
+    },
+    "digest_entry": {
+      "type": "object",
+      "required": ["path", "digest"],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Relative to the step's --out or the workspace root. Never absolute."
+        },
+        "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "verdict": {
+      "enum": ["PASS", "CONCERNS", "NOT_ASSESSED", "FAIL"],
+      "description": "Priority FAIL > CONCERNS > NOT_ASSESSED > PASS."
+    }
+  }
+}

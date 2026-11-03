@@ -1,0 +1,34 @@
+{
+  "contract": "visual-intent/v1",
+  "profile": { "id": "strict_retro", "digest": "sha256:ac4891d29b55ea5bce356d462ce331849ca4fa7d185c3d3e12525ad1876e3d46" },
+  "pixel_grid": { "native_size": [32, 32], "display_scale": 4, "snap": true },
+  "palette_policy": {
+    "mode": "strict", "palette": "static_bullet.palette.json",
+    "allowed_indices": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+    "ui_palette": null, "runtime_grade": false, "extension_budget": 0
+  },
+  "roles": {
+    "background": { "value": [0, 100], "saturation": [0, 140], "relative_contrast": -1 },
+    "actor": { "value": [60, 220], "saturation": [20, 220], "relative_contrast": 1 }
+  },
+  "value_script": { "focal_roles": ["actor"], "rest_roles": ["background"] },
+  "materials": {
+    "metal": { "ramp": "main", "finish": "keep", "response": "hard_edge", "regions": ["body", "eye"] }
+  },
+  "asset_policies": [{
+    "asset_id": "bullet", "kind": "sprite", "role": "actor", "native_size": [32, 32],
+    "material_ids": ["metal"], "protected_regions": ["eye"], "finish": "keep", "lighting": "baked"
+  }],
+  "animation_policy": {
+    "max_frames": 16, "hold_terminal": true, "allow_squash": false, "allow_smear": false,
+    "required_phases": ["contact"], "contact_tolerance": 1
+  },
+  "scene_previews": [{
+    "id": "main", "size": [64, 64], "background": "dark", "scale": 2, "tick": 0,
+    "instances": [{ "asset_id": "bullet", "position": [16, 16], "layer": "world", "frame": null }],
+    "rois": [{ "id": "actor", "layer": "world", "rect": [0, 0, 64, 64] }]
+  }],
+  "review_policy": { "required_dimensions": ["silhouette", "material_form"], "min_reviewers": 2 },
+  "sources": { "pixel_grid": "profile", "palette_policy": "project" },
+  "risks": []
+}

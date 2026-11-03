@@ -10,3 +10,16 @@ examples/reference/*/out/
 /thirdparty/
 .session_tmps
 .env
+# web playground
+/web/node_modules/
+/web/dist/
+/web/src/wasm/
+.playwright-mcp
+
+# legacy dual-track crate, removed from the workspace in M6
+harness/
+
+# local runtime saves
+/stardew-save.json
+/stardew-save.json.tmp
+/stardew-save.json.broken

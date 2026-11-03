@@ -1,0 +1,33 @@
+{
+  "schema_version": 3,
+  "requirements": [
+    {
+      "asset_id": "bullet",
+      "kind": "sprite",
+      "required": true,
+      "consumer_refs": ["level_1"],
+      "style_ref": "palette.json",
+      "size_px": [16, 16],
+      "directions": ["N"],
+      "anims": [{ "name": "fly", "fps": 1, "looped": false, "frames": 2, "dirs": ["N"] }],
+      "semantics": "projectile",
+      "strategy": "shapes",
+      "seamless": false,
+      "priority": 1
+    },
+    {
+      "asset_id": "gem",
+      "kind": "sprite",
+      "required": true,
+      "consumer_refs": ["level_1"],
+      "style_ref": "palette.json",
+      "size_px": [6, 6],
+      "directions": [],
+      "anims": [{ "name": "idle", "fps": 1, "looped": true, "frames": 2, "dirs": [] }],
+      "semantics": "pickup",
+      "strategy": "shapes",
+      "seamless": false,
+      "priority": 1
+    }
+  ]
+}

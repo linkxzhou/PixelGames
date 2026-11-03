@@ -1,0 +1,39 @@
+{
+  "schema_version": 2,
+  "contract_version": "pipeline/v2",
+  "game_id": "fixture",
+  "slice": {
+    "assets": [
+      "bullet"
+    ],
+    "levels": [
+      0
+    ]
+  },
+  "steps": {
+    "step-100-design": {
+      "version": "0.1.0",
+      "contract": "design/v3"
+    },
+    "step-200-art-spec": {
+      "version": "0.1.0",
+      "contract": "art-spec/v3"
+    },
+    "step-300-asset-build": {
+      "version": "0.1.0",
+      "contract": "asset-build/v4"
+    },
+    "step-400-package": {
+      "version": "0.1.0",
+      "contract": "asset-package/v4"
+    },
+    "step-500-engine": {
+      "version": "0.1.0",
+      "contract": "engine/v4"
+    }
+  },
+  "runtime": {
+    "name": "fixture",
+    "engine": "macroquad"
+  }
+}

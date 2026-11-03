@@ -1,0 +1,115 @@
+# CLI flag 覆盖矩阵（v8.0 / M0–M9）
+
+> 日期：2026-11-03（Asia/Shanghai）  
+> 对照：https://www.aseprite.org/docs/cli/ + 本地 `thirdparty/aseprite/src/app/cli/app_options.h`  
+> v8.1 **GC-1**：补全对照 `app_options.h` 曾缺行的旗标（状态与 `libs/pxl-cli/src/cmd/ase/` 核对）
+
+| Flag / 子命令 | 状态 | 说明 |
+|---|---|---|
+| `ase --help` | 已完成 | clap 子命令组 |
+| `ase inspect <file>` | 已完成 | 尺寸/色模/层/帧/tags/slices |
+| `ase convert` / `--save-as` | 已完成 | PNG / GIF / `.aseprite`；多输入批处理 |
+| `ase list-layers` | 已完成 | |
+| `ase list-tags` | 已完成 | 含 direction |
+| `ase list-slices` | 已完成 | |
+| `ase split-slices` / `convert --split-slices` | 已完成 | 每 slice 裁切 PNG |
+| `ase sheet` | 已完成 | PNG+JSON；`--layout` horizontal/vertical/packed；`--padding`/`--extrude`/`--trim`/`--merge-duplicates` |
+| `ase filter` | 已完成 | outline / replace-index / replace-color / invert / brightness-contrast / hue-saturation |
+| `ase op` | 已完成 | flip / rotate90 / flood-fill / crop / canvas-size / trim |
+| `ase import` | 已完成 | ase-import/v1 manifest + schema-valid Recipe + palette/frames/sheet |
+| `-b` / `--batch` | 兼容忽略 | 默认无 UI |
+| `--preview` / `-p` | 已完成 | convert 干跑 |
+| `--tag` | 已完成 | convert/sheet 过滤 |
+| `--frame-range` | 已完成 | `0,2` / `1-3` |
+| `--oneframe` | 已完成 | inspect/convert/list/sheet/import |
+| `--color-mode` | 已完成 | rgba/indexed/grayscale |
+| `--palette` | 已完成 | `.gpl` / `.act` |
+| `--dithering-algorithm` | 已完成 | none/ordered/old |
+| `--dithering-matrix` | 已完成 | bayer2x2/4x4/8x8 |
+| `--scale` | 已完成 | convert/split-slices |
+| `--filename-format` | 部分 | `{frame}`/`{frame1}`/`{frame01}`/`{frame001}`/`{frame0001}` `{tag}` `{innertag}` `{layer}` `{title}` `{name}` `{path}` `{fullname}` `{slice}` `{duration}` `{tagframe}` `{innertagframe}` `{startframe}` `{endframe}`；非官方全集的冷门占位符不做 |
+| `--ignore-empty` | 已完成 | convert/sheet |
+| `--merge-duplicates` | 已完成 | convert/sheet；连续相同扁平帧去重 |
+| `--all-layers` / `--layer` | 已完成 | flatten 可见性 |
+| `--data` | 已完成 | sheet sidecar JSON |
+| `--padding` | 已完成 | sheet；映射 `pack_sheet` pad |
+| `--extrude` | 已完成 | sheet；边缘像素外扩 |
+| `--trim` | 已完成 | convert=文档级透明边裁；sheet=每 cell bbox 裁 |
+| `--trim-by-grid` | 已完成 | convert/sheet：内容 bbox 后向外对齐 `sprite.grid`；`grid.w/h==0` 时退化为普通 trim |
+| `--crop` | 已完成 | convert：`x,y,w,h`；亦见 `ase op crop` |
+| sheet tag `direction` | 已完成 | meta.frameTags |
+| `--play-subtags` | 部分 | Tag 模型无 parent；按范围包含推断子标签并展开 direction；重叠兄弟启发式；见 08 |
+| `--script` / `ase script` | 部分 | Rhai：`ase script <path> --script-param k=v`；`--shell` REPL **不做/后续**；MCP 未做 |
+| 顺序敏感官方 CLI 解析器 / `ase run` | 部分 | 最小 `AseBatchParser`：open / `--save-as` / `--sheet` / `--tag` / `--trim` / `--trim-by-grid` / `--play-subtags` / `--filter replace-color|invert` / `--op trim|flip`；**非**官方全集 |
+
+
+## v8.1 GC-1 · `app_options.h` 曾缺行旗标
+
+> 证据：`thirdparty/aseprite/src/app/cli/app_options.h` / `app_options.cpp`；实现核验：`libs/pxl-cli/src/cmd/ase/{args,convert,ops,mod}.rs`。  
+> 状态取值：已实现 / 部分 / 缺失 / 不做。扩展别名须写明映射。
+
+| Flag | 状态 | 证据 / 映射 | 说明 |
+|---|---|---|---|
+| `--split-layers` | 已实现 | `args.rs` + `convert::convert_split`；`{layer}` 插入 `--save-as` | 按 image 层各写一文件；GC-2 |
+| `--split-tags` | 已实现 | `convert::convert_split`；`{tag}` 插入路径 | 与 `--split-layers` 互斥；GC-2 |
+| `--split-grid` | 已实现 | `convert --split-grid <dir>` → `split_grid_to_dir`（需 `sprite.grid` w/h>0） | GC-2；无 grid 时错误 |
+| `--split-slices` | 已实现 | `args.rs` `split_slices`；`ase split-slices` / `convert --split-slices` | 矩阵上表已有；此处对照确认 |
+| `--slice <name>` | 已实现 | `convert` 按 slice 首 key 裁切文档 | ≠ `split-slices`；GC-2 |
+| `--ignore-layer` | 已实现 | convert/sheet 可重复；`gc_flags::apply_ignore_layers` | 与 `--layer` 可组合；GC-2 |
+| `--shrink-to` | 已实现 | convert/sheet；`ops::shrink_sprite_to`；`WxH`/`W,H`；不放大 | GB-5 |
+| `--format`（`json-hash` / `json-array`） | 已实现 | `ase sheet --format`；默认 `json-hash`；`sheet_json_format` | GC-3；hash 消费者默认路径不变 |
+| `--data` | 已实现 | `AseSheetArgs.data` → sheet sidecar | 上表已有；与 `--format` 分工：我方用 `--data` 路径，未暴露 format 枚举 |
+| `--tagname-format` | 已实现 | `ase sheet --tagname-format` → meta.frameTags 名；`{tag}`/`{title}`… | GC-4 |
+| `--filename-format` | 部分 | 上表已列占位符子集 | 冷门占位符不做 |
+| `--power-of-two-size` | 已实现 | `SheetPackOpts.power_of_two`；atlas 边扩到 2^n（≤2048） | GC-4 |
+| `--trim-sprite` | 已实现 | convert/sheet 同名 flag → `ops::trim_sprite`；与 `--trim` 同文档裁语义 | sheet 另有 per-cell `--trim`；GC-2 |
+| `--trim` | 已实现 | convert=文档裁；sheet=cell bbox | 上表已有 |
+| `--trim-by-grid` | 已实现 | convert/sheet | 上表已有 |
+| `--border-padding` | 已实现 | `SheetPadding.border` → `pack_sheet_padded` 图集外缘 | 与 shape/inner 分立；GC-2/本轮 |
+| `--shape-padding` | 已实现 | `SheetPadding.shape`（缺省回落 `--padding`） | 单元格间距；本轮 |
+| `--inner-padding` | 已实现 | `SheetPadding.inner` 内容内缩、placement 含内边 | 本轮 |
+| `--padding` | 已实现 | 扩展别名（非官方同名）；sheet | 映射官方三类 padding 的均匀近似 |
+| `--sheet-type` | 已实现 | `ase sheet --sheet-type` 覆盖 `--layout`；同名子集 | GC-4 |
+| `--sheet-pack` | 已实现 | 独立 bool → layout `packed` | GC-4 |
+| `--sheet-width` / `--sheet-height` | 已实现 | width=货架换行；height=超限失败（单页） | GC-4；无多页 |
+| `--sheet-columns` / `--sheet-rows` | 已实现 | `SheetPackOpts.columns/rows` 固定分块 | GC-4 |
+| `--layout` | 已实现 | 扩展别名 → `pxl-export` layouts | 对应 `--sheet-type` 子集 |
+| `--list-layers` | 已实现 | `ase list-layers` | 上表已有 |
+| `--list-layer-hierarchy` | 缺失 | `listLayerHierarchy()`；仅扁平 `list-layers` | GC-2/树形输出未做 |
+| `--export-tileset` | 已实现（命令） | `ase export-tileset -o … [--index N]`；读 0x2023 像素图集 | 非官方 CLI 名；tilemap 层合成仍跳过 |
+| `--layer` / `--all-layers` | 已实现 | convert/sheet 可见性 | 上表已有；非 `--ignore-layer` |
+
+### 扩展别名速查
+
+| 官方 | 我方 | 关系 |
+|---|---|---|
+| `--sheet-type` | `--layout` | 子集别名；packed/rows/grid/horizontal/vertical |
+| `--sheet-pack` | `--layout packed` | 等价意图 |
+| `--border-padding` / `--shape-padding` / `--inner-padding` | 分立旗标 + `--padding` 别名 | 三元组已实现；`--padding`→shape 缺省 |
+| `--format json-hash\|json-array` | `--format` + `--data <path>` | format 已暴露；data 仍为侧车路径 |
+| `--trim-sprite` | `convert --trim` / `ase op trim` | 语义近；旗标名不同 |
+
+
+## GD 文档编辑（非官方扩展）
+
+| 命令 | 状态 | 说明 |
+|---|---|---|
+| `ase frame add/remove/copy/set-duration` | 已实现 | tag 边界按 07 §10 |
+| `ase tag add/remove/rename/set` | 已实现 | |
+| `ase layer add/remove/rename/set` | 已实现 | |
+| `ase cel move/unlink/clear/set` | 已实现 | linked 需先 unlink 再改 position/opacity |
+| `ase flatten` | 已实现 | 写回单 RGBA 层 |
+| `ase sprite set` | 已实现 | transparent-index / pixel-ratio / grid |
+| `ase palette sort --by` | 已实现 | hue|sat|lum；默认 keep-zero |
+| `ase palette set/add/remove` | 已实现 | 可选 `--frame` → 帧级 palette |
+| `ase palette clear-frame` | 已实现 | 删除帧级覆盖 |
+
+## GE 滤镜 / tileset
+
+| 项 | 状态 | 说明 |
+|---|---|---|
+| `ase filter convolve` | 已实现 | `--kernel` / `--kernel-json` |
+| `ase filter median` | 已实现 | `--radius` ≤3 |
+| `ase filter curve` | 已实现 | `--curve-json` 或默认 S 曲线 |
+| `--channels` / `--tiled` | 已实现 | filter 通道掩码 + clamp/wrap |
+| `ase export-tileset` | 已实现 | 需 tileset 内嵌像素 |

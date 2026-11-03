@@ -1,0 +1,19 @@
+[package]
+name = "step-400-package"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Step 400: build outputs -> asset-package (deterministic)"
+
+[[bin]]
+name = "step-400"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+serde = { workspace = true, features = ["std"] }
+serde_json = { workspace = true }
+pxl-contract = { workspace = true }
+pxl-store = { workspace = true }
+pxl-audio = { workspace = true }

@@ -1,0 +1,15 @@
+[package]
+name = "pxl-contract"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Shared contract types: step.json envelope, verdict, exit codes"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+
+[dev-dependencies]
+jsonschema = { version = "0.18", default-features = false }

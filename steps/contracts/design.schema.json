@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pxl/design/v3",
+  "title": "asset-requirements.json",
+  "type": "object",
+  "required": ["schema_version", "requirements"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 3 },
+    "requirements": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/requirement" } }
+  },
+  "definitions": {
+    "acceptance": {
+      "type": "object",
+      "required": ["id", "type", "check"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "enum": ["machine", "human"] },
+        "check": { "enum": ["size.equals", "anim.frames", "anim.dirs", "anim.anchor", "asset.kind", "palette.profile", "tile.seamless", "silhouette_readable", "style_consistent", "animation_readable"] },
+        "anim": { "type": "string" },
+        "expected": {},
+        "tolerance_px": { "type": "integer", "minimum": 0 },
+        "min_score": { "type": "integer", "minimum": 1, "maximum": 5 }
+      }
+    },
+    "anim": {
+      "type": "object",
+      "required": ["name", "fps", "looped", "frames"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" }, "fps": { "type": "integer", "minimum": 1 },
+        "looped": { "type": "boolean" }, "frames": { "type": "integer", "minimum": 1, "maximum": 16 },
+        "dirs": { "type": "array", "items": { "type": "string" } },
+        "mode": { "enum": ["dynamic", "static"] },
+        "anchor_tolerance_px": { "type": "integer", "minimum": 0 },
+        "protected_features": { "type": "array", "items": { "type": "string" } },
+        "change_regions": { "type": "array", "items": { "type": "string" } },
+        "allow_terminal_empty": { "type": "boolean" }
+      }
+    },
+    "requirement": {
+      "type": "object",
+      "required": ["asset_id", "kind", "required", "consumer_refs", "style_ref", "size_px", "anims", "strategy", "acceptance"],
+      "additionalProperties": false,
+      "properties": {
+        "asset_id": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$" },
+        "kind": { "enum": ["sprite", "tile", "ui", "effect", "overlay"] },
+        "required": { "type": "boolean" },
+        "consumer_refs": { "type": "array", "items": { "type": "string" } },
+        "style_ref": { "type": "string" },
+        "size_px": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "integer", "minimum": 1, "maximum": 256 } },
+        "directions": { "type": "array", "items": { "type": "string" } },
+        "anims": { "type": "array", "items": { "$ref": "#/definitions/anim" } },
+        "semantics": { "type": "string" },
+        "strategy": { "enum": ["shapes", "ascii", "svg", "parts", "template", "tile_gen", "external"] },
+        "seamless": { "type": "boolean" }, "priority": { "type": "integer" },
+        "visual": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "view": { "type": "string" }, "silhouette": { "type": "string" },
+            "materials": { "type": "array", "items": { "type": "string" } },
+            "protected_features": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "anchor": { "type": "object", "required": ["center_x", "bottom_y"], "additionalProperties": false, "properties": { "center_x": { "type": "integer" }, "bottom_y": { "type": "integer" } } },
+        "direction_policy": { "type": "string" },
+        "acceptance": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/acceptance" } }
+      }
+    }
+  }
+}

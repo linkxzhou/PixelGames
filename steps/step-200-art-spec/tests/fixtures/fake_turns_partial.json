@@ -1,0 +1,10 @@
+[
+  [
+    ["assets.read_requirements", {}]
+  ],
+  [
+    ["assets.write_candidate", { "path": "palette.json", "content": "{\n  \"v\": 1,\n  \"id\": \"p16\",\n  \"colors\": [\n    \"#00000000\", \"#140c1c\", \"#442434\", \"#30346d\",\n    \"#4e4a4e\", \"#854c30\", \"#346524\", \"#d04648\",\n    \"#757161\", \"#597dce\", \"#d27d2c\", \"#8595a1\",\n    \"#6daa2c\", \"#d2aa99\", \"#6dc2ca\", \"#deeed6\"\n  ],\n  \"ramps\": {},\n  \"cycles\": {}\n}\n" }],
+    ["assets.write_candidate", { "path": "bullet/bullet.recipe.json", "content": "{\n  \"v\": 1,\n  \"asset\": \"bullet\",\n  \"gen_version\": 1,\n  \"seed\": 5,\n  \"palette\": \"../palette.json\",\n  \"sprites\": [\n    { \"id\": \"bullet\", \"base\": { \"gen\": \"shapes\", \"spec\": \"bullet.shapes.json\", \"seed\": 5 } }\n  ],\n  \"sheet\": { \"sources\": [\"bullet\"], \"layout\": \"rows-by-anim\", \"pad\": 1, \"file\": \"bullet.sheet.png\" },\n  \"validate\": { \"rules\": \"default\" }\n}\n" }],
+    ["assets.write_candidate", { "path": "bullet/bullet.shapes.json", "content": "{\n  \"w\": 16,\n  \"h\": 16,\n  \"draw\": [\n    { \"x\": 0, \"y\": 0, \"pixels\": [\n      \"................\",\n      \"................\",\n      \"................\",\n      \"................\",\n      \"................\",\n      \"......4444......\",\n      \"......4334......\",\n      \"......4334......\",\n      \"......4334......\",\n      \"......4334......\",\n      \"......4334......\",\n      \"......4334......\",\n      \"................\",\n      \"................\",\n      \"................\",\n      \"................\"\n    ] }\n  ]\n}\n" }]
+  ]
+]

@@ -1,0 +1,36 @@
+{
+  "format": "BeepBox",
+  "version": 9,
+  "scale": "normal :(",
+  "key": "C",
+  "introBars": 0,
+  "loopBars": 2,
+  "beatsPerBar": 8,
+  "ticksPerBeat": 4,
+  "beatsPerMinute": 125,
+  "layeredInstruments": false,
+  "patternInstruments": false,
+  "channels": [{
+    "type": "pitch",
+    "instruments": [{
+      "type": "chip",
+      "volume": 100,
+      "eqFilter": [],
+      "effects": ["chord type"],
+      "chord": "simultaneous",
+      "fadeInSeconds": 0,
+      "fadeOutTicks": -3,
+      "wave": "square",
+      "unison": "none",
+      "envelopes": []
+    }],
+    "patterns": [{
+      "notes": [
+        { "pitches": [24], "points": [{ "tick": 0, "pitchBend": 0, "volume": 100 }, { "tick": 8, "pitchBend": 0, "volume": 100 }] },
+        { "pitches": [28], "points": [{ "tick": 8, "pitchBend": 0, "volume": 100 }, { "tick": 16, "pitchBend": 0, "volume": 100 }] }
+      ]
+    }],
+    "sequence": [1, 1],
+    "octaveScrollBar": 3
+  }]
+}

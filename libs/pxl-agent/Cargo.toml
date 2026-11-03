@@ -1,0 +1,13 @@
+[package]
+name = "pxl-agent"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Shared model-provider loop: agent, tools, policy, MCP, goal"
+
+[dependencies]
+serde = { workspace = true, features = ["std"] }
+serde_json = { workspace = true }
+pxl-contract = { workspace = true }
+pxl-store = { workspace = true }

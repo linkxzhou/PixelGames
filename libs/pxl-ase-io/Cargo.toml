@@ -1,0 +1,13 @@
+[package]
+name = "pxl-ase-io"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Clean-room .aseprite reader/writer per public ase-file-specs"
+
+[dependencies]
+pxl-ase-doc = { workspace = true }
+pxl-core = { workspace = true }
+pxl-export = { workspace = true }
+flate2 = "1"

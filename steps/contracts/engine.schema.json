@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pxl/engine/v4",
+  "title": "engine-check.json",
+  "description": "Asset intake and engine/v4 capability checks, including visual metadata and pre-rendered WAV audio in JS mode.",
+  "type": "object",
+  "required": ["schema_version", "package_id", "ok", "checks"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "package_id": { "type": "string" },
+    "ok": { "type": "boolean" },
+    "checks": {
+      "type": "array",
+      "minItems": 7,
+      "items": {
+        "type": "object",
+        "required": ["id", "result"],
+        "additionalProperties": true,
+        "properties": {
+          "id": {
+            "enum": [
+              "sheet_files_exist",
+              "palette_index_in_range",
+              "anims_in_frame_tags",
+              "level_tiles_in_sheets",
+              "engine_limits_respected",
+              "engine_contract",
+              "audio_capability"
+            ]
+          },
+          "result": { "enum": ["pass", "warning", "fail", "not_assessed"] },
+          "detail": { "type": "string" }
+        }
+      }
+    }
+  }
+}

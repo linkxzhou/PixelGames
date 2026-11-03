@@ -1,0 +1,18 @@
+[package]
+name = "pxl-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "wasm-bindgen bindings over pxl-engine for the web playground"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+pxl-core = { workspace = true }
+pxl-engine = { workspace = true }
+pxl-format = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+wasm-bindgen = "=0.2.129"
