@@ -45,36 +45,53 @@ pub fn parse_frame_range(spec: &str, frame_count: u16) -> Result<Vec<u16>> {
 
 /// Expand a tag's `[from, to]` range honoring `direction` and finite `repeat`.
 ///
-/// `repeat == 0` means "play once" for export (Aseprite's infinite loop is a
-/// playback concern, not a batch export multiplier).
+/// See `plan/v8.1/playback.md`. `repeat == 0` means play once on export
+/// (UI infinite loop is not a batch multiplier). Ping-pong + `repeat == 1`
+/// exports a single direction only.
 pub fn expand_tag_frames(tag: &Tag) -> Vec<u16> {
-    let mut base: Vec<u16> = (tag.from..=tag.to).collect();
-    match tag.direction {
-        TagDirection::Forward => {}
-        TagDirection::Reverse => base.reverse(),
-        TagDirection::PingPong => {
-            if base.len() > 2 {
-                let mut mid = base[1..base.len() - 1].to_vec();
-                mid.reverse();
-                base.extend(mid);
-            } else if base.len() == 2 {
-                // A-B already; pingpong mid empty
-            }
+    let forward: Vec<u16> = (tag.from..=tag.to).collect();
+    let pingpong_one_way = tag.repeat == 1
+        && matches!(
+            tag.direction,
+            TagDirection::PingPong | TagDirection::PingPongReverse
+        );
+
+    let mut base = match tag.direction {
+        TagDirection::Forward => forward,
+        TagDirection::Reverse => {
+            let mut v = forward;
+            v.reverse();
+            v
         }
+        TagDirection::PingPong if pingpong_one_way => forward,
+        TagDirection::PingPongReverse if pingpong_one_way => {
+            let mut v = forward;
+            v.reverse();
+            v
+        }
+        TagDirection::PingPong => append_pingpong_return(forward),
         TagDirection::PingPongReverse => {
-            base.reverse();
-            if base.len() > 2 {
-                let mut mid = base[1..base.len() - 1].to_vec();
-                mid.reverse();
-                base.extend(mid);
-            }
+            let mut v = forward;
+            v.reverse();
+            append_pingpong_return(v)
         }
-    }
-    if tag.repeat > 1 {
+    };
+
+    let times = if tag.repeat <= 1 { 1 } else { tag.repeat as usize };
+    if times > 1 {
         let once = base.clone();
-        for _ in 1..tag.repeat {
+        for _ in 1..times {
             base.extend_from_slice(&once);
         }
+    }
+    base
+}
+
+fn append_pingpong_return(mut base: Vec<u16>) -> Vec<u16> {
+    if base.len() > 2 {
+        let mut mid = base[1..base.len() - 1].to_vec();
+        mid.reverse();
+        base.extend(mid);
     }
     base
 }
@@ -85,14 +102,10 @@ pub fn frames_for_tag(sprite: &Sprite, tag: Option<&str>) -> Result<Vec<u16>> {
 
 /// Frame selection for a tag.
 ///
-/// When `play_subtags` is true: best-effort over the flat [`Tag`] list (the
-/// doc model has no parent pointer). Nested/sub tags are inferred by **range
-/// containment** — any tag whose `[from,to]` lies strictly inside the selected
-/// tag is treated as a child. Children are expanded (with their own direction)
-/// in ascending `from` order; overlapping siblings keep the earlier `from`
-/// (then shorter span). Gaps between children are filled with the parent
-/// direction's remaining frames. Limits: no true hierarchy metadata; overlapping
-/// ranges are heuristic; infinite repeat is not expanded.
+/// When `play_subtags` is true: best-effort over the flat [`Tag`] list (no
+/// parent pointer in the model). Subtags = range-contained tags; expanded with
+/// their own direction/repeat; gaps filled **forward** (parent direction is
+/// not re-applied to the concatenation). See `plan/v8.1/playback.md`.
 pub fn frames_for_tag_opts(
     sprite: &Sprite,
     tag: Option<&str>,
@@ -193,3 +206,39 @@ pub fn frame_is_empty(rgba: &[u8]) -> bool {
     rgba.chunks_exact(4).all(|c| c[3] < 8)
 }
 
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pxl_ase_doc::{Tag, TagDirection};
+
+    fn tag(dir: TagDirection, from: u16, to: u16, repeat: u16) -> Tag {
+        Tag {
+            name: "t".into(),
+            from,
+            to,
+            direction: dir,
+            repeat,
+            user_data: Default::default(),
+        }
+    }
+
+    #[test]
+    fn pingpong_repeat0_is_roundtrip_once() {
+        let f = expand_tag_frames(&tag(TagDirection::PingPong, 0, 3, 0));
+        assert_eq!(f, vec![0, 1, 2, 3, 2, 1]);
+    }
+
+    #[test]
+    fn pingpong_repeat1_is_one_direction() {
+        let f = expand_tag_frames(&tag(TagDirection::PingPong, 0, 3, 1));
+        assert_eq!(f, vec![0, 1, 2, 3]);
+    }
+
+    #[test]
+    fn forward_repeat2_duplicates() {
+        let f = expand_tag_frames(&tag(TagDirection::Forward, 1, 2, 2));
+        assert_eq!(f, vec![1, 2, 1, 2]);
+    }
+}

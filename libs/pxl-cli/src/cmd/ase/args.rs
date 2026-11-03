@@ -16,7 +16,7 @@ pub struct AseFileArgs {
     pub oneframe: bool,
 }
 
-#[derive(Args, Debug)]
+#[derive(Args, Debug, Clone)]
 pub struct AseConvertArgs {
     /// One or more `.aseprite` inputs (batch when multiple).
     pub files: Vec<String>,
@@ -77,6 +77,22 @@ pub struct AseConvertArgs {
     /// Trim then snap crop edges to sprite Grid (from .aseprite header).
     #[arg(long = "trim-by-grid")]
     pub trim_by_grid: bool,
+
+    /// Export only this named slice (crop). Official `--slice`.
+    #[arg(long = "slice")]
+    pub slice: Option<String>,
+    /// Hide this layer name (repeatable). Official `--ignore-layer`.
+    #[arg(long = "ignore-layer")]
+    pub ignore_layer: Vec<String>,
+    /// Write one file per image layer (uses `{layer}` in --save-as / --filename-format).
+    #[arg(long = "split-layers")]
+    pub split_layers: bool,
+    /// Write one file per tag (sets --tag per pass).
+    #[arg(long = "split-tags")]
+    pub split_tags: bool,
+    /// Alias of `--trim` (official `--trim-sprite` name).
+    #[arg(long = "trim-sprite")]
+    pub trim_sprite: bool,
     /// Expand nested/sub tags by range containment when using --tag.
     #[arg(long = "play-subtags")]
     pub play_subtags: bool,
@@ -117,6 +133,22 @@ pub struct AseSheetArgs {
     /// Skip consecutive duplicate frames.
     #[arg(long = "merge-duplicates")]
     pub merge_duplicates: bool,
+
+    /// Layer to hide (repeatable). Official `--ignore-layer`.
+    #[arg(long = "ignore-layer")]
+    pub ignore_layer: Vec<String>,
+    /// Official `--border-padding` (sheet outer/gap; maps into pack pad with shape).
+    #[arg(long = "border-padding")]
+    pub border_padding: Option<u32>,
+    /// Official `--shape-padding` (gap between cells → pack `pad`).
+    #[arg(long = "shape-padding")]
+    pub shape_padding: Option<u32>,
+    /// Official `--inner-padding` (currently folded into pack pad; 非完整独立语义).
+    #[arg(long = "inner-padding")]
+    pub inner_padding: Option<u32>,
+    /// Alias of sheet `--trim` toward official `--trim-sprite` (doc trim before pack).
+    #[arg(long = "trim-sprite")]
+    pub trim_sprite: bool,
     /// Expand nested/sub tags by range containment when using --tag.
     #[arg(long = "play-subtags")]
     pub play_subtags: bool,

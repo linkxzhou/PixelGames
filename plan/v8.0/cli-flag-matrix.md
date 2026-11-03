@@ -50,24 +50,24 @@
 
 | Flag | 状态 | 证据 / 映射 | 说明 |
 |---|---|---|---|
-| `--split-layers` | 缺失 | `app_options.h` `splitLayers()`；CLI 无同名 arg | 按层拆文件导出；GC-2 |
-| `--split-tags` | 缺失 | `splitTags()`；CLI 无同名 arg | 按 tag 拆文件；GC-2 |
+| `--split-layers` | 已实现 | `args.rs` + `convert::convert_split`；`{layer}` 插入 `--save-as` | 按 image 层各写一文件；GC-2 |
+| `--split-tags` | 已实现 | `convert::convert_split`；`{tag}` 插入路径 | 与 `--split-layers` 互斥；GC-2 |
 | `--split-grid` | 缺失 | `splitGrid()`；CLI 无同名 arg | 按 grid 拆；GC-2 / 07 |
 | `--split-slices` | 已实现 | `args.rs` `split_slices`；`ase split-slices` / `convert --split-slices` | 矩阵上表已有；此处对照确认 |
-| `--slice <name>` | 缺失 | `slice()`；CLI 无按名过滤 | 仅导出指定 slice；≠ `split-slices`；GC-2 |
-| `--ignore-layer` | 缺失 | `ignoreLayer()`；有 `--layer` / `--all-layers` 无忽略列表 | GC-2；可与 `--layer` 组合语义对齐 |
+| `--slice <name>` | 已实现 | `convert` 按 slice 首 key 裁切文档 | ≠ `split-slices`；GC-2 |
+| `--ignore-layer` | 已实现 | convert/sheet 可重复；`gc_flags::apply_ignore_layers` | 与 `--layer` 可组合；GC-2 |
 | `--shrink-to` | 缺失 | `shrinkTo()`；08 §6 标「做」；CLI 无 arg | GB-5 / GC-2 外的缩放适配 |
 | `--format`（`json-hash` / `json-array`） | 部分 | 官方 `format()`；我方 sheet 侧车经 `--data` 写 JSON（hash 形） | **无** `--format json-array`；GC-3；现有 `--data` 消费者勿破 |
 | `--data` | 已实现 | `AseSheetArgs.data` → sheet sidecar | 上表已有；与 `--format` 分工：我方用 `--data` 路径，未暴露 format 枚举 |
 | `--tagname-format` | 缺失 | `tagnameFormat()`；仅有 `--filename-format` 子集 | GC-4 |
 | `--filename-format` | 部分 | 上表已列占位符子集 | 冷门占位符不做 |
 | `--power-of-two-size` | 缺失 | `powerOfTwoSize()`；CLI 无 | GC-4；依赖 pack 能力 |
-| `--trim-sprite` | 部分 | 官方独立 flag；我方 `convert --trim` / `ase op trim` 调 `ops::trim_sprite`（`ops.rs`/`convert.rs`） | **无**官方同名 `--trim-sprite`；文档级透明边裁语义已覆盖 convert；sheet 的 `--trim` 是 per-cell bbox |
+| `--trim-sprite` | 已实现 | convert/sheet 同名 flag → `ops::trim_sprite`；与 `--trim` 同文档裁语义 | sheet 另有 per-cell `--trim`；GC-2 |
 | `--trim` | 已实现 | convert=文档裁；sheet=cell bbox | 上表已有 |
 | `--trim-by-grid` | 已实现 | convert/sheet | 上表已有 |
-| `--border-padding` | 部分 | 官方三分 padding；我方单一 `--padding` → `pack_sheet` pad（`AseSheetArgs.padding`） | 扩展别名 **`--padding`** ≈ 均匀 border/shape；**未**拆 shape/inner；GC-2 |
-| `--shape-padding` | 部分 | 同上 | 映射进 `--padding` 时无法区分；GC-2 拆分前保持「部分」 |
-| `--inner-padding` | 部分 | 同上 | 同上 |
+| `--border-padding` | 部分 | sheet 已接受；`effective_sheet_padding` 取 max(border,shape,inner,padding) | 尚非独立外框语义；pack 仍单 pad；GC-2 |
+| `--shape-padding` | 部分 | 已接入 `effective_sheet_padding`（优先/参与 max） | 对应 pack 间隙的主候选；完整三分仍待 pack API；GC-2 |
+| `--inner-padding` | 部分 | 已接入 max 折叠 | 无独立 cell 内扩；GC-2 |
 | `--padding` | 已实现 | 扩展别名（非官方同名）；sheet | 映射官方三类 padding 的均匀近似 |
 | `--sheet-type` | 部分 | 官方 `sheetType()`；我方扩展 **`--layout`**=`horizontal\|vertical\|packed\|rows\|grid` | `packed`≈`--sheet-pack`；非官方全集 type 名；GC-4 |
 | `--sheet-pack` | 部分 | 官方；我方 `--layout packed` | 无独立 `--sheet-pack` 开关 |

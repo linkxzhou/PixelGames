@@ -19,12 +19,19 @@ use crate::util::Ctx;
 
 
 use super::args::*;
+use super::gc_flags::{apply_ignore_layers, effective_sheet_padding};
 use super::util::{ensure_out, map_err};
 
 pub(crate) fn sheet(ctx: &Ctx, a: AseSheetArgs) -> CmdResult<()> {
     let mut doc = open(&a.file, a.oneframe).map_err(map_err)?;
     if a.all_layers {
         set_all_layers_visible(&mut doc.sprite, true);
+    }
+    if !a.ignore_layer.is_empty() {
+        apply_ignore_layers(&mut doc.sprite, &a.ignore_layer);
+    }
+    if a.trim_sprite {
+        pxl_ase::ops::trim_sprite(&mut doc.sprite).map_err(map_err)?;
     }
     if a.trim_by_grid {
         pxl_ase::ops::trim_sprite_by_grid(&mut doc.sprite).map_err(map_err)?;
@@ -56,7 +63,12 @@ pub(crate) fn sheet(ctx: &Ctx, a: AseSheetArgs) -> CmdResult<()> {
         .unwrap_or("sheet.png")
         .to_string();
     let opts = SheetExportOpts {
-        padding: a.padding,
+        padding: effective_sheet_padding(
+            a.padding,
+            a.border_padding,
+            a.shape_padding,
+            a.inner_padding,
+        ),
         extrude: a.extrude,
         trim: a.trim,
         merge_duplicates: a.merge_duplicates,

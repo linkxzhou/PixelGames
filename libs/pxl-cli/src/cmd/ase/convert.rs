@@ -21,6 +21,7 @@ use crate::util::Ctx;
 
 
 use super::args::*;
+use super::gc_flags::{apply_ignore_layers, ensure_format_token, find_slice};
 use super::util::{ensure_out, map_err, parse_color_mode, parse_crop_rect};
 
 pub(crate) fn inspect(ctx: &Ctx, a: AseInspectArgs) -> CmdResult<()> {
@@ -58,15 +59,73 @@ pub(crate) fn convert(ctx: &Ctx, a: AseConvertArgs) -> CmdResult<()> {
     if a.files.is_empty() {
         return Err(PxlError::usage("ase convert requires at least one input file").into());
     }
+    if a.split_layers && a.split_tags {
+        return Err(PxlError::usage("use only one of --split-layers / --split-tags").into());
+    }
     let mut outs = Vec::new();
     for (i, file) in a.files.iter().enumerate() {
-        let out = convert_one(ctx, &a, file, i)?;
-        outs.extend(out);
+        if a.split_layers || a.split_tags {
+            outs.extend(convert_split(ctx, &a, file, i)?);
+        } else {
+            outs.extend(convert_one(ctx, &a, file, i)?);
+        }
     }
     if ctx.json {
         println!("{}", json!({"ok": true, "outs": outs}));
     }
     Ok(())
+}
+
+fn convert_split(
+    ctx: &Ctx,
+    a: &AseConvertArgs,
+    file: &str,
+    index: usize,
+) -> CmdResult<Vec<String>> {
+    let doc = open(file, a.oneframe).map_err(map_err)?;
+    let mut outs = Vec::new();
+    if a.split_layers {
+        let pattern = ensure_format_token(&a.save_as, "{layer}");
+        let layers: Vec<String> = doc
+            .sprite
+            .layers
+            .iter()
+            .filter(|l| l.kind == pxl_ase::doc::LayerKind::Image)
+            .map(|l| l.name.clone())
+            .collect();
+        if layers.is_empty() {
+            return Err(PxlError::usage("--split-layers: no image layers").into());
+        }
+        for name in layers {
+            let mut sub = a.clone();
+            sub.split_layers = false;
+            sub.split_tags = false;
+            sub.layer = Some(name.clone());
+            sub.save_as = pattern.replace("{layer}", &sanitize_token(&name));
+            outs.extend(convert_one(ctx, &sub, file, index)?);
+        }
+    } else {
+        let pattern = ensure_format_token(&a.save_as, "{tag}");
+        let tags: Vec<String> = doc.sprite.tags.iter().map(|t| t.name.clone()).collect();
+        if tags.is_empty() {
+            return Err(PxlError::usage("--split-tags: file has no tags").into());
+        }
+        for name in tags {
+            let mut sub = a.clone();
+            sub.split_layers = false;
+            sub.split_tags = false;
+            sub.tag = Some(name.clone());
+            sub.save_as = pattern.replace("{tag}", &sanitize_token(&name));
+            outs.extend(convert_one(ctx, &sub, file, index)?);
+        }
+    }
+    Ok(outs)
+}
+
+fn sanitize_token(s: &str) -> String {
+    s.chars()
+        .map(|c| if c.is_ascii_alphanumeric() || c == '-' || c == '_' { c } else { '_' })
+        .collect()
 }
 
 pub(crate) fn convert_one(
@@ -85,18 +144,36 @@ pub(crate) fn convert_one(
         }
         let _ = set_layer_visibility_by_name; // keep import used if inlined above
     }
+    if !a.ignore_layer.is_empty() {
+        apply_ignore_layers(&mut doc.sprite, &a.ignore_layer);
+    }
     if let Some(pal_path) = &a.palette {
         let colors = load_palette_file(Path::new(pal_path)).map_err(map_err)?;
         apply_palette(&mut doc.sprite, colors).map_err(map_err)?;
     }
     if a.trim_by_grid {
         pxl_ase::ops::trim_sprite_by_grid(&mut doc.sprite).map_err(map_err)?;
-    } else if a.trim {
+    } else if a.trim || a.trim_sprite {
         pxl_ase::ops::trim_sprite(&mut doc.sprite).map_err(map_err)?;
     }
     if let Some(crop) = &a.crop {
         let (x, y, w, h) = parse_crop_rect(crop)?;
         pxl_ase::ops::crop_sprite(&mut doc.sprite, x, y, w, h).map_err(map_err)?;
+    }
+    if let Some(slice_name) = &a.slice {
+        let (sx, sy, sw, sh) = {
+            let Some(sl) = find_slice(&doc.sprite, slice_name) else {
+                return Err(PxlError::usage(format!("slice '{slice_name}' not found")).into());
+            };
+            let key = sl
+                .keys
+                .first()
+                .ok_or_else(|| PxlError::usage("slice has no keys"))?;
+            let w = u16::try_from(key.w).map_err(|_| PxlError::usage("slice width too large"))?;
+            let h = u16::try_from(key.h).map_err(|_| PxlError::usage("slice height too large"))?;
+            (key.x, key.y, w, h)
+        };
+        pxl_ase::ops::crop_sprite(&mut doc.sprite, sx, sy, sw, sh).map_err(map_err)?;
     }
     let algo = DitherAlgorithm::parse(&a.dithering_algorithm).map_err(map_err)?;
     let matrix = DitherMatrix::parse(&a.dithering_matrix).ok_or_else(|| {
