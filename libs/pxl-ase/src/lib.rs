@@ -18,7 +18,7 @@ pub use pxl_ase_io as io;
 
 pub use export_png::{
     expand_filename_format, expand_filename_format_ctx, export_frame_png, export_slice_png,
-    split_slices_to_dir, sprite_palette, FilenameFormatCtx,
+    split_grid_to_dir, split_slices_to_dir, sprite_palette, FilenameFormatCtx,
 };
 pub use frames::{
     expand_tag_frames, frame_is_empty, frames_for_tag, frames_for_tag_opts, parse_frame_range,

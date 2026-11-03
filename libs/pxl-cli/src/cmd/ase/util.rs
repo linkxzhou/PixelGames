@@ -62,3 +62,33 @@ pub(crate) fn parse_crop_rect(s: &str) -> CmdResult<(i32, i32, u16, u16)> {
         .map_err(|_| PxlError::usage("bad --crop h"))?;
     Ok((x, y, w, h))
 }
+
+/// Parse `WxH` / `W,H` / `W H` into `(w, h)`.
+pub(crate) fn parse_wxh(s: &str) -> CmdResult<(u32, u32)> {
+    let t = s.trim().to_ascii_lowercase().replace('×', "x");
+    let parts: Vec<&str> = if t.contains('x') {
+        t.split('x').collect()
+    } else if t.contains(',') {
+        t.split(',').collect()
+    } else {
+        t.split_whitespace().collect()
+    };
+    if parts.len() != 2 {
+        return Err(PxlError::usage(format!(
+            "expected WxH for size, got '{s}'"
+        ))
+        .into());
+    }
+    let w: u32 = parts[0]
+        .trim()
+        .parse()
+        .map_err(|_| PxlError::usage(format!("bad width in '{s}'")))?;
+    let h: u32 = parts[1]
+        .trim()
+        .parse()
+        .map_err(|_| PxlError::usage(format!("bad height in '{s}'")))?;
+    if w == 0 || h == 0 {
+        return Err(PxlError::usage("size must be non-zero").into());
+    }
+    Ok((w, h))
+}

@@ -9,6 +9,7 @@ use pxl_ase::{
     open, select_frames_opts, set_all_layers_visible,
     split_slices_to_dir, SheetExportOpts,
 };
+// shrink via pxl_ase::ops::shrink_sprite_to
 use pxl_ase::batch::run_batch_argv;
 use pxl_ase::script::{run_script_file, ScriptOptions};
 use pxl_core::{parse_hex, PxlError};
@@ -20,7 +21,7 @@ use crate::util::Ctx;
 
 use super::args::*;
 use super::gc_flags::{apply_ignore_layers};
-use super::util::{ensure_out, map_err};
+use super::util::{ensure_out, map_err, parse_wxh};
 
 pub(crate) fn sheet(ctx: &Ctx, a: AseSheetArgs) -> CmdResult<()> {
     let mut doc = open(&a.file, a.oneframe).map_err(map_err)?;
@@ -35,6 +36,10 @@ pub(crate) fn sheet(ctx: &Ctx, a: AseSheetArgs) -> CmdResult<()> {
     }
     if a.trim_by_grid {
         pxl_ase::ops::trim_sprite_by_grid(&mut doc.sprite).map_err(map_err)?;
+    }
+    if let Some(sz) = &a.shrink_to {
+        let (w, h) = parse_wxh(sz)?;
+        pxl_ase::ops::shrink_sprite_to(&mut doc.sprite, w as u16, h as u16).map_err(map_err)?;
     }
     let mut frames = if a.oneframe {
         vec![0]
@@ -62,6 +67,18 @@ pub(crate) fn sheet(ctx: &Ctx, a: AseSheetArgs) -> CmdResult<()> {
         .and_then(|s| s.to_str())
         .unwrap_or("sheet.png")
         .to_string();
+    let mut layout = a.layout.clone();
+    if let Some(st) = &a.sheet_type {
+        layout = st.clone();
+    }
+    if a.sheet_pack {
+        layout = "packed".into();
+    }
+    let title = Path::new(&a.file)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+        .to_string();
     let opts = SheetExportOpts {
         padding: a.padding,
         border_padding: a.border_padding.unwrap_or(0),
@@ -71,12 +88,19 @@ pub(crate) fn sheet(ctx: &Ctx, a: AseSheetArgs) -> CmdResult<()> {
         trim: a.trim,
         merge_duplicates: a.merge_duplicates,
         data_format: a.format.clone(),
+        columns: a.sheet_columns,
+        rows: a.sheet_rows,
+        sheet_width: a.sheet_width,
+        sheet_height: a.sheet_height,
+        power_of_two: a.power_of_two_size,
+        tagname_format: a.tagname_format.clone(),
+        title,
     };
     let (png, js) = export_sheet_png_json_layout_opts(
         &doc.sprite,
         &frames,
         &image_name,
-        &a.layout,
+        &layout,
         &opts,
     )
     .map_err(map_err)?;

@@ -52,16 +52,16 @@
 |---|---|---|---|
 | `--split-layers` | 已实现 | `args.rs` + `convert::convert_split`；`{layer}` 插入 `--save-as` | 按 image 层各写一文件；GC-2 |
 | `--split-tags` | 已实现 | `convert::convert_split`；`{tag}` 插入路径 | 与 `--split-layers` 互斥；GC-2 |
-| `--split-grid` | 缺失 | `splitGrid()`；CLI 无同名 arg | 按 grid 拆；GC-2 / 07 |
+| `--split-grid` | 已实现 | `convert --split-grid <dir>` → `split_grid_to_dir`（需 `sprite.grid` w/h>0） | GC-2；无 grid 时错误 |
 | `--split-slices` | 已实现 | `args.rs` `split_slices`；`ase split-slices` / `convert --split-slices` | 矩阵上表已有；此处对照确认 |
 | `--slice <name>` | 已实现 | `convert` 按 slice 首 key 裁切文档 | ≠ `split-slices`；GC-2 |
 | `--ignore-layer` | 已实现 | convert/sheet 可重复；`gc_flags::apply_ignore_layers` | 与 `--layer` 可组合；GC-2 |
-| `--shrink-to` | 缺失 | `shrinkTo()`；08 §6 标「做」；CLI 无 arg | GB-5 / GC-2 外的缩放适配 |
+| `--shrink-to` | 已实现 | convert/sheet；`ops::shrink_sprite_to`；`WxH`/`W,H`；不放大 | GB-5 |
 | `--format`（`json-hash` / `json-array`） | 已实现 | `ase sheet --format`；默认 `json-hash`；`sheet_json_format` | GC-3；hash 消费者默认路径不变 |
 | `--data` | 已实现 | `AseSheetArgs.data` → sheet sidecar | 上表已有；与 `--format` 分工：我方用 `--data` 路径，未暴露 format 枚举 |
-| `--tagname-format` | 缺失 | `tagnameFormat()`；仅有 `--filename-format` 子集 | GC-4 |
+| `--tagname-format` | 已实现 | `ase sheet --tagname-format` → meta.frameTags 名；`{tag}`/`{title}`… | GC-4 |
 | `--filename-format` | 部分 | 上表已列占位符子集 | 冷门占位符不做 |
-| `--power-of-two-size` | 缺失 | `powerOfTwoSize()`；CLI 无 | GC-4；依赖 pack 能力 |
+| `--power-of-two-size` | 已实现 | `SheetPackOpts.power_of_two`；atlas 边扩到 2^n（≤2048） | GC-4 |
 | `--trim-sprite` | 已实现 | convert/sheet 同名 flag → `ops::trim_sprite`；与 `--trim` 同文档裁语义 | sheet 另有 per-cell `--trim`；GC-2 |
 | `--trim` | 已实现 | convert=文档裁；sheet=cell bbox | 上表已有 |
 | `--trim-by-grid` | 已实现 | convert/sheet | 上表已有 |
@@ -69,10 +69,10 @@
 | `--shape-padding` | 已实现 | `SheetPadding.shape`（缺省回落 `--padding`） | 单元格间距；本轮 |
 | `--inner-padding` | 已实现 | `SheetPadding.inner` 内容内缩、placement 含内边 | 本轮 |
 | `--padding` | 已实现 | 扩展别名（非官方同名）；sheet | 映射官方三类 padding 的均匀近似 |
-| `--sheet-type` | 部分 | 官方 `sheetType()`；我方扩展 **`--layout`**=`horizontal\|vertical\|packed\|rows\|grid` | `packed`≈`--sheet-pack`；非官方全集 type 名；GC-4 |
-| `--sheet-pack` | 部分 | 官方；我方 `--layout packed` | 无独立 `--sheet-pack` 开关 |
-| `--sheet-width` / `--sheet-height` | 缺失 | `sheetWidth/Height()`；CLI 无 | GC-4 |
-| `--sheet-columns` / `--sheet-rows` | 缺失 | `sheetColumns/Rows()`；`--layout rows\|grid` 无固定行列数 | GC-4 |
+| `--sheet-type` | 已实现 | `ase sheet --sheet-type` 覆盖 `--layout`；同名子集 | GC-4 |
+| `--sheet-pack` | 已实现 | 独立 bool → layout `packed` | GC-4 |
+| `--sheet-width` / `--sheet-height` | 已实现 | width=货架换行；height=超限失败（单页） | GC-4；无多页 |
+| `--sheet-columns` / `--sheet-rows` | 已实现 | `SheetPackOpts.columns/rows` 固定分块 | GC-4 |
 | `--layout` | 已实现 | 扩展别名 → `pxl-export` layouts | 对应 `--sheet-type` 子集 |
 | `--list-layers` | 已实现 | `ase list-layers` | 上表已有 |
 | `--list-layer-hierarchy` | 缺失 | `listLayerHierarchy()`；仅扁平 `list-layers` | GC-2/树形输出未做 |
@@ -85,6 +85,6 @@
 |---|---|---|
 | `--sheet-type` | `--layout` | 子集别名；packed/rows/grid/horizontal/vertical |
 | `--sheet-pack` | `--layout packed` | 等价意图 |
-| `--border-padding` / `--shape-padding` / `--inner-padding` | `--padding` | 单一均匀 pad；未拆三路 |
-| `--format json-hash` | `--data <path>` | 侧车路径；未暴露 format 枚举 |
+| `--border-padding` / `--shape-padding` / `--inner-padding` | 分立旗标 + `--padding` 别名 | 三元组已实现；`--padding`→shape 缺省 |
+| `--format json-hash\|json-array` | `--format` + `--data <path>` | format 已暴露；data 仍为侧车路径 |
 | `--trim-sprite` | `convert --trim` / `ase op trim` | 语义近；旗标名不同 |

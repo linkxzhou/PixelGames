@@ -16,10 +16,11 @@ pub use label::{contact_sheet, text_height, text_width, Panel};
 pub use png::{decode_indexed, decode_png_rgba, encode_indexed_png, encode_rgba_png};
 pub use preview::{render_asset_png, render_preview_png};
 pub use raster::{
-    composite, composite_checked, scale_nearest, scale_rgba, scale_rgba_checked, scaled_dims,
+    composite, composite_checked, fit_dims, fit_index_frame, resize_nearest, resize_rgba,
+    scale_nearest, scale_rgba, scale_rgba_checked, scaled_dims,
 };
 pub use review::{review_image, ReviewMode};
-pub use sheet::{pack_sheet, pack_sheet_padded, sheet_budget_json, sheet_json, sheet_json_format, PackedSheet, Placement, SheetBudget, SheetCell, SheetPadding};
+pub use sheet::{pack_sheet, pack_sheet_opts, pack_sheet_padded, sheet_budget_json, sheet_json, sheet_json_format, PackedSheet, Placement, SheetBudget, SheetCell, SheetPackOpts, SheetPadding};
 
 #[cfg(test)]
 mod tests;

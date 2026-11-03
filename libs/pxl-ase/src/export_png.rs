@@ -156,6 +156,71 @@ pub fn split_slices_to_dir(
     Ok(written)
 }
 
+/// Split the sprite canvas by `sprite.grid` cell size into PNGs under `out_dir`.
+pub fn split_grid_to_dir(
+    sprite: &Sprite,
+    out_dir: &std::path::Path,
+    frame: u16,
+    scale: u32,
+) -> Result<Vec<String>> {
+    let gw = sprite.grid.w as i32;
+    let gh = sprite.grid.h as i32;
+    if gw <= 0 || gh <= 0 {
+        return Err(AseErr(
+            "--split-grid needs sprite grid w/h > 0 (set in .aseprite)".into(),
+        ));
+    }
+    let ox = sprite.grid.x as i32;
+    let oy = sprite.grid.y as i32;
+    let sw = sprite.width as i32;
+    let sh = sprite.height as i32;
+    std::fs::create_dir_all(out_dir).map_err(|e| AseErr(e.to_string()))?;
+    let rgba = flatten_frame_rgba(sprite, frame)?;
+    let mut written = Vec::new();
+    let mut row = 0i32;
+    let mut y = oy;
+    while y < sh {
+        let mut col = 0i32;
+        let mut x = ox;
+        while x < sw {
+            let cw = gw.min(sw - x).max(0) as u16;
+            let ch = gh.min(sh - y).max(0) as u16;
+            if cw == 0 || ch == 0 {
+                break;
+            }
+            let mut crop = vec![0u8; (cw as usize) * (ch as usize) * 4];
+            for dy in 0..ch as i32 {
+                for dx in 0..cw as i32 {
+                    let sx = x + dx;
+                    let sy = y + dy;
+                    if sx < 0 || sy < 0 || sx >= sw || sy >= sh {
+                        continue;
+                    }
+                    let si = ((sy * sw + sx) * 4) as usize;
+                    let di = ((dy * cw as i32 + dx) * 4) as usize;
+                    crop[di..di + 4].copy_from_slice(&rgba[si..si + 4]);
+                }
+            }
+            let scale = scale.max(1);
+            let scaled = if scale == 1 {
+                crop
+            } else {
+                scale_rgba(cw, ch, &crop, scale)
+            };
+            let png = pxl_export::encode_rgba_png(cw as u32 * scale, ch as u32 * scale, &scaled)
+                .map_err(|e| AseErr(e.message.clone()))?;
+            let path = out_dir.join(format!("grid_{}_{}.png", row, col));
+            std::fs::write(&path, png).map_err(|e| AseErr(e.to_string()))?;
+            written.push(path.display().to_string());
+            col += 1;
+            x += gw;
+        }
+        row += 1;
+        y += gh;
+    }
+    Ok(written)
+}
+
 fn scale_rgba(w: u16, h: u16, rgba: &[u8], scale: u32) -> Vec<u8> {
     let sw = w as u32 * scale;
     let sh = h as u32 * scale;

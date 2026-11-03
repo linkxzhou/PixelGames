@@ -147,6 +147,72 @@ pub fn scale_rgba(w: u32, h: u32, rgba: &[u8], scale: u32, grid: bool) -> (u32, 
     (ow, oh, out)
 }
 
+/// Target size that fits inside `max_w`×`max_h`, preserving aspect (no upscale).
+pub fn fit_dims(src_w: u32, src_h: u32, max_w: u32, max_h: u32) -> (u32, u32) {
+    if src_w == 0 || src_h == 0 || max_w == 0 || max_h == 0 {
+        return (1, 1);
+    }
+    if src_w <= max_w && src_h <= max_h {
+        return (src_w, src_h);
+    }
+    let sx = max_w as f64 / src_w as f64;
+    let sy = max_h as f64 / src_h as f64;
+    let s = sx.min(sy);
+    let w = ((src_w as f64) * s).floor().max(1.0) as u32;
+    let h = ((src_h as f64) * s).floor().max(1.0) as u32;
+    (w.min(max_w).max(1), h.min(max_h).max(1))
+}
+
+/// Nearest-neighbor resize of an indexed frame to exact `new_w`×`new_h`.
+pub fn resize_nearest(frame: &IndexFrame, new_w: u16, new_h: u16) -> PxlResult<IndexFrame> {
+    if new_w == 0 || new_h == 0 {
+        return Err(PxlError::usage("resize size must be non-zero"));
+    }
+    let mut out = IndexFrame::canvas(new_w, new_h)?;
+    if frame.w == 0 || frame.h == 0 {
+        return Ok(out);
+    }
+    for y in 0..new_h as i32 {
+        for x in 0..new_w as i32 {
+            let sx = (x as i64 * frame.w as i64) / new_w as i64;
+            let sy = (y as i64 * frame.h as i64) / new_h as i64;
+            out.set(x, y, frame.get(sx as i32, sy as i32));
+        }
+    }
+    Ok(out)
+}
+
+/// Shrink (never enlarge) an indexed frame to fit `max_w`×`max_h`.
+pub fn fit_index_frame(frame: &IndexFrame, max_w: u32, max_h: u32) -> PxlResult<IndexFrame> {
+    let (w, h) = fit_dims(frame.w as u32, frame.h as u32, max_w, max_h);
+    if w == frame.w as u32 && h == frame.h as u32 {
+        return Ok(frame.clone());
+    }
+    resize_nearest(frame, w as u16, h as u16)
+}
+
+/// Nearest-neighbor resize of an RGBA8 buffer.
+pub fn resize_rgba(src_w: u32, src_h: u32, rgba: &[u8], new_w: u32, new_h: u32) -> PxlResult<Vec<u8>> {
+    if new_w == 0 || new_h == 0 || src_w == 0 || src_h == 0 {
+        return Err(PxlError::usage("resize size must be non-zero"));
+    }
+    if rgba.len() < (src_w as usize) * (src_h as usize) * 4 {
+        return Err(PxlError::semantic("rgba buffer shorter than src_w*src_h*4"));
+    }
+    scaled_dims(new_w, new_h, 1)?;
+    let mut out = vec![0u8; (new_w as usize) * (new_h as usize) * 4];
+    for y in 0..new_h {
+        for x in 0..new_w {
+            let sx = (x as u64 * src_w as u64) / new_w as u64;
+            let sy = (y as u64 * src_h as u64) / new_h as u64;
+            let si = ((sy * src_w as u64 + sx) * 4) as usize;
+            let di = (y as usize * new_w as usize + x as usize) * 4;
+            out[di..di + 4].copy_from_slice(&rgba[si..si + 4]);
+        }
+    }
+    Ok(out)
+}
+
 /// Preview scaling output cap, in pixels.
 const MAX_SCALED_PIXELS: u64 = 64 * 1024 * 1024;
 

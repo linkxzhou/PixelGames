@@ -48,6 +48,22 @@ impl SheetPadding {
     }
 }
 
+/// Extra pack constraints beyond layout name + padding triad.
+#[derive(Clone, Debug, Default)]
+pub struct SheetPackOpts {
+    pub pad: SheetPadding,
+    /// Fixed columns (cells per row). Overrides auto grid column count.
+    pub columns: Option<u32>,
+    /// Fixed row count → columns = ceil(n / rows). Ignored if `columns` set.
+    pub rows: Option<u32>,
+    /// Wrap cells when the next placement would exceed this atlas width.
+    pub sheet_width: Option<u32>,
+    /// Fail if packed height exceeds this (after power-of-two expand).
+    pub sheet_height: Option<u32>,
+    /// Expand final atlas sides to the next power of two (≤2048).
+    pub power_of_two: bool,
+}
+
 /// The whole-atlas memory budget of one packed sheet (P08). `rgba8_bytes`
 /// is the level-1 texture estimate — width × height × 4 bytes at 1x — never
 /// the PNG size on disk. A sheet is always one page today: multi-page
@@ -84,8 +100,16 @@ impl SheetBudget {
 
 
 /// `rows-by-anim` keeps caller row grouping. `grid` packs in a roughly square grid.
+/// `vertical` is one cell per row. `horizontal` is a single row of all cells.
 pub fn pack_sheet(rows: &[Vec<SheetCell>], layout: &str, pad: u32) -> PxlResult<PackedSheet> {
-    pack_sheet_padded(rows, layout, SheetPadding::shape_only(pad))
+    pack_sheet_opts(
+        rows,
+        layout,
+        SheetPackOpts {
+            pad: SheetPadding::shape_only(pad),
+            ..SheetPackOpts::default()
+        },
+    )
 }
 
 pub fn pack_sheet_padded(
@@ -93,32 +117,63 @@ pub fn pack_sheet_padded(
     layout: &str,
     pad: SheetPadding,
 ) -> PxlResult<PackedSheet> {
+    pack_sheet_opts(
+        rows,
+        layout,
+        SheetPackOpts {
+            pad,
+            ..SheetPackOpts::default()
+        },
+    )
+}
+
+pub fn pack_sheet_opts(
+    rows: &[Vec<SheetCell>],
+    layout: &str,
+    opts: SheetPackOpts,
+) -> PxlResult<PackedSheet> {
     let flat: Vec<&SheetCell> = rows.iter().flatten().collect();
     if flat.is_empty() {
         return Err(PxlError::semantic("sheet has no frames"));
     }
-    let groups: Vec<Vec<&SheetCell>> = match layout {
-        "rows-by-anim" | "rows" => rows
-            .iter()
-            .map(|r| r.iter().collect())
-            .filter(|r: &Vec<_>| !r.is_empty())
-            .collect(),
-        "grid" => {
-            let n = flat.len();
-            let mut cols = 1usize;
-            while cols * cols < n {
-                cols += 1;
+    let layout = layout.to_ascii_lowercase();
+    let shape = i64::from(opts.pad.shape);
+    let border = i64::from(opts.pad.border);
+    let inner = i64::from(opts.pad.inner);
+
+    // Width-constrained shelf pack ignores row grouping.
+    if let Some(max_w) = opts.sheet_width.filter(|w| *w > 0) {
+        return pack_shelf(&flat, opts, max_w, shape, border, inner);
+    }
+
+    let groups: Vec<Vec<&SheetCell>> = if let Some(cols) = opts.columns.filter(|c| *c > 0) {
+        flat.chunks(cols as usize).map(|c| c.to_vec()).collect()
+    } else if let Some(nrows) = opts.rows.filter(|r| *r > 0) {
+        let cols = ((flat.len() as u32 + nrows - 1) / nrows).max(1) as usize;
+        flat.chunks(cols).map(|c| c.to_vec()).collect()
+    } else {
+        match layout.as_str() {
+            "rows-by-anim" | "rows" | "horizontal" | "h" => rows
+                .iter()
+                .map(|r| r.iter().collect())
+                .filter(|r: &Vec<_>| !r.is_empty())
+                .collect(),
+            "vertical" | "v" | "columns" => flat.iter().map(|c| vec![*c]).collect(),
+            "grid" | "packed" => {
+                let n = flat.len();
+                let mut cols = 1usize;
+                while cols * cols < n {
+                    cols += 1;
+                }
+                flat.chunks(cols).map(|c| c.to_vec()).collect()
             }
-            flat.chunks(cols).map(|c| c.to_vec()).collect()
-        }
-        other => {
-            return Err(PxlError::usage(format!("unknown sheet layout '{other}'"))
-                .with_hint("layout is rows-by-anim or grid"));
+            other => {
+                return Err(PxlError::usage(format!("unknown sheet layout '{other}'"))
+                    .with_hint("layout is horizontal|vertical|rows|grid|packed"));
+            }
         }
     };
-    let shape = i64::from(pad.shape);
-    let border = i64::from(pad.border);
-    let inner = i64::from(pad.inner);
+
     let mut placements = Vec::new();
     let mut y = border;
     let mut sheet_w = 1i64;
@@ -128,7 +183,7 @@ pub fn pack_sheet_padded(
         for cell in row {
             let cw = cell.frame.w as i64 + inner * 2;
             let ch = cell.frame.h as i64 + inner * 2;
-            placements.push((x, y, cell));
+            placements.push((x, y, *cell));
             row_h = row_h.max(ch);
             x += cw + shape;
         }
@@ -138,19 +193,83 @@ pub fn pack_sheet_padded(
         y += row_h + shape;
     }
     let sheet_h = if y > border { y - shape + border } else { 1 };
-    let (sheet_w, sheet_h) = (sheet_w.max(1), sheet_h.max(1));
+    finish_sheet(placements, sheet_w.max(1), sheet_h.max(1), &opts)
+}
+
+fn pack_shelf(
+    flat: &[&SheetCell],
+    opts: SheetPackOpts,
+    max_w: u32,
+    shape: i64,
+    border: i64,
+    inner: i64,
+) -> PxlResult<PackedSheet> {
+    let max_w = max_w as i64;
+    let mut placements = Vec::new();
+    let mut x = border;
+    let mut y = border;
+    let mut row_h = 1i64;
+    let mut sheet_w = border;
+    for cell in flat {
+        let cw = cell.frame.w as i64 + inner * 2;
+        let ch = cell.frame.h as i64 + inner * 2;
+        if cw + border * 2 > max_w {
+            return Err(PxlError::semantic(format!(
+                "cell {}x{} does not fit sheet-width {max_w}",
+                cell.frame.w, cell.frame.h
+            )));
+        }
+        if x > border && x + cw + border > max_w {
+            sheet_w = sheet_w.max(x - shape + border);
+            x = border;
+            y += row_h + shape;
+            row_h = 1;
+        }
+        placements.push((x, y, *cell));
+        row_h = row_h.max(ch);
+        x += cw + shape;
+    }
+    sheet_w = sheet_w.max(if x > border { x - shape + border } else { border + 1 });
+    sheet_w = sheet_w.max(max_w.min(sheet_w.max(1)));
+    // Prefer exact sheet_width when set: pad canvas to requested width.
+    let sheet_w = max_w.max(sheet_w);
+    let sheet_h = if y > border || row_h > 0 {
+        y + row_h + border
+    } else {
+        1
+    };
+    finish_sheet(placements, sheet_w, sheet_h.max(1), &opts)
+}
+
+fn finish_sheet(
+    placements: Vec<(i64, i64, &SheetCell)>,
+    mut sheet_w: i64,
+    mut sheet_h: i64,
+    opts: &SheetPackOpts,
+) -> PxlResult<PackedSheet> {
+    if opts.power_of_two {
+        sheet_w = next_pow2_u32(sheet_w as u32).min(2048) as i64;
+        sheet_h = next_pow2_u32(sheet_h as u32).min(2048) as i64;
+    }
+    if let Some(max_h) = opts.sheet_height.filter(|h| *h > 0) {
+        if sheet_h > max_h as i64 {
+            return Err(PxlError::semantic(format!(
+                "sheet height {sheet_h} exceeds --sheet-height {max_h}"
+            )));
+        }
+    }
     if sheet_w > 2048 || sheet_h > 2048 {
         return Err(PxlError::semantic(format!(
             "sheet would be {sheet_w}x{sheet_h}, over the 2048 limit"
         ))
-        .with_hint("use fewer frames, a smaller --pad, or the grid layout"));
+        .with_hint("use fewer frames, smaller padding, or sheet-width wrapping"));
     }
     let mut image = IndexFrame::canvas(sheet_w as u16, sheet_h as u16)?;
     let mut out_places = Vec::new();
     for (x, y, cell) in placements {
         let (x, y) = (x as i32, y as i32);
-        let ox = x + pad.inner as i32;
-        let oy = y + pad.inner as i32;
+        let ox = x + opts.pad.inner as i32;
+        let oy = y + opts.pad.inner as i32;
         for py in 0..cell.frame.h as i32 {
             for px in 0..cell.frame.w as i32 {
                 image.set(ox + px, oy + py, cell.frame.get(px, py));
@@ -160,8 +279,8 @@ pub fn pack_sheet_padded(
             name: cell.name.clone(),
             x: x as u32,
             y: y as u32,
-            w: (cell.frame.w as u32) + pad.inner * 2,
-            h: (cell.frame.h as u32) + pad.inner * 2,
+            w: (cell.frame.w as u32) + opts.pad.inner * 2,
+            h: (cell.frame.h as u32) + opts.pad.inner * 2,
             duration_ms: cell.duration_ms,
             tag: cell.tag.clone(),
         });
@@ -170,6 +289,14 @@ pub fn pack_sheet_padded(
         image,
         placements: out_places,
     })
+}
+
+fn next_pow2_u32(v: u32) -> u32 {
+    let v = v.max(1);
+    if v >= 2048 {
+        return 2048;
+    }
+    v.next_power_of_two()
 }
 
 #[derive(Serialize)]
@@ -317,77 +444,6 @@ pub fn sheet_json_format(
     Ok(s)
 }
 
-
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn cell(name: &str, w: u16) -> SheetCell {
-        SheetCell {
-            name: name.into(),
-            frame: IndexFrame::new(w, 4).unwrap(),
-            duration_ms: 100,
-            tag: None,
-        }
-    }
-
-    #[test]
-    fn pad_does_not_wrap_and_oversize_sheets_are_rejected() {
-        let rows = vec![vec![cell("a", 4), cell("b", 4)]];
-        let ok = pack_sheet(&rows, "rows-by-anim", 1).unwrap();
-        assert_eq!((ok.image.w, ok.image.h), (9, 4));
-        let err = pack_sheet(&rows, "rows-by-anim", u32::MAX).unwrap_err();
-        assert!(err.message.contains("2048"), "{err:?}");
-        let wide: Vec<SheetCell> = (0..40).map(|i| cell(&format!("f{i}"), 64)).collect();
-        assert!(pack_sheet(&[wide], "rows-by-anim", 1).is_err());
-    }
-
-    #[test]
-    fn budget_reports_rgba8_estimate_not_png_size() {
-        let rows = vec![vec![cell("a", 4), cell("b", 4)]];
-        let packed = pack_sheet(&rows, "rows-by-anim", 1).unwrap();
-        let triad = pack_sheet_padded(
-            &rows,
-            "rows-by-anim",
-            SheetPadding {
-                border: 2,
-                shape: 3,
-                inner: 1,
-            },
-        )
-        .unwrap();
-        assert!(triad.image.w > packed.image.w);
-        assert_eq!(triad.placements[0].x, 2);
-        assert_eq!(triad.placements[0].w, rows[0][0].frame.w as u32 + 2);
-
-        let budget = SheetBudget::of(&packed);
-        // 9x4 sheet: the RGBA8 estimate is w*h*4, not the indexed PNG size.
-        assert_eq!(budget.rgba8_bytes, 9 * 4 * 4);
-        assert_eq!(budget.frames, 2);
-        assert_eq!(budget.pages, 1);
-        assert_eq!(budget.page_limit, 1);
-        // A full 2048x2048 single page tops out at exactly 16 MiB. Frames
-        // cannot reach that size (MAX_DIM is 256), so build the sheet
-        // directly and check the arithmetic.
-        let full = PackedSheet {
-            image: IndexFrame::canvas(2048, 2048).unwrap(),
-            placements: Vec::new(),
-        };
-        assert_eq!(SheetBudget::of(&full).rgba8_bytes, 2048 * 2048 * 4);
-        assert_eq!(SheetBudget::of(&full).rgba8_mib, 16.0);
-    }
-
-
-    #[test]
-    fn json_array_frames_is_array_hash_is_object() {
-        let rows = vec![vec![cell("a", 4), cell("b", 4)]];
-        let packed = pack_sheet(&rows, "rows-by-anim", 0).unwrap();
-        let hash = sheet_json_format(&packed, "s.png", serde_json::json!({}), "json-hash").unwrap();
-        let arr = sheet_json_format(&packed, "s.png", serde_json::json!({}), "json-array").unwrap();
-        let hv: serde_json::Value = serde_json::from_str(&hash).unwrap();
-        let av: serde_json::Value = serde_json::from_str(&arr).unwrap();
-        assert!(hv["frames"].is_object());
-        assert!(av["frames"].is_array());
-        assert_eq!(av["frames"].as_array().unwrap().len(), 2);
-    }
-}
+#[path = "sheet_tests.rs"]
+mod tests;

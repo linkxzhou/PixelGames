@@ -96,6 +96,12 @@ pub struct AseConvertArgs {
     /// Expand nested/sub tags by range containment when using --tag.
     #[arg(long = "play-subtags")]
     pub play_subtags: bool,
+    /// Shrink document to fit `WxH` (no upscale). Official `--shrink-to`.
+    #[arg(long = "shrink-to")]
+    pub shrink_to: Option<String>,
+    /// Split canvas by sprite grid into PNGs under this directory.
+    #[arg(long = "split-grid")]
+    pub split_grid: Option<String>,
 }
 
 #[derive(Args, Debug)]
@@ -155,6 +161,29 @@ pub struct AseSheetArgs {
     /// Sheet data format: `json-hash` (default) or `json-array`.
     #[arg(long = "format", default_value = "json-hash")]
     pub format: String,
+    /// Official `--sheet-type` (overrides `--layout` when set).
+    #[arg(long = "sheet-type")]
+    pub sheet_type: Option<String>,
+    /// Official `--sheet-pack` → packed layout.
+    #[arg(long = "sheet-pack")]
+    pub sheet_pack: bool,
+    #[arg(long = "sheet-width")]
+    pub sheet_width: Option<u32>,
+    #[arg(long = "sheet-height")]
+    pub sheet_height: Option<u32>,
+    #[arg(long = "sheet-columns")]
+    pub sheet_columns: Option<u32>,
+    #[arg(long = "sheet-rows")]
+    pub sheet_rows: Option<u32>,
+    /// Expand atlas sides to next power of two.
+    #[arg(long = "power-of-two-size")]
+    pub power_of_two_size: bool,
+    /// Rewrite frameTags names (`{tag}` `{title}` …).
+    #[arg(long = "tagname-format")]
+    pub tagname_format: Option<String>,
+    /// Shrink document to fit `WxH` before packing.
+    #[arg(long = "shrink-to")]
+    pub shrink_to: Option<String>,
 }
 
 #[derive(Args, Debug)]

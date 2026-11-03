@@ -14,9 +14,10 @@
 | GB-2 blend 全集 | P1 | 已完成 | 19 种 `BlendMode` 均有路径（`render/blend/`）；单测 smoke + HSL |
 | GB-3 组层合成 | P1 | 已完成 | header bit2 / Group：子层先合成再按组 blend；`group_composites_children_then_blends` |
 | GB-4 Playback | P1 | 已完成 | `playback.md` + expand_tag_frames |
-| GB-5 `--shrink-to` | P2 | 未开始 | |
-| GC-2 split/slice/… | P1 | 部分→补齐 padding | split/slice/ignore/trim-sprite 已有；**padding 三元组现已真实分拆** |
+| GB-5 `--shrink-to` | P2 | 已完成 | `ops::shrink_sprite_to` + convert/sheet CLI；aspect 适配、不放大；`shrink_to_fits_without_upscale` |
+| GC-2 split/slice/… | P1 | 已完成 | split/slice/ignore/trim + **padding 三元组** + **`--split-grid`**（依赖 sprite.grid） |
 | GC-3 `--format json-array` | P1 | 已完成 | `sheet_json_format`；默认 `json-hash` 不变；`ase sheet --format` |
-| GC-4.. / GD / GE | P1–P2 | 未开始 | |
+| GC-4 sheet 高级旗标 | P2 | 部分→已实现子集 | `--sheet-type/pack/width/height/columns/rows`、`--power-of-two-size`、`--tagname-format` → `SheetPackOpts`；无多页 pack |
+| GD / GE | P2 | 未开始 | tileset / 其余冷门未做 |
 
-验证：`cargo +1.95.0 test -p pxl-export -p pxl-ase-io -p pxl-ase-doc -p pxl-ase --lib`；`check -p pxl-cli`。
+验证：`cargo +1.95.0 test -p pxl-export -p pxl-ase --lib`；`check -p pxl-cli`。

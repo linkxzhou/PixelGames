@@ -10,8 +10,9 @@ use crate::{slice_json, tag_direction_name, AseErr, Result};
 
 fn sheet_layout_name(layout: &str) -> Result<&'static str> {
     match layout.to_ascii_lowercase().as_str() {
-        "rows" | "rows-by-anim" | "horizontal" | "h" => Ok("rows-by-anim"),
-        "grid" | "packed" | "vertical" | "v" | "columns" => Ok("grid"),
+        "rows" | "rows-by-anim" | "horizontal" | "h" => Ok("horizontal"),
+        "vertical" | "v" | "columns" => Ok("vertical"),
+        "grid" | "packed" => Ok("grid"),
         other => Err(AseErr(format!(
             "unknown sheet layout '{other}' (horizontal|vertical|packed|rows|grid)"
         ))),
@@ -29,6 +30,14 @@ pub struct SheetExportOpts {
     pub merge_duplicates: bool,
     /// `json-hash` (default) or `json-array`.
     pub data_format: String,
+    pub columns: Option<u32>,
+    pub rows: Option<u32>,
+    pub sheet_width: Option<u32>,
+    pub sheet_height: Option<u32>,
+    pub power_of_two: bool,
+    /// Optional `{tag}` / `{title}` style rewrite for meta.frameTags names.
+    pub tagname_format: Option<String>,
+    pub title: String,
 }
 
 impl Default for SheetExportOpts {
@@ -42,6 +51,13 @@ impl Default for SheetExportOpts {
             trim: false,
             merge_duplicates: false,
             data_format: "json-hash".into(),
+            columns: None,
+            rows: None,
+            sheet_width: None,
+            sheet_height: None,
+            power_of_two: false,
+            tagname_format: None,
+            title: String::new(),
         }
     }
 }
@@ -118,7 +134,7 @@ pub fn export_sheet_png_json_layout_opts(
     layout: &str,
     opts: &SheetExportOpts,
 ) -> Result<(Vec<u8>, String)> {
-    use pxl_export::{pack_sheet_padded, sheet_json_format, SheetCell, SheetPadding};
+    use pxl_export::{pack_sheet_opts, sheet_json_format, SheetCell, SheetPackOpts, SheetPadding};
     let layout = sheet_layout_name(layout)?;
     let mut frames = frames.to_vec();
     if opts.merge_duplicates {
@@ -184,7 +200,18 @@ pub fn export_sheet_png_json_layout_opts(
         shape: opts.shape_padding.unwrap_or(opts.padding),
         inner: opts.inner_padding,
     };
-    let packed = pack_sheet_padded(&[cells], layout, pad)?;
+    let packed = pack_sheet_opts(
+        &[cells],
+        layout,
+        SheetPackOpts {
+            pad,
+            columns: opts.columns,
+            rows: opts.rows,
+            sheet_width: opts.sheet_width,
+            sheet_height: opts.sheet_height,
+            power_of_two: opts.power_of_two,
+        },
+    )?;
     let png = pxl_export::encode_indexed_png(&packed.image, &pal, 1)?;
     let meta = json!({
         "frameTags": sprite.tags.iter().map(|t| json!({
@@ -207,15 +234,36 @@ pub fn export_sheet_png_json_layout_opts(
     // Prefer document tag directions over packer defaults ("forward").
     if let Ok(mut v) = serde_json::from_str::<Value>(&js) {
         if let Some(meta_obj) = v.get_mut("meta").and_then(|m| m.as_object_mut()) {
-            meta_obj.insert(
-                "frameTags".into(),
-                json!(sprite.tags.iter().map(|t| json!({
-                    "name": t.name,
-                    "from": t.from,
-                    "to": t.to,
-                    "direction": tag_direction_name(t.direction),
-                })).collect::<Vec<_>>()),
-            );
+            let tags_json: Vec<_> = sprite
+                .tags
+                .iter()
+                .map(|t| {
+                    let name = if let Some(fmt) = opts.tagname_format.as_deref() {
+                        crate::expand_filename_format_ctx(
+                            fmt,
+                            &crate::FilenameFormatCtx {
+                                frame: t.from,
+                                tag: &t.name,
+                                layer: "",
+                                title: &opts.title,
+                                path: "",
+                                startframe: t.from,
+                                endframe: t.to,
+                                ..Default::default()
+                            },
+                        )
+                    } else {
+                        t.name.clone()
+                    };
+                    json!({
+                        "name": name,
+                        "from": t.from,
+                        "to": t.to,
+                        "direction": tag_direction_name(t.direction),
+                    })
+                })
+                .collect();
+            meta_obj.insert("frameTags".into(), json!(tags_json));
         }
         js = serde_json::to_string_pretty(&v).unwrap_or(js);
         if !js.ends_with('\n') {

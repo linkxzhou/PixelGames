@@ -11,7 +11,7 @@ use pxl_ase::doc::ColorMode;
 use pxl_ase::{
     expand_filename_format_ctx, export_frame_png, export_gif, frame_is_empty, inspect_json, merge_duplicate_frames,
     open, select_frames_opts, set_all_layers_visible, set_layer_visibility_by_name,
-    split_slices_to_dir, FilenameFormatCtx,
+    split_grid_to_dir, split_slices_to_dir, FilenameFormatCtx,
 };
 use pxl_core::PxlError;
 use serde_json::json;
@@ -22,7 +22,7 @@ use crate::util::Ctx;
 
 use super::args::*;
 use super::gc_flags::{apply_ignore_layers, ensure_format_token, find_slice};
-use super::util::{ensure_out, map_err, parse_color_mode, parse_crop_rect};
+use super::util::{ensure_out, map_err, parse_color_mode, parse_crop_rect, parse_wxh};
 
 pub(crate) fn inspect(ctx: &Ctx, a: AseInspectArgs) -> CmdResult<()> {
     let doc = open(&a.file, a.oneframe).map_err(map_err)?;
@@ -175,6 +175,10 @@ pub(crate) fn convert_one(
         };
         pxl_ase::ops::crop_sprite(&mut doc.sprite, sx, sy, sw, sh).map_err(map_err)?;
     }
+    if let Some(sz) = &a.shrink_to {
+        let (w, h) = parse_wxh(sz)?;
+        pxl_ase::ops::shrink_sprite_to(&mut doc.sprite, w as u16, h as u16).map_err(map_err)?;
+    }
     let algo = DitherAlgorithm::parse(&a.dithering_algorithm).map_err(map_err)?;
     let matrix = DitherMatrix::parse(&a.dithering_matrix).ok_or_else(|| {
         PxlError::usage(format!(
@@ -266,6 +270,17 @@ pub(crate) fn convert_one(
     let mut written = Vec::new();
     if let Some(dir) = &a.split_slices {
         let paths = split_slices_to_dir(&doc.sprite, Path::new(dir), a.frame, a.scale)
+            .map_err(map_err)?;
+        written.extend(paths);
+        if !ctx.quiet && !ctx.json {
+            for p in &written {
+                println!("wrote {p}");
+            }
+        }
+        return Ok(written);
+    }
+    if let Some(dir) = &a.split_grid {
+        let paths = split_grid_to_dir(&doc.sprite, Path::new(dir), a.frame, a.scale)
             .map_err(map_err)?;
         written.extend(paths);
         if !ctx.quiet && !ctx.json {

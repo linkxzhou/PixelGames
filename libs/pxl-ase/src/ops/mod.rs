@@ -237,6 +237,65 @@ pub fn trim_sprite(sprite: &mut Sprite) -> Result<Option<(i32, i32, u16, u16)>> 
 }
 
 
+/// Shrink sprite to fit inside `max_w`×`max_h` (never enlarges). Nearest-neighbor.
+/// Rebuilds as a single RGBA layer (same pattern as [`crop_sprite`]).
+pub fn shrink_sprite_to(sprite: &mut Sprite, max_w: u16, max_h: u16) -> Result<(u16, u16)> {
+    if max_w == 0 || max_h == 0 {
+        return Err(AseErr("--shrink-to size must be non-zero".into()));
+    }
+    let (tw, th) = pxl_export::fit_dims(
+        sprite.width as u32,
+        sprite.height as u32,
+        max_w as u32,
+        max_h as u32,
+    );
+    let (tw, th) = (tw as u16, th as u16);
+    if tw == sprite.width && th == sprite.height {
+        return Ok((tw, th));
+    }
+    let ow = sprite.width;
+    let oh = sprite.height;
+    let frames = sprite.frame_count();
+    let mut flats = Vec::with_capacity(frames);
+    for f in 0..frames {
+        let src = flatten_frame_rgba(sprite, f as u16)?;
+        let out = pxl_export::resize_rgba(ow as u32, oh as u32, &src, tw as u32, th as u32)
+            .map_err(|e| AseErr(e.message.clone()))?;
+        flats.push(out);
+    }
+    // Scale slice rects proportionally (integer).
+    for slice in &mut sprite.slices {
+        for key in &mut slice.keys {
+            key.x = ((key.x as i64) * tw as i64 / ow as i64) as i32;
+            key.y = ((key.y as i64) * th as i64 / oh as i64) as i32;
+            key.w = (key.w * tw as u32 / ow as u32).max(1);
+            key.h = (key.h * th as u32 / oh as u32).max(1);
+            if let Some((px, py)) = key.pivot.as_mut() {
+                *px = ((*px as i64) * tw as i64 / ow as i64) as i32;
+                *py = ((*py as i64) * th as i64 / oh as i64) as i32;
+            }
+            if let Some((cx, cy, cw, ch)) = key.center.as_mut() {
+                *cx = ((*cx as i64) * tw as i64 / ow as i64) as i32;
+                *cy = ((*cy as i64) * th as i64 / oh as i64) as i32;
+                *cw = (*cw * tw as u32 / ow as u32).max(1);
+                *ch = (*ch * th as u32 / oh as u32).max(1);
+            }
+        }
+    }
+    sprite.layers.clear();
+    sprite.images.clear();
+    sprite.width = tw;
+    sprite.height = th;
+    let layer = sprite.add_image_layer("Shrink");
+    for (fi, px) in flats.into_iter().enumerate() {
+        let img = pxl_ase_doc::RgbaImage::from_rgba(tw, th, px);
+        let id = sprite.insert_image(ImageBuffer::Rgba(img));
+        sprite.set_cel(layer, fi as u16, pxl_ase_doc::Cel::image(id, 0, 0, 255));
+    }
+    sprite.color_mode = ColorMode::Rgba;
+    Ok((tw, th))
+}
+
 /// Snap `v` down to the nearest grid line at or below `v`.
 fn grid_align_down(v: i32, origin: i32, cell: i32) -> i32 {
     if cell <= 0 {
@@ -375,6 +434,22 @@ mod tests {
         let bb = trim_sprite_by_grid(&mut s).unwrap().unwrap();
         assert_eq!(bb, (4, 4, 4, 4));
         assert_eq!((s.width, s.height), (4, 4));
+    }
+
+    #[test]
+    fn shrink_to_fits_without_upscale() {
+        let mut s = Sprite::new(8, 8, ColorMode::Rgba);
+        s.frame_durations_ms = vec![100];
+        let layer = s.add_image_layer("a");
+        let mut px = vec![0u8; 8 * 8 * 4];
+        px[0] = 1; px[1] = 2; px[2] = 3; px[3] = 255;
+        let img = RgbaImage::from_rgba(8, 8, px);
+        let id = s.insert_image(ImageBuffer::Rgba(img));
+        s.set_cel(layer, 0, Cel::image(id, 0, 0, 255));
+        let (w, h) = shrink_sprite_to(&mut s, 16, 16).unwrap();
+        assert_eq!((w, h), (8, 8), "already fits: unchanged");
+        let (w, h) = shrink_sprite_to(&mut s, 4, 2).unwrap();
+        assert_eq!((w, h), (2, 2), "aspect-preserving fit inside 4x2");
     }
 
 }
