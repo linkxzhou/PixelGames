@@ -1,0 +1,4 @@
+interface:
+  display_name: "pxl asset build"
+  short_description: "step-300: build and validate pixel art"
+  default_prompt: "Use $pxl-asset-build to make a 16x16 slime sprite and validate it."

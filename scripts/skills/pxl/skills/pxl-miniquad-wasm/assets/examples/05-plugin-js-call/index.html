@@ -1,0 +1,5 @@
+<!doctype html><link rel="icon" href="data:,"><canvas id="glcanvas" tabindex="0"></canvas><script src="gl.js"></script><script type="module">
+import { sum } from "./plugin.js";
+miniquad_add_plugin({name:"demo",version:1,register_plugin(imports){imports.env.demo_js_frame=tick=>{if(tick===1)console.log("first Rust→JS frame");}},on_init(){const ptr=wasm_exports.demo_alloc(4);const bytes=new Uint8Array(wasm_memory.buffer,ptr,4);bytes.set([1,2,3,4]);console.log("JS→wasm sum",wasm_exports.demo_sum(ptr,4),"JS sum",sum(bytes));}});
+load("plugin.wasm");
+</script>

@@ -381,7 +381,7 @@ fn lessons_compare_reports_deltas_without_claiming_significance() {
 fn holdout_audit_separates_engineering_from_visual_review() {
     let out = temp("holdout-audit");
     let manifest = Path::new(env!("CARGO_MANIFEST_DIR")).join(
-        "../../steps/step-300-asset-build/pxl-cli/tests/fixtures/visual-benchmark/manifest.json",
+        "../../libs/pxl-cli/tests/fixtures/visual-benchmark/manifest.json",
     );
     let (code, _o, stderr) = step100(&[
         "lessons", "audit",

@@ -1,9 +1,7 @@
 /target/
 **/*.rs.bk
-examples/tank/out/
-demo/tank/out/
-examples/farmer/out/
-examples/reference/*/out/
+/games/
+/examples/
 .DS_Store
 
 # local third-party checkouts
@@ -23,3 +21,25 @@ harness/
 /stardew-save.json
 /stardew-save.json.tmp
 /stardew-save.json.broken
+
+# node / js
+node_modules/
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+
+# build outputs
+/work/*/out/
+/scripts/skills/pxl-asset-gen/bin/
+
+# editor / OS
+.idea/
+.vscode/
+*.swp
+Thumbs.db

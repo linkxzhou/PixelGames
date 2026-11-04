@@ -18,4 +18,4 @@ Drawing from nothing asks one pass to invent identity, pose, camera, and every p
 ## What this must not do
 
 - Paste or depend on third-party Aseprite extension prompts/schemas.
-- Claim pixels came from an image model — pixels still come only from `step-300`.
+- Claim pixels came from an image model — pixels still come only from `$PXL`.

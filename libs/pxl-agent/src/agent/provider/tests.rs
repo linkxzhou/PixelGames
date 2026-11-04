@@ -1,5 +1,7 @@
 use super::*;
 
+use super::openai::{build_request_body, parse_response};
+
 #[test]
 fn dotenv_config_validates_and_keeps_credentials_private() {
     let cfg = crate::config::Config::default();

@@ -1,0 +1,4 @@
+interface:
+  display_name: "pxl miniquad wasm"
+  short_description: "miniquad wasm ABI, rendering, plugins, and runnable examples"
+  default_prompt: "Use $pxl-miniquad-wasm to build and validate a miniquad wasm browser page."

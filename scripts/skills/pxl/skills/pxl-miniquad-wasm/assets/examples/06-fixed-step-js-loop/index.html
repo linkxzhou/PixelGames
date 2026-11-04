@@ -1,0 +1,6 @@
+<!doctype html><link rel="icon" href="data:,"><canvas id="glcanvas" tabindex="0"></canvas><script src="gl.js"></script><script type="module">
+import { FixedStep } from "./fixed-step.js";
+const fixed=new FixedStep();let commands;let tick=0;
+miniquad_add_plugin({name:"loop",version:1,register_plugin(imports){imports.env.loop_js_update=dt=>fixed.advance(dt,()=>{tick++});imports.env.loop_js_draw=()=>{commands[0]=tick%120<60?0xff4020e8:0xff20c040;wasm_exports.loop_submit();};},on_init(){const ptr=wasm_exports.loop_alloc(4);commands=new Uint32Array(wasm_memory.buffer,ptr,1);wasm_exports.loop_set_commands(ptr);}});
+load("fixed_step.wasm");
+</script>

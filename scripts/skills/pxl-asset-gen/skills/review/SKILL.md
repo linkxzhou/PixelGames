@@ -22,7 +22,7 @@ $PXL inspect art.pxl.json
 $PXL ase inspect file.aseprite --json
 ```
 
-Exit 5 from step-300 = QA fail. Treat skipped checks as **NOT_ASSESSED**, never PASS.
+Exit 5 from `$PXL validate` = QA fail. Treat skipped checks as **NOT_ASSESSED**, never PASS.
 
 ### 2. By-eye checklist
 

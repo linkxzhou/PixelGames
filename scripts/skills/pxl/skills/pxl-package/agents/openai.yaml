@@ -1,0 +1,4 @@
+interface:
+  display_name: "pxl package"
+  short_description: "step-400: package built assets"
+  default_prompt: "Use $pxl-package to check coverage and package the build output."

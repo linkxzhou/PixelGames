@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "workspace_version": "0.1.0",
+  "git_commit": "ed8d13c94350",
+  "platforms": {
+    "darwin-arm64": {
+      "step-100": "sha256:8b2ae1f1efa09ec30947c19f69971facac3bf771a35e1270a3565d33708b39b7",
+      "step-200": "sha256:92457bb3cd14fb5296411e54dfd50c898b9e5cfd0ae7153e0551d5c14512a75e",
+      "step-300": "sha256:dd38bb6600a633705a16be09564cd838c749dbfe50a8aee5e64f9b0e988b7268",
+      "step-400": "sha256:5a6d411d0814358d82963adb7666e83b4add9db4a2aad41376451864727bb094",
+      "step-500": "sha256:43763d5002130ea4a191c8e1a1907bc41782b2ce1f9aad6070ae2ce12b424f39"
+    }
+  },
+  "web_runtime": {
+    "path": "../assets/web-runtime",
+    "files": {
+      "assets.js": "sha256:a28fb3dff9d5c8458984b256f89f1193900c661a5ca28c5f811450ddfb684c46",
+      "audio.js": "sha256:12aa602a4e696535f025f2345af22e03f776b71999781b541c8549ae7ce18b01",
+      "browser-playtest.py": "sha256:27a72450724b4d432a11ef38c84a6f89082aa94ef4ff5d8eab0880d3c32f01eb",
+      "command-buffer.js": "sha256:f635cd7a3532c7205b5816aaa96b31e143cd2cedf2e366d0e124f73bdb0e748c",
+      "edge-rules.js": "sha256:b16eb2e95349f54182c2014120f1238504acebbf69df3c17a51a42e2f504129e",
+      "fixed-step.js": "sha256:6da161612e5bbfdf2af63a69fa5b9d695b481834bbc4bdfd3549466116ddee9b",
+      "index.d.ts": "sha256:bee9b8d6fc8c0566f4a48fe6c26da35a0955c0e44f65a99f1a7f97f524b3deb3",
+      "index.js": "sha256:4088330c07567f20079324d326bef9e4629067a7444b1753e8f53d049ba8818b",
+      "input.js": "sha256:7ade06aca8daa3ee13836915d9ef33b23c8c33bae47bf8fcb1777f4c4de420bd",
+      "level.js": "sha256:dd3f665ba4fb890148f1e5fae5c845c337f17067ef55ea95daee5f6a742df618",
+      "manifest.json": "sha256:db439f76860bd06166dbc082870c24d921eb9dbe0677d7c21d8e84a47bbd96a6",
+      "mq_js_bundle.js": "sha256:cf69c5d7714ba0e6b704d0b5fc75daae8660b53ca60d7be9ecb283a270c890c9",
+      "palette.js": "sha256:64000b930a85cd74bba8f83b9a3a63c318accc19c78970ca1edf284c13301003",
+      "pxl_runtime.js": "sha256:13c29d0459d0751012b30c74c20bac8f41b0fafc531a697c17210bc359444151",
+      "pxl_web.wasm": "sha256:39d8f7bc11afcfaba7c27dfeee6eaa60c2a3c72c9db36dabe3eb4f0d1dd4f0ca",
+      "save.js": "sha256:fcc3d219d71e45d7e9f25ee2a1fe45f290067366ca342194739b97227a2f4ab5",
+      "scene-select.js": "sha256:81db4de9f7033d4479f774f529e69c38302a1254f88726720b39e03617a68dd1",
+      "sheet.js": "sha256:4439e42904fc40c72cde64df5a061f10493e58fa45b94fd119b4d88031df098e",
+      "showcase.js": "sha256:f7f5efaddd7af0625c547d7a5995913663365f210fc671ae5f5d61035afb6373",
+      "template/index.html": "sha256:158b396385df0d03d2454447ed2c270d35186020a3d468aab8ff660e25b77513"
+    }
+  },
+  "audio_toolchain": {
+    "path": "../assets/audio-toolchain",
+    "node": ">=22",
+    "verified_platforms": [
+      "darwin-arm64"
+    ],
+    "files": {
+      "bgm.mjs": "sha256:6ac40386f5f7a3c9d4178d62b7c60db9b12b248229a86e790619df9d5f19cb6a",
+      "cli.mjs": "sha256:21bd5a889b3e661919391a1f560f94960e1452ec396a45a261d19d3ba326401a",
+      "package.json": "sha256:5823aecc1619807ceeb5c67e518bfee66a185685674451ef9821adff4e11b71f",
+      "prng.mjs": "sha256:b0a1ab1d9386c7f24607be590c2002f455c06f6101a1f139da11532bf235ce63",
+      "sfx.mjs": "sha256:cef3210640acd14609a68eb5bcf2d96e22658a0184105774787fe80326598481",
+      "vendor/VENDOR.json": "sha256:d72f95237a9a19b2407ed0b79f087839e2840fd23267aa61dab4c28b490f38f5",
+      "vendor/beepbox/Deque.js": "sha256:cadfd876acc56c85787e00d0196f00023ca5e9304e8a30cb710f83040eb0fd83",
+      "vendor/beepbox/FFT.js": "sha256:8a3dd845599c5d3ca75d7072b5404a7d0aace22a636dfc6999280a0a08ed69fe",
+      "vendor/beepbox/LICENSE.md": "sha256:11bda08d0a35daa31dea162bce1aeaae999938fe7bddabd9709602c28af998ef",
+      "vendor/beepbox/SynthConfig.js": "sha256:af403bea121b8e62bd30591b11e5664ba56578de753e5532046752ff7cb75a43",
+      "vendor/beepbox/filtering.js": "sha256:f717227a1e0fe4727c03fd1f867521fff63e7f52b01fc30048b83d5debf5d17a",
+      "vendor/beepbox/index.js": "sha256:215f4d4be896e77d7256648dfab587853743a281d31fbe7707e03574edcbfd81",
+      "vendor/beepbox/synth.js": "sha256:0c35f9ff1a56f45acf30eb57f18ed3ccec4acdadc0a8fd7836fd3ef702cfa106",
+      "vendor/zzfx/LICENSE": "sha256:8917d3dfd55d69fb08e7786d4ac5bf01a4f7eb89c6008713bb4e48c3016ce537",
+      "vendor/zzfx/ZzFX.js": "sha256:43f321101a935892c112a291e2e943b4da33159b43fcd4a21f3eae710f4a27ff"
+    }
+  }
+}

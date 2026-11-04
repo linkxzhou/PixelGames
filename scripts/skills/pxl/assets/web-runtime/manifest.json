@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "runtime_version": 2,
+  "files": {
+    "pxl_web.wasm": {
+      "bytes": 141153,
+      "sha256": "sha256:39d8f7bc11afcfaba7c27dfeee6eaa60c2a3c72c9db36dabe3eb4f0d1dd4f0ca"
+    },
+    "mq_js_bundle.js": {
+      "bytes": 66593,
+      "sha256": "sha256:cf69c5d7714ba0e6b704d0b5fc75daae8660b53ca60d7be9ecb283a270c890c9"
+    }
+  }
+}

@@ -1,5 +1,6 @@
 use super::*;
 use serde_json::json;
+use serde_json::Value;
 
 fn instrument() -> Value {
     json!({"type":"chip","volume":100,"eqFilter":[],"effects":["chord type"],"chord":"simultaneous",

@@ -1,11 +1,12 @@
-# step-300 CLI cheatsheet (PixelGames)
+# pxl-asset-gen CLI cheatsheet
 
-Discovered from `libs/pxl-cli` + `./target/debug/step-300 --help` on main. Prefer live `--help` after rebuilds.
+Flags of the bundled `bin/pxl-asset-gen-<platform>` (includes `ase` + Rhai `ase script`). Prefer live `--help`.
 
 ```bash
-PXL=./target/debug/step-300
-# cargo +1.95.0 run -p pxl-cli --bin step-300 --
+PXL=<skill>/bin/pxl-asset-gen-darwin-arm64   # Linux x86_64: bin/pxl-asset-gen-linux
 ```
+
+ASCII specs (`*.ascii.json`) only accept square canvases of 32 / 64 / 128 / 256.
 
 Global: `--json` `--seed` `--quiet` `--strict` `--overwrite` `--pxl-version-lock`
 
@@ -25,8 +26,8 @@ $PXL tile gen --kind grass --size 16 --palette tank --variants 4 -o grass.pxl.js
 ## Palette / inspect / validate / render / build / sheet
 
 ```bash
-$PXL list palettes|templates|ops|macros
-$PXL palette show p16
+$PXL --json list palettes|templates|ops|macros   # plain output only prints "list"
+$PXL --json palette show p16
 $PXL palette ramp p16 --levels 4 --hue-shift 40 -o ramped.palette.json
 $PXL palette apply in.pxl.json ramped.palette.json -o out.pxl.json
 $PXL inspect doc.pxl.json
@@ -53,7 +54,7 @@ $PXL ase import file.aseprite -o recipe_dir/
 $PXL ase export-tileset file.aseprite -o tiles.png --index 0
 ```
 
-### ase edit (source on main; rebuild if binary lacks them)
+### ase edit
 
 ```bash
 $PXL ase frame add file.aseprite --at 1 --duration 100 -o out.aseprite

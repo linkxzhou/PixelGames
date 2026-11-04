@@ -1,0 +1,286 @@
+# JavaScript imports
+
+## Contents
+
+- Rust imports
+- Loader coverage
+
+Generated from the `extern "C"` blocks in `wasm.rs`, `wasm/fs.rs`, and `wasm/webgl.rs`.
+
+## Rust imports
+
+- `fn canvas_height() -> i32`
+- `fn canvas_width() -> i32`
+- `fn console_debug(msg: *const ::std::os::raw::c_char)`
+- `fn console_error(msg: *const ::std::os::raw::c_char)`
+- `fn console_info(msg: *const ::std::os::raw::c_char)`
+- `fn console_log(msg: *const ::std::os::raw::c_char)`
+- `fn console_warn(msg: *const ::std::os::raw::c_char)`
+- `fn dpi_scale() -> f32`
+- `fn fs_get_buffer_size(file_id: u32) -> i32`
+- `fn fs_load_file(ptr: *const i8, len: u32) -> u32`
+- `fn fs_take_buffer(file_id: u32, ptr: *mut u8, max_size: u32)`
+- `fn glActiveTexture(texture: GLenum)`
+- `fn glAttachShader(program: GLuint, shader: GLuint)`
+- `fn glBeginQuery(target: GLenum, id: GLuint)`
+- `fn glBeginTransformFeedback(primitiveMode: GLenum)`
+- `fn glBindAttribLocation(program: GLuint, index: GLuint, name: *const GLchar)`
+- `fn glBindBuffer(target: GLenum, buffer: GLuint)`
+- `fn glBindBufferBase(target: GLenum, index: GLuint, buffer: GLuint)`
+- `fn glBindBufferRange( target: GLenum, index: GLuint, buffer: GLuint, offset: GLintptr, size: GLsizeiptr, )`
+- `fn glBindFramebuffer(target: GLenum, framebuffer: GLuint)`
+- `fn glBindRenderbuffer(target: GLenum, renderbuffer: GLuint)`
+- `fn glBindSampler(unit: GLuint, sampler: GLuint)`
+- `fn glBindTexture(target: GLenum, texture: GLuint)`
+- `fn glBindTransformFeedback(target: GLenum, id: GLuint)`
+- `fn glBindVertexArray(array: GLuint)`
+- `fn glBlendColor(red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat)`
+- `fn glBlendEquation(mode: GLenum)`
+- `fn glBlendEquationSeparate(modeRGB: GLenum, modeAlpha: GLenum)`
+- `fn glBlendFunc(sfactor: GLenum, dfactor: GLenum)`
+- `fn glBlendFuncSeparate( sfactorRGB: GLenum, dfactorRGB: GLenum, sfactorAlpha: GLenum, dfactorAlpha: GLenum, )`
+- `fn glBlitFramebuffer( srcX0: GLint, srcY0: GLint, srcX1: GLint, srcY1: GLint, dstX0: GLint, dstY0: GLint, dstX1: GLint, dstY1: GLint, mask: GLbitfield, filter: GLenum, )`
+- `fn glBufferData( target: GLenum, size: GLsizeiptr, data: *const ::std::os::raw::c_void, usage: GLenum, )`
+- `fn glBufferSubData( target: GLenum, offset: GLintptr, size: GLsizeiptr, data: *const ::std::os::raw::c_void, )`
+- `fn glCheckFramebufferStatus(target: GLenum) -> GLenum`
+- `fn glClear(mask: GLbitfield)`
+- `fn glClearBufferfi(buffer: GLenum, drawbuffer: GLint, depth: GLfloat, stencil: GLint)`
+- `fn glClearBufferfv(buffer: GLenum, drawbuffer: GLint, value: *const GLfloat)`
+- `fn glClearBufferiv(buffer: GLenum, drawbuffer: GLint, value: *const GLint)`
+- `fn glClearBufferuiv(buffer: GLenum, drawbuffer: GLint, value: *const GLuint)`
+- `fn glClearColor(red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat)`
+- `fn glClearDepthf(d: GLfloat)`
+- `fn glClearStencil(s: GLint)`
+- `fn glClientWaitSync(sync: GLsync, flags: GLbitfield, timeout: GLuint64) -> GLenum`
+- `fn glColorMask(red: GLboolean, green: GLboolean, blue: GLboolean, alpha: GLboolean)`
+- `fn glCompileShader(shader: GLuint)`
+- `fn glCompressedTexImage2D( target: GLenum, level: GLint, internalformat: GLenum, width: GLsizei, height: GLsizei, border: GLint, imageSize: GLsizei, data: *const ::std::os::raw::c_void, )`
+- `fn glCompressedTexImage3D( target: GLenum, level: GLint, internalformat: GLenum, width: GLsizei, height: GLsizei, depth: GLsizei, border: GLint, imageSize: GLsizei, data: *const ::std::os::raw::c_void, )`
+- `fn glCompressedTexSubImage2D( target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, width: GLsizei, height: GLsizei, format: GLenum, imageSize: GLsizei, data: *const ::std::os::raw::c_void, )`
+- `fn glCompressedTexSubImage3D( target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, zoffset: GLint, width: GLsizei, height: GLsizei, depth: GLsizei, format: GLenum, imageSize: GLsizei, data: *const ::std::os::raw::c_void, )`
+- `fn glCopyBufferSubData( readTarget: GLenum, writeTarget: GLenum, readOffset: GLintptr, writeOffset: GLintptr, size: GLsizeiptr, )`
+- `fn glCopyTexImage2D( target: GLenum, level: GLint, internalformat: GLenum, x: GLint, y: GLint, width: GLsizei, height: GLsizei, border: GLint, )`
+- `fn glCopyTexSubImage2D( target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, x: GLint, y: GLint, width: GLsizei, height: GLsizei, )`
+- `fn glCopyTexSubImage3D( target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, zoffset: GLint, x: GLint, y: GLint, width: GLsizei, height: GLsizei, )`
+- `fn glCreateProgram() -> GLuint`
+- `fn glCreateShader(type_: GLenum) -> GLuint`
+- `fn glCullFace(mode: GLenum)`
+- `fn glDeleteBuffers(n: GLsizei, buffers: *const GLuint)`
+- `fn glDeleteFramebuffers(n: GLsizei, framebuffers: *const GLuint)`
+- `fn glDeleteProgram(program: GLuint)`
+- `fn glDeleteQueries(n: GLsizei, ids: *const GLuint)`
+- `fn glDeleteRenderbuffers(n: GLsizei, renderbuffers: *const GLuint)`
+- `fn glDeleteSamplers(count: GLsizei, samplers: *const GLuint)`
+- `fn glDeleteShader(shader: GLuint)`
+- `fn glDeleteSync(sync: GLsync)`
+- `fn glDeleteTextures(n: GLsizei, textures: *const GLuint)`
+- `fn glDeleteTransformFeedbacks(n: GLsizei, ids: *const GLuint)`
+- `fn glDeleteVertexArrays(n: GLsizei, arrays: *const GLuint)`
+- `fn glDepthFunc(func: GLenum)`
+- `fn glDepthMask(flag: GLboolean)`
+- `fn glDepthRangef(n: GLfloat, f: GLfloat)`
+- `fn glDetachShader(program: GLuint, shader: GLuint)`
+- `fn glDisable(cap: GLenum)`
+- `fn glDisableVertexAttribArray(index: GLuint)`
+- `fn glDrawArrays(mode: GLenum, first: GLint, count: GLsizei)`
+- `fn glDrawArraysInstanced( mode: GLenum, first: GLint, count: GLsizei, instancecount: GLsizei, )`
+- `fn glDrawBuffers(n: GLsizei, bufs: *const GLenum)`
+- `fn glDrawElements( mode: GLenum, count: GLsizei, type_: GLenum, indices: *const ::std::os::raw::c_void, )`
+- `fn glDrawElementsInstanced( mode: GLenum, count: GLsizei, type_: GLenum, indices: *const ::std::os::raw::c_void, instancecount: GLsizei, )`
+- `fn glDrawRangeElements( mode: GLenum, start: GLuint, end: GLuint, count: GLsizei, type_: GLenum, indices: *const ::std::os::raw::c_void, )`
+- `fn glEnable(cap: GLenum)`
+- `fn glEnableVertexAttribArray(index: GLuint)`
+- `fn glEndQuery(target: GLenum)`
+- `fn glEndTransformFeedback()`
+- `fn glFenceSync(condition: GLenum, flags: GLbitfield) -> GLsync`
+- `fn glFinish()`
+- `fn glFlush()`
+- `fn glFlushMappedBufferRange(target: GLenum, offset: GLintptr, length: GLsizeiptr)`
+- `fn glFramebufferRenderbuffer( target: GLenum, attachment: GLenum, renderbuffertarget: GLenum, renderbuffer: GLuint, )`
+- `fn glFramebufferTexture2D( target: GLenum, attachment: GLenum, textarget: GLenum, texture: GLuint, level: GLint, )`
+- `fn glFramebufferTextureLayer( target: GLenum, attachment: GLenum, texture: GLuint, level: GLint, layer: GLint, )`
+- `fn glFrontFace(mode: GLenum)`
+- `fn glGenBuffers(n: GLsizei, buffers: *mut GLuint)`
+- `fn glGenFramebuffers(n: GLsizei, framebuffers: *mut GLuint)`
+- `fn glGenQueries(n: GLsizei, ids: *mut GLuint)`
+- `fn glGenRenderbuffers(n: GLsizei, renderbuffers: *mut GLuint)`
+- `fn glGenSamplers(count: GLsizei, samplers: *mut GLuint)`
+- `fn glGenTextures(n: GLsizei, textures: *mut GLuint)`
+- `fn glGenTransformFeedbacks(n: GLsizei, ids: *mut GLuint)`
+- `fn glGenVertexArrays(n: GLsizei, arrays: *mut GLuint)`
+- `fn glGenerateMipmap(target: GLenum)`
+- `fn glGetActiveAttrib( program: GLuint, index: GLuint, bufSize: GLsizei, length: *mut GLsizei, size: *mut GLint, type_: *mut GLenum, name: *mut GLchar, )`
+- `fn glGetActiveUniform( program: GLuint, index: GLuint, bufSize: GLsizei, length: *mut GLsizei, size: *mut GLint, type_: *mut GLenum, name: *mut GLchar, )`
+- `fn glGetActiveUniformBlockName( program: GLuint, uniformBlockIndex: GLuint, bufSize: GLsizei, length: *mut GLsizei, uniformBlockName: *mut GLchar, )`
+- `fn glGetActiveUniformBlockiv( program: GLuint, uniformBlockIndex: GLuint, pname: GLenum, params: *mut GLint, )`
+- `fn glGetActiveUniformsiv( program: GLuint, uniformCount: GLsizei, uniformIndices: *const GLuint, pname: GLenum, params: *mut GLint, )`
+- `fn glGetAttachedShaders( program: GLuint, maxCount: GLsizei, count: *mut GLsizei, shaders: *mut GLuint, )`
+- `fn glGetAttribLocation(program: GLuint, name: *const GLchar) -> GLint`
+- `fn glGetBooleanv(pname: GLenum, data: *mut GLboolean)`
+- `fn glGetBufferParameteri64v(target: GLenum, pname: GLenum, params: *mut GLint64)`
+- `fn glGetBufferParameteriv(target: GLenum, pname: GLenum, params: *mut GLint)`
+- `fn glGetBufferPointerv( target: GLenum, pname: GLenum, params: *mut *mut ::std::os::raw::c_void, )`
+- `fn glGetError() -> GLenum`
+- `fn glGetFloatv(pname: GLenum, data: *mut GLfloat)`
+- `fn glGetFragDataLocation(program: GLuint, name: *const GLchar) -> GLint`
+- `fn glGetFramebufferAttachmentParameteriv( target: GLenum, attachment: GLenum, pname: GLenum, params: *mut GLint, )`
+- `fn glGetInteger64i_v(target: GLenum, index: GLuint, data: *mut GLint64)`
+- `fn glGetInteger64v(pname: GLenum, data: *mut GLint64)`
+- `fn glGetIntegeri_v(target: GLenum, index: GLuint, data: *mut GLint)`
+- `fn glGetIntegerv(pname: GLenum, data: *mut GLint)`
+- `fn glGetInternalformativ( target: GLenum, internalformat: GLenum, pname: GLenum, bufSize: GLsizei, params: *mut GLint, )`
+- `fn glGetProgramBinary( program: GLuint, bufSize: GLsizei, length: *mut GLsizei, binaryFormat: *mut GLenum, binary: *mut ::std::os::raw::c_void, )`
+- `fn glGetProgramInfoLog( program: GLuint, bufSize: GLsizei, length: *mut GLsizei, infoLog: *mut GLchar, )`
+- `fn glGetProgramiv(program: GLuint, pname: GLenum, params: *mut GLint)`
+- `fn glGetQueryObjectiv(id: GLuint, pname: GLenum, params: *mut GLint)`
+- `fn glGetQueryObjectui64v(id: GLuint, pname: GLenum, params: *mut GLuint64)`
+- `fn glGetQueryiv(target: GLenum, pname: GLenum, params: *mut GLint)`
+- `fn glGetRenderbufferParameteriv(target: GLenum, pname: GLenum, params: *mut GLint)`
+- `fn glGetSamplerParameterfv(sampler: GLuint, pname: GLenum, params: *mut GLfloat)`
+- `fn glGetSamplerParameteriv(sampler: GLuint, pname: GLenum, params: *mut GLint)`
+- `fn glGetShaderInfoLog( shader: GLuint, bufSize: GLsizei, length: *mut GLsizei, infoLog: *mut GLchar, )`
+- `fn glGetShaderPrecisionFormat( shadertype: GLenum, precisiontype: GLenum, range: *mut GLint, precision: *mut GLint, )`
+- `fn glGetShaderSource( shader: GLuint, bufSize: GLsizei, length: *mut GLsizei, source: *mut GLchar, )`
+- `fn glGetShaderiv(shader: GLuint, pname: GLenum, params: *mut GLint)`
+- `fn glGetString(name: GLenum) -> *const GLubyte`
+- `fn glGetStringi(name: GLenum, index: GLuint) -> *const GLubyte`
+- `fn glGetSynciv( sync: GLsync, pname: GLenum, bufSize: GLsizei, length: *mut GLsizei, values: *mut GLint, )`
+- `fn glGetTexParameterfv(target: GLenum, pname: GLenum, params: *mut GLfloat)`
+- `fn glGetTexParameteriv(target: GLenum, pname: GLenum, params: *mut GLint)`
+- `fn glGetTransformFeedbackVarying( program: GLuint, index: GLuint, bufSize: GLsizei, length: *mut GLsizei, size: *mut GLsizei, type_: *mut GLenum, name: *mut GLchar, )`
+- `fn glGetUniformBlockIndex(program: GLuint, uniformBlockName: *const GLchar) -> GLuint`
+- `fn glGetUniformIndices( program: GLuint, uniformCount: GLsizei, uniformNames: *const *const GLchar, uniformIndices: *mut GLuint, )`
+- `fn glGetUniformLocation(program: GLuint, name: *const GLchar) -> GLint`
+- `fn glGetUniformfv(program: GLuint, location: GLint, params: *mut GLfloat)`
+- `fn glGetUniformiv(program: GLuint, location: GLint, params: *mut GLint)`
+- `fn glGetUniformuiv(program: GLuint, location: GLint, params: *mut GLuint)`
+- `fn glGetVertexAttribIiv(index: GLuint, pname: GLenum, params: *mut GLint)`
+- `fn glGetVertexAttribIuiv(index: GLuint, pname: GLenum, params: *mut GLuint)`
+- `fn glGetVertexAttribPointerv( index: GLuint, pname: GLenum, pointer: *mut *mut ::std::os::raw::c_void, )`
+- `fn glGetVertexAttribfv(index: GLuint, pname: GLenum, params: *mut GLfloat)`
+- `fn glGetVertexAttribiv(index: GLuint, pname: GLenum, params: *mut GLint)`
+- `fn glHint(target: GLenum, mode: GLenum)`
+- `fn glInvalidateFramebuffer( target: GLenum, numAttachments: GLsizei, attachments: *const GLenum, )`
+- `fn glInvalidateSubFramebuffer( target: GLenum, numAttachments: GLsizei, attachments: *const GLenum, x: GLint, y: GLint, width: GLsizei, height: GLsizei, )`
+- `fn glIsBuffer(buffer: GLuint) -> GLboolean`
+- `fn glIsEnabled(cap: GLenum) -> GLboolean`
+- `fn glIsFramebuffer(framebuffer: GLuint) -> GLboolean`
+- `fn glIsProgram(program: GLuint) -> GLboolean`
+- `fn glIsQuery(id: GLuint) -> GLboolean`
+- `fn glIsRenderbuffer(renderbuffer: GLuint) -> GLboolean`
+- `fn glIsSampler(sampler: GLuint) -> GLboolean`
+- `fn glIsShader(shader: GLuint) -> GLboolean`
+- `fn glIsSync(sync: GLsync) -> GLboolean`
+- `fn glIsTexture(texture: GLuint) -> GLboolean`
+- `fn glIsTransformFeedback(id: GLuint) -> GLboolean`
+- `fn glIsVertexArray(array: GLuint) -> GLboolean`
+- `fn glLineWidth(width: GLfloat)`
+- `fn glLinkProgram(program: GLuint)`
+- `fn glMapBufferRange( target: GLenum, offset: GLintptr, length: GLsizeiptr, access: GLbitfield, ) -> *mut ::std::os::raw::c_void`
+- `fn glPauseTransformFeedback()`
+- `fn glPixelStorei(pname: GLenum, param: GLint)`
+- `fn glPolygonOffset(factor: GLfloat, units: GLfloat)`
+- `fn glProgramBinary( program: GLuint, binaryFormat: GLenum, binary: *const ::std::os::raw::c_void, length: GLsizei, )`
+- `fn glProgramParameteri(program: GLuint, pname: GLenum, value: GLint)`
+- `fn glQueryCounter(id: GLenum, pname: GLenum)`
+- `fn glReadBuffer(src: GLenum)`
+- `fn glReadPixels( x: GLint, y: GLint, width: GLsizei, height: GLsizei, format: GLenum, type_: GLenum, pixels: *mut ::std::os::raw::c_void, )`
+- `fn glReleaseShaderCompiler()`
+- `fn glRenderbufferStorage( target: GLenum, internalformat: GLenum, width: GLsizei, height: GLsizei, )`
+- `fn glRenderbufferStorageMultisample( target: GLenum, samples: GLsizei, internalformat: GLenum, width: GLsizei, height: GLsizei, )`
+- `fn glResumeTransformFeedback()`
+- `fn glSampleCoverage(value: GLfloat, invert: GLboolean)`
+- `fn glSamplerParameterf(sampler: GLuint, pname: GLenum, param: GLfloat)`
+- `fn glSamplerParameterfv(sampler: GLuint, pname: GLenum, param: *const GLfloat)`
+- `fn glSamplerParameteri(sampler: GLuint, pname: GLenum, param: GLint)`
+- `fn glSamplerParameteriv(sampler: GLuint, pname: GLenum, param: *const GLint)`
+- `fn glScissor(x: GLint, y: GLint, width: GLsizei, height: GLsizei)`
+- `fn glShaderBinary( count: GLsizei, shaders: *const GLuint, binaryformat: GLenum, binary: *const ::std::os::raw::c_void, length: GLsizei, )`
+- `fn glShaderSource( shader: GLuint, count: GLsizei, string: *const *const GLchar, length: *const GLint, )`
+- `fn glStencilFunc(func: GLenum, ref_: GLint, mask: GLuint)`
+- `fn glStencilFuncSeparate(face: GLenum, func: GLenum, ref_: GLint, mask: GLuint)`
+- `fn glStencilMask(mask: GLuint)`
+- `fn glStencilMaskSeparate(face: GLenum, mask: GLuint)`
+- `fn glStencilOp(fail: GLenum, zfail: GLenum, zpass: GLenum)`
+- `fn glStencilOpSeparate(face: GLenum, sfail: GLenum, dpfail: GLenum, dppass: GLenum)`
+- `fn glTexImage2D( target: GLenum, level: GLint, internalformat: GLint, width: GLsizei, height: GLsizei, border: GLint, format: GLenum, type_: GLenum, pixels: *const ::std::os::raw::c_void, )`
+- `fn glTexImage3D( target: GLenum, level: GLint, internalformat: GLint, width: GLsizei, height: GLsizei, depth: GLsizei, border: GLint, format: GLenum, type_: GLenum, pixels: *const ::std::os::raw::c_void, )`
+- `fn glTexParameterf(target: GLenum, pname: GLenum, param: GLfloat)`
+- `fn glTexParameterfv(target: GLenum, pname: GLenum, params: *const GLfloat)`
+- `fn glTexParameteri(target: GLenum, pname: GLenum, param: GLint)`
+- `fn glTexParameteriv(target: GLenum, pname: GLenum, params: *const GLint)`
+- `fn glTexStorage2D( target: GLenum, levels: GLsizei, internalformat: GLenum, width: GLsizei, height: GLsizei, )`
+- `fn glTexStorage3D( target: GLenum, levels: GLsizei, internalformat: GLenum, width: GLsizei, height: GLsizei, depth: GLsizei, )`
+- `fn glTexSubImage2D( target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, width: GLsizei, height: GLsizei, format: GLenum, type_: GLenum, pixels: *const ::std::os::raw::c_void, )`
+- `fn glTexSubImage3D( target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, zoffset: GLint, width: GLsizei, height: GLsizei, depth: GLsizei, format: GLenum, type_: GLenum, pixels: *const ::std::os::raw::c_void, )`
+- `fn glTransformFeedbackVaryings( program: GLuint, count: GLsizei, varyings: *const *const GLchar, bufferMode: GLenum, )`
+- `fn glUniform1f(location: GLint, v0: GLfloat)`
+- `fn glUniform1fv(location: GLint, count: GLsizei, value: *const GLfloat)`
+- `fn glUniform1i(location: GLint, v0: GLint)`
+- `fn glUniform1iv(location: GLint, count: GLsizei, value: *const GLint)`
+- `fn glUniform1ui(location: GLint, v0: GLuint)`
+- `fn glUniform1uiv(location: GLint, count: GLsizei, value: *const GLuint)`
+- `fn glUniform2f(location: GLint, v0: GLfloat, v1: GLfloat)`
+- `fn glUniform2fv(location: GLint, count: GLsizei, value: *const GLfloat)`
+- `fn glUniform2i(location: GLint, v0: GLint, v1: GLint)`
+- `fn glUniform2iv(location: GLint, count: GLsizei, value: *const GLint)`
+- `fn glUniform2ui(location: GLint, v0: GLuint, v1: GLuint)`
+- `fn glUniform2uiv(location: GLint, count: GLsizei, value: *const GLuint)`
+- `fn glUniform3f(location: GLint, v0: GLfloat, v1: GLfloat, v2: GLfloat)`
+- `fn glUniform3fv(location: GLint, count: GLsizei, value: *const GLfloat)`
+- `fn glUniform3i(location: GLint, v0: GLint, v1: GLint, v2: GLint)`
+- `fn glUniform3iv(location: GLint, count: GLsizei, value: *const GLint)`
+- `fn glUniform3ui(location: GLint, v0: GLuint, v1: GLuint, v2: GLuint)`
+- `fn glUniform3uiv(location: GLint, count: GLsizei, value: *const GLuint)`
+- `fn glUniform4f(location: GLint, v0: GLfloat, v1: GLfloat, v2: GLfloat, v3: GLfloat)`
+- `fn glUniform4fv(location: GLint, count: GLsizei, value: *const GLfloat)`
+- `fn glUniform4i(location: GLint, v0: GLint, v1: GLint, v2: GLint, v3: GLint)`
+- `fn glUniform4iv(location: GLint, count: GLsizei, value: *const GLint)`
+- `fn glUniform4ui(location: GLint, v0: GLuint, v1: GLuint, v2: GLuint, v3: GLuint)`
+- `fn glUniform4uiv(location: GLint, count: GLsizei, value: *const GLuint)`
+- `fn glUniformBlockBinding( program: GLuint, uniformBlockIndex: GLuint, uniformBlockBinding: GLuint, )`
+- `fn glUniformMatrix2fv( location: GLint, count: GLsizei, transpose: GLboolean, value: *const GLfloat, )`
+- `fn glUniformMatrix2x3fv( location: GLint, count: GLsizei, transpose: GLboolean, value: *const GLfloat, )`
+- `fn glUniformMatrix2x4fv( location: GLint, count: GLsizei, transpose: GLboolean, value: *const GLfloat, )`
+- `fn glUniformMatrix3fv( location: GLint, count: GLsizei, transpose: GLboolean, value: *const GLfloat, )`
+- `fn glUniformMatrix3x2fv( location: GLint, count: GLsizei, transpose: GLboolean, value: *const GLfloat, )`
+- `fn glUniformMatrix3x4fv( location: GLint, count: GLsizei, transpose: GLboolean, value: *const GLfloat, )`
+- `fn glUniformMatrix4fv( location: GLint, count: GLsizei, transpose: GLboolean, value: *const GLfloat, )`
+- `fn glUniformMatrix4x2fv( location: GLint, count: GLsizei, transpose: GLboolean, value: *const GLfloat, )`
+- `fn glUniformMatrix4x3fv( location: GLint, count: GLsizei, transpose: GLboolean, value: *const GLfloat, )`
+- `fn glUnmapBuffer(target: GLenum) -> GLboolean`
+- `fn glUseProgram(program: GLuint)`
+- `fn glValidateProgram(program: GLuint)`
+- `fn glVertexAttrib1f(index: GLuint, x: GLfloat)`
+- `fn glVertexAttrib1fv(index: GLuint, v: *const GLfloat)`
+- `fn glVertexAttrib2f(index: GLuint, x: GLfloat, y: GLfloat)`
+- `fn glVertexAttrib2fv(index: GLuint, v: *const GLfloat)`
+- `fn glVertexAttrib3f(index: GLuint, x: GLfloat, y: GLfloat, z: GLfloat)`
+- `fn glVertexAttrib3fv(index: GLuint, v: *const GLfloat)`
+- `fn glVertexAttrib4f(index: GLuint, x: GLfloat, y: GLfloat, z: GLfloat, w: GLfloat)`
+- `fn glVertexAttrib4fv(index: GLuint, v: *const GLfloat)`
+- `fn glVertexAttribDivisor(index: GLuint, divisor: GLuint)`
+- `fn glVertexAttribI4i(index: GLuint, x: GLint, y: GLint, z: GLint, w: GLint)`
+- `fn glVertexAttribI4iv(index: GLuint, v: *const GLint)`
+- `fn glVertexAttribI4ui(index: GLuint, x: GLuint, y: GLuint, z: GLuint, w: GLuint)`
+- `fn glVertexAttribI4uiv(index: GLuint, v: *const GLuint)`
+- `fn glVertexAttribIPointer( index: GLuint, size: GLint, type_: GLenum, stride: GLsizei, pointer: *const ::std::os::raw::c_void, )`
+- `fn glVertexAttribPointer( index: GLuint, size: GLint, type_: GLenum, normalized: GLboolean, stride: GLsizei, pointer: *const ::std::os::raw::c_void, )`
+- `fn glViewport(x: GLint, y: GLint, width: GLsizei, height: GLsizei)`
+- `fn glWaitSync(sync: GLsync, flags: GLbitfield, timeout: GLuint64)`
+- `fn init_webgl(version: i32)`
+- `fn now() -> f64`
+- `fn run_animation_loop(blocking: bool)`
+- `fn sapp_is_elapsed_timer_supported() -> bool`
+- `fn sapp_is_fullscreen() -> bool`
+- `fn sapp_schedule_update()`
+- `fn sapp_set_clipboard(clipboard: *const i8, len: usize)`
+- `fn sapp_set_cursor(cursor: *const u8, len: usize)`
+- `fn sapp_set_cursor_grab(grab: bool)`
+- `fn sapp_set_fullscreen(fullscreen: bool)`
+- `fn sapp_set_window_size(new_width: u32, new_height: u32)`
+- `fn setup_canvas_size(high_dpi: bool)`
+
+## Loader coverage
+
+`check_wasm_imports.py` verifies these names against `js/gl.js`; plugin imports are checked against the example HTML.

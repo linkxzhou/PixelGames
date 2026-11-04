@@ -1,0 +1,132 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pxl/visual-plan/v2",
+  "title": "visual-plan.json",
+  "description": "visual-plan/v2 keeps the v1 layout and adds per-asset palette family binding plus the resolved effective policy digest. Both new fields are rejected by the v1 schema so old consumers fail loudly instead of silently ignoring them.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "intent_digest", "assets", "previews"],
+  "properties": {
+    "contract": { "const": "visual-plan/v2" },
+    "intent_digest": { "$ref": "#/definitions/digest" },
+    "effective_policy_digest": {
+      "type": "string",
+      "pattern": "^policy-jcs-sha256:[0-9a-f]{64}$",
+      "description": "Digest of the effective policy the plan was authored against; required exactly when the intent carries the modern profile."
+    },
+    "assets": { "type": "array", "items": { "$ref": "#/definitions/asset" } },
+    "previews": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["scene_id", "assets"],
+        "properties": {
+          "scene_id": { "$ref": "#/definitions/id" },
+          "assets": { "type": "array", "items": { "$ref": "#/definitions/id" } }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "id": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$" },
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "size": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "integer", "minimum": 1, "maximum": 256 } },
+    "point": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "integer" } },
+    "finish": { "enum": ["keep", "flat", "volume", "selout", "hard_edge"] },
+    "asset": {
+      "type": "object", "additionalProperties": false,
+      "required": ["asset_id", "role", "native_size", "finish", "lighting", "regions", "animations", "channels"],
+      "properties": {
+        "asset_id": { "$ref": "#/definitions/id" },
+        "role": { "$ref": "#/definitions/id" },
+        "native_size": { "$ref": "#/definitions/size" },
+        "finish": { "$ref": "#/definitions/finish" },
+        "lighting": { "enum": ["baked", "runtime_lit", "hybrid", "unlit"] },
+        "regions": { "type": "array", "items": { "$ref": "#/definitions/region" } },
+        "animations": { "type": "array", "items": { "$ref": "#/definitions/animation" } },
+        "palette_family": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$",
+          "description": "Palette family this asset builds with; must equal the intent's asset policy binding when both are present."
+        },
+        "tile": {
+          "type": ["object", "null"], "additionalProperties": false,
+          "required": ["family", "neighbours", "variant_seed"],
+          "properties": {
+            "family": { "type": "string", "minLength": 1 },
+            "neighbours": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/id" } },
+            "variant_seed": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "channels": {
+          "type": "object", "additionalProperties": false,
+          "required": ["material_labels", "emissive", "shadow"],
+          "properties": {
+            "material_labels": { "type": "boolean" },
+            "emissive": { "type": "boolean" },
+            "shadow": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "region": {
+      "type": "object", "additionalProperties": false,
+      "required": ["region_id", "material_id", "ramp", "light_role", "protect", "source"],
+      "properties": {
+        "region_id": { "$ref": "#/definitions/id" },
+        "material_id": { "$ref": "#/definitions/id" },
+        "ramp": { "type": "string", "minLength": 1 },
+        "light_role": { "enum": ["base", "lit", "shadow", "emissive", "ui"] },
+        "protect": { "type": "boolean" },
+        "source": {
+          "type": "object", "additionalProperties": false, "required": ["kind", "selector"],
+          "properties": {
+            "kind": { "enum": ["ascii", "shape", "svg", "mask"] },
+            "selector": { "type": "string", "minLength": 1 }
+          }
+        },
+        "mask": {
+          "type": ["object", "null"], "additionalProperties": false,
+          "required": ["path", "size", "digest"],
+          "properties": {
+            "path": { "type": "string", "minLength": 1 },
+            "size": { "$ref": "#/definitions/size" },
+            "digest": { "$ref": "#/definitions/digest" }
+          }
+        }
+      }
+    },
+    "animation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["anim_id", "anchor", "contact", "allow_squash", "allow_smear", "terminal_empty", "phases"],
+      "properties": {
+        "anim_id": { "$ref": "#/definitions/id" },
+        "anchor": { "$ref": "#/definitions/point" },
+        "contact": { "$ref": "#/definitions/point" },
+        "allow_squash": { "type": "boolean" },
+        "allow_smear": { "type": "boolean" },
+        "terminal_empty": { "type": "boolean" },
+        "phases": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["phase_id", "frames", "duration_ms"],
+            "properties": {
+              "phase_id": { "$ref": "#/definitions/id" },
+              "frames": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+              "duration_ms": { "type": "array", "minItems": 1, "items": { "type": "integer", "minimum": 1 } },
+              "transform": {
+                "type": ["object", "null"], "additionalProperties": false,
+                "required": ["kind", "offset", "rotate90"],
+                "properties": {
+                  "kind": { "enum": ["translate"], "description": "Step 300 moves material and protection masks by whole pixels only; rotate/squash/smear are not executed and are rejected." },
+                  "offset": { "$ref": "#/definitions/point" },
+                  "rotate90": { "type": "integer", "minimum": 0, "maximum": 0 }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

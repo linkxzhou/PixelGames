@@ -1,6 +1,15 @@
 use super::*;
+use crate::upscale::UNIT;
+use crate::SpriteGraph;
 use alloc::string::{String, ToString};
-use pxl_core::{Palette, Rgba};
+use alloc::vec;
+use alloc::vec::Vec;
+use pxl_core::{IndexFrame, Palette, Rgba};
+
+use super::geom::fill_new_holes;
+use super::geom::rdp_open;
+use super::geom::smooth_curves;
+use super::trace::Point;
 
 fn frame(rows: &[&str]) -> IndexFrame {
     let rows: Vec<String> = rows.iter().map(|r| r.to_string()).collect();

@@ -1,0 +1,4 @@
+interface:
+  display_name: "pxl engine"
+  short_description: "step-500: wasm + JS browser builds, playtests, or pure Rust mode"
+  default_prompt: "Use $pxl-engine to choose the runtime mode, build a browser game, and run headless replay."

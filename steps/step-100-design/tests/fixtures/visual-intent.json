@@ -1,0 +1,75 @@
+{
+  "contract": "visual-intent/v1",
+  "profile": {
+    "id": "strict_retro",
+    "digest": "sha256:ac4891d29b55ea5bce356d462ce331849ca4fa7d185c3d3e12525ad1876e3d46"
+  },
+  "pixel_grid": { "native_size": [16, 16], "display_scale": 4, "snap": true },
+  "palette_policy": {
+    "mode": "strict",
+    "palette": "palette.json",
+    "allowed_indices": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+    "ui_palette": null,
+    "runtime_grade": false,
+    "extension_budget": 0
+  },
+  "roles": {
+    "background": { "value": [0, 100], "saturation": [0, 140], "relative_contrast": -1 },
+    "actor": { "value": [60, 220], "saturation": [20, 220], "relative_contrast": 1 }
+  },
+  "value_script": { "focal_roles": ["actor"], "rest_roles": ["background"] },
+  "materials": {
+    "metal": { "ramp": "main", "finish": "hard_edge", "response": "hard_edge", "regions": ["body", "track", "eye"] },
+    "stone": { "ramp": "main", "finish": "volume", "response": "hard_edge", "regions": ["brick", "surface"] },
+    "water": { "ramp": "main", "finish": "flat", "response": "planar", "regions": ["surface"] }
+  },
+  "asset_policies": [
+    { "asset_id": "player_tank", "kind": "sprite", "role": "actor", "native_size": [16, 16], "material_ids": ["metal"], "protected_regions": ["eye"], "finish": "hard_edge", "lighting": "baked" },
+    { "asset_id": "enemy_tank", "kind": "sprite", "role": "actor", "native_size": [16, 16], "material_ids": ["metal"], "protected_regions": ["eye"], "finish": "hard_edge", "lighting": "baked" },
+    { "asset_id": "b", "kind": "tile", "role": "background", "native_size": [16, 16], "material_ids": ["stone"], "protected_regions": [], "finish": "volume", "lighting": "baked" },
+    { "asset_id": "w", "kind": "tile", "role": "background", "native_size": [16, 16], "material_ids": ["water"], "protected_regions": [], "finish": "flat", "lighting": "hybrid" }
+  ],
+  "animation_policy": {
+    "max_frames": 16,
+    "hold_terminal": true,
+    "allow_squash": false,
+    "allow_smear": false,
+    "required_phases": ["contact"],
+    "contact_tolerance": 1
+  },
+  "scene_previews": [
+    {
+      "id": "main",
+      "size": [128, 128],
+      "background": "dark",
+      "scale": 4,
+      "tick": 0,
+      "instances": [
+        { "asset_id": "player_tank", "position": [16, 16], "layer": "world", "frame": null },
+        { "asset_id": "enemy_tank", "position": [80, 16], "layer": "world", "frame": null },
+        { "asset_id": "b", "position": [16, 48], "layer": "stage", "frame": null },
+        { "asset_id": "w", "position": [48, 48], "layer": "stage", "frame": null }
+      ],
+      "rois": [{ "id": "actors", "layer": "world", "rect": [0, 0, 128, 40] }]
+    }
+  ],
+  "review_policy": {
+    "required_dimensions": ["silhouette", "colour_value", "material_form", "animation", "tile_scene"],
+    "min_reviewers": 2
+  },
+  "sources": {
+    "pixel_grid": "profile",
+    "palette_policy": "project",
+    "asset_policies.finish": "default"
+  },
+  "risks": [
+    {
+      "risk_id": "actor-background-contrast",
+      "target": "scene:main",
+      "check": "figure_ground",
+      "evidence_required": "visual-report.json#main.roi.actors",
+      "status": "open",
+      "resolved_by": null
+    }
+  ]
+}

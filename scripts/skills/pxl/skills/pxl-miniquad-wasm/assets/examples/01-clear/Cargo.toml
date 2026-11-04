@@ -1,0 +1,9 @@
+[package]
+name = "mq-example-clear"
+version = "0.1.0"
+edition = "2021"
+[workspace]
+[lib]
+crate-type = ["cdylib"]
+[dependencies]
+miniquad = { path = "../../../../../../../../vendor/miniquad", default-features = false }

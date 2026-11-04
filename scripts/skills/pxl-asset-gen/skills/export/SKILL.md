@@ -1,6 +1,6 @@
 ---
 name: pxl-asset-gen-export
-description: Export game-ready PNG/GIF/spritesheet/aseprite via step-300 render, sheet, or ase convert/sheet. Use when craft passed review.
+description: Export game-ready PNG/GIF/spritesheet/aseprite via `$PXL render`, `sheet`, or `ase convert/sheet`. Use when craft passed review.
 ---
 
 # Export
@@ -29,6 +29,10 @@ $PXL ase sheet file.aseprite -o sheet.png --data sheet.json --layout packed --pa
 ## Before export
 
 Run `review`. Do not ship failed validate.
+
+## Packs → library folder
+
+For more than a couple of assets, export through `assets/library-kit/build_library.py` instead of hand-running `render`/`sheet`: it writes per-asset PNG/doc, category atlases, preview boards, `manifest.json`, `validation.json` and `index.html`. See [../../references/library.md](../../references/library.md).
 
 ## Delivery
 

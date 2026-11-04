@@ -1,0 +1,39 @@
+{
+  "contract": "visual-intent/v1",
+  "profile": { "id": "strict_retro", "digest": "sha256:ac4891d29b55ea5bce356d462ce331849ca4fa7d185c3d3e12525ad1876e3d46" },
+  "pixel_grid": { "native_size": [16, 16], "display_scale": 4, "snap": true },
+  "palette_policy": {
+    "mode": "strict", "palette": "palette.json",
+    "allowed_indices": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+    "ui_palette": null, "runtime_grade": false, "extension_budget": 0
+  },
+  "roles": {
+    "background": { "value": [0, 100], "saturation": [0, 140], "relative_contrast": -1 },
+    "actor": { "value": [60, 220], "saturation": [20, 220], "relative_contrast": 1 },
+    "pickup": { "value": [100, 240], "saturation": [20, 240], "relative_contrast": 2 }
+  },
+  "value_script": { "focal_roles": ["actor", "pickup"], "rest_roles": ["background"] },
+  "materials": {
+    "metal": { "ramp": "main", "finish": "hard_edge", "response": "hard_edge", "regions": ["body", "eye"] },
+    "emissive": { "ramp": "main", "finish": "keep", "response": "emissive", "regions": ["core", "glow"] }
+  },
+  "asset_policies": [
+    { "asset_id": "bullet", "kind": "sprite", "role": "actor", "native_size": [16, 16], "material_ids": ["metal"], "protected_regions": ["eye"], "finish": "hard_edge", "lighting": "baked" },
+    { "asset_id": "gem", "kind": "sprite", "role": "pickup", "native_size": [6, 6], "material_ids": ["emissive"], "protected_regions": ["core"], "finish": "keep", "lighting": "hybrid" }
+  ],
+  "animation_policy": {
+    "max_frames": 16, "hold_terminal": true, "allow_squash": true, "allow_smear": true,
+    "required_phases": ["contact"], "contact_tolerance": 1
+  },
+  "scene_previews": [{
+    "id": "main", "size": [64, 64], "background": "dark", "scale": 4, "tick": 0,
+    "instances": [
+      { "asset_id": "bullet", "position": [8, 8], "layer": "world", "frame": null },
+      { "asset_id": "gem", "position": [32, 8], "layer": "world", "frame": null }
+    ],
+    "rois": [{ "id": "actors", "layer": "world", "rect": [0, 0, 64, 32] }]
+  }],
+  "review_policy": { "required_dimensions": ["silhouette", "material_form", "animation"], "min_reviewers": 2 },
+  "sources": { "pixel_grid": "profile", "palette_policy": "project", "asset_policies.finish": "default" },
+  "risks": []
+}

@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pxl/scene-kit/v1",
+  "title": "scene-kit.json",
+  "description": "A reviewed arrangement of library prototypes (porch group, tree cluster, field edge). Holds relationships and offsets only; no pixels.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "id",
+    "version",
+    "bounds",
+    "items",
+    "license",
+    "review"
+  ],
+  "properties": {
+    "contract": {
+      "const": "scene-kit/v1"
+    },
+    "id": {
+      "$ref": "#/definitions/id"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "bounds": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "integer",
+        "minimum": 1
+      }
+    },
+    "items": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "prototype",
+          "at",
+          "params"
+        ],
+        "properties": {
+          "prototype": {
+            "$ref": "#/definitions/id"
+          },
+          "at": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "params": {
+            "type": "object",
+            "additionalProperties": {
+              "type": [
+                "boolean",
+                "integer",
+                "string"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1
+    },
+    "review": {
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ]
+    }
+  },
+  "definitions": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,63}$"
+    }
+  }
+}

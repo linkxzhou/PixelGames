@@ -1,0 +1,22 @@
+{
+  "contract": "visual-template/v1",
+  "parameters": {
+    "view": ["top_down", "side", "isometric", "screen"],
+    "asset_family": ["sprite", "tile", "ui", "effect", "overlay"],
+    "native_grid": { "min": 1, "max": 256, "non_square": true },
+    "palette_style": ["strict", "monochrome", "duotone", "explicit_extension"],
+    "outline": ["none", "flat", "selout", "hard_edge"],
+    "aa": ["off", "declared_regions"],
+    "material_language": ["flat", "planar", "round", "hard_edge", "emissive"],
+    "animation_phase": ["anticipation", "contact", "recovery", "squash", "smear", "dissolve"],
+    "scene_layering": ["background", "stage", "world", "effect", "ui"]
+  },
+  "defaults": {
+    "ui_finish": "keep",
+    "text_finish": "keep",
+    "tile_preview": "adjacency_matrix",
+    "actor_preview": "pose_and_anchor",
+    "effect_finish": "declared_per_region"
+  },
+  "source": { "kind": "original", "license": "MIT" }
+}

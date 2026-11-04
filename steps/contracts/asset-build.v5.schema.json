@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pxl/asset-build/v5",
+  "title": "index.json",
+  "description": "Step-300 plan output under the single visual production contract; optional audio points to one complete audio-manifest/v1 render. v5 keeps the v4 layout and adds the palette_families summary block; per-recipe stable resource references live in each recipe's build manifest.",
+  "type": "object",
+  "required": ["schema_version", "scope", "recipes"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 5 },
+    "scope": { "enum": ["all", "slice"] },
+    "recipes": { "type": "array", "items": { "$ref": "#/definitions/entry" } },
+    "audio": { "$ref": "#/definitions/audio" },
+    "palette_families": { "type": "array", "items": { "$ref": "#/definitions/family" } }
+  },
+  "definitions": {
+    "entry": {
+      "type": "object",
+      "required": ["id", "recipe", "status", "out"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "recipe": { "type": "string" },
+        "status": { "enum": ["ok", "parse_error", "qa_failed"] },
+        "out": { "type": "string" },
+        "manifest": { "type": "string" },
+        "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "sprites": { "type": "array", "items": { "type": "string" } },
+        "palette_family": { "type": "string" },
+        "error": { "type": "string" }
+      }
+    },
+    "family": {
+      "type": "object",
+      "required": ["id", "digest", "semantic_digest", "colors", "transparent_index"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "semantic_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "colors": { "type": "integer", "minimum": 1, "maximum": 62 },
+        "transparent_index": { "type": "integer", "minimum": 0, "maximum": 255 }
+      }
+    },
+    "audio": {
+      "type": "object",
+      "required": ["contract", "status", "out"],
+      "additionalProperties": false,
+      "properties": {
+        "contract": { "const": "audio-spec/v1" },
+        "status": { "enum": ["ok", "failed"] },
+        "out": { "const": "audio/" },
+        "manifest": { "const": "audio-manifest.json" },
+        "entries": { "type": "integer", "minimum": 1 },
+        "warnings": { "type": "array", "items": { "type": "string" } },
+        "error": { "type": "string" },
+        "audio_error": { "type": "string" }
+      }
+    }
+  }
+}

@@ -1,67 +1,67 @@
-//! Battle City palette. Index 0 is clear. Every other index is opaque.
-//! The bytes match `data/palette.json` (the same ramp set the asset stage uses).
+//! Palette loading. Sheets are palette-indexed and every sprite is decoded
+//! through this table, so a wrong palette shows up as a wrong colour rather
+//! than a decoding error.
 
-use serde_json::Value;
+use serde::Deserialize;
 
-pub const COLOR_COUNT: usize = 16;
+#[derive(Debug, Clone, Deserialize)]
+pub struct PaletteFile {
+    #[serde(default)]
+    pub id: String,
+    pub colors: Vec<String>,
+}
 
-#[derive(Clone)]
+/// RGBA colours, indexed exactly like `palette.json`.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Palette {
-    pub rgba: [[u8; 4]; COLOR_COUNT],
+    pub id: String,
+    pub colors: Vec<[u8; 4]>,
 }
 
 impl Palette {
-    pub fn battle_city() -> Self {
-        let raw = include_str!("../data/palette.json");
-        Self::from_json(raw).expect("bundled palette.json")
-    }
-
     pub fn from_json(text: &str) -> Result<Self, String> {
-        let value: Value = serde_json::from_str(text).map_err(|e| e.to_string())?;
-        let colors = value
-            .get("colors")
-            .and_then(|c| c.as_array())
-            .ok_or_else(|| "palette.colors missing".to_string())?;
-        if colors.len() != COLOR_COUNT {
-            return Err(format!("expected {COLOR_COUNT} colors, got {}", colors.len()));
+        let file: PaletteFile =
+            serde_json::from_str(text).map_err(|e| format!("palette.json: {e}"))?;
+        if file.colors.is_empty() {
+            return Err("palette.json carries no colours".to_string());
         }
-        let mut rgba = [[0u8; 4]; COLOR_COUNT];
-        for (i, color) in colors.iter().enumerate() {
-            let hex = color.as_str().ok_or_else(|| format!("color {i} not a string"))?;
-            rgba[i] = parse_hex(hex).ok_or_else(|| format!("bad color {hex}"))?;
+        let mut colors = Vec::with_capacity(file.colors.len());
+        for (index, raw) in file.colors.iter().enumerate() {
+            colors
+                .push(parse_hex(raw).map_err(|e| format!("palette colour {index} '{raw}': {e}"))?);
         }
-        if rgba[0][3] != 0 {
-            return Err("index 0 must be transparent".into());
-        }
-        Ok(Self { rgba })
+        Ok(Self {
+            id: file.id,
+            colors,
+        })
     }
 
-    pub fn contains_rgba(&self, px: [u8; 4]) -> bool {
-        if px[3] == 0 {
-            return true;
-        }
-        self.rgba.iter().any(|c| c[0] == px[0] && c[1] == px[1] && c[2] == px[2] && c[3] == 255 && px[3] == 255)
+    pub fn get(&self, index: u8) -> [u8; 4] {
+        self.colors
+            .get(index as usize)
+            .copied()
+            .unwrap_or([0, 0, 0, 0])
+    }
+
+    pub fn len(&self) -> usize {
+        self.colors.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.colors.is_empty()
     }
 }
 
-fn parse_hex(hex: &str) -> Option<[u8; 4]> {
-    let h = hex.strip_prefix('#')?;
-    match h.len() {
-        8 => {
-            let n = u32::from_str_radix(h, 16).ok()?;
-            Some([
-                ((n >> 24) & 0xff) as u8,
-                ((n >> 16) & 0xff) as u8,
-                ((n >> 8) & 0xff) as u8,
-                (n & 0xff) as u8,
-            ])
-        }
-        6 => {
-            let n = u32::from_str_radix(h, 16).ok()?;
-            Some([((n >> 16) & 0xff) as u8, ((n >> 8) & 0xff) as u8, (n & 0xff) as u8, 255])
-        }
-        _ => None,
+fn parse_hex(raw: &str) -> Result<[u8; 4], String> {
+    let hex = raw.strip_prefix('#').unwrap_or(raw);
+    if hex.len() != 6 && hex.len() != 8 {
+        return Err("expected #RRGGBB or #RRGGBBAA".to_string());
     }
+    let byte = |at: usize| -> Result<u8, String> {
+        u8::from_str_radix(&hex[at..at + 2], 16).map_err(|e| format!("bad hex byte: {e}"))
+    };
+    let alpha = if hex.len() == 8 { byte(6)? } else { 255 };
+    Ok([byte(0)?, byte(2)?, byte(4)?, alpha])
 }
 
 #[cfg(test)]
@@ -69,12 +69,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn bundled_palette_is_opaque_except_clear() {
-        let p = Palette::battle_city();
-        assert_eq!(p.rgba[0][3], 0);
-        assert!(p.rgba[1][3] == 255);
-        assert!(p.contains_rgba([0, 0, 0, 0]));
-        assert!(p.contains_rgba(p.rgba[4]));
-        assert!(!p.contains_rgba([1, 2, 3, 255]));
+    fn parses_rgb_and_rgba() {
+        let palette =
+            Palette::from_json(r##"{"id":"p","colors":["#00000000","#0d0f0a","#6f8a3aff"]}"##)
+                .unwrap();
+        assert_eq!(palette.get(0), [0, 0, 0, 0]);
+        assert_eq!(palette.get(1), [0x0d, 0x0f, 0x0a, 255]);
+        assert_eq!(palette.get(2), [0x6f, 0x8a, 0x3a, 255]);
+        assert_eq!(palette.get(9), [0, 0, 0, 0]);
     }
 }

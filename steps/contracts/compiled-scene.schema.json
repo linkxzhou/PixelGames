@@ -1,0 +1,132 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pxl/compiled-scene/v1",
+  "title": "scene.json",
+  "description": "The flattened, deterministic result of expanding a module tree. Instances reference compiled resource ids only — the runtime never executes a recipe. Collision is a separate map, so decoration edits cannot change collision.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "id",
+    "version",
+    "bounds",
+    "instances",
+    "collision",
+    "seed",
+    "depends",
+    "license",
+    "review"
+  ],
+  "properties": {
+    "contract": {
+      "const": "compiled-scene/v1"
+    },
+    "id": {
+      "$ref": "#/definitions/id"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "bounds": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "description": "Scene bounds in pixels."
+    },
+    "instances": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "resource_id",
+          "layer",
+          "sort_y",
+          "at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "resource_id": {
+            "type": "string",
+            "pattern": "^res-",
+            "description": "A compiled resource id, never a recipe path."
+          },
+          "layer": {
+            "enum": [
+              "back",
+              "front"
+            ]
+          },
+          "sort_y": {
+            "type": "integer"
+          },
+          "at": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "mirror": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "collision": {
+      "type": "object",
+      "description": "Cell key 'x,y' (pixels) to collision kind.",
+      "propertyNames": {
+        "pattern": "^-?[0-9]+,-?[0-9]+$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "depends": {
+      "type": "object",
+      "description": "Module, tileset and kit ids this scene was built from, with their digests, so a stale scene is detectable without re-expanding.",
+      "propertyNames": {
+        "$ref": "#/definitions/id"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^sha256:[0-9a-f]{64}$"
+      }
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1
+    },
+    "review": {
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "description": "Set by a human reviewer only."
+    }
+  },
+  "definitions": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,63}$"
+    }
+  }
+}

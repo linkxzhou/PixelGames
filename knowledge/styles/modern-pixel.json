@@ -1,0 +1,16 @@
+{
+  "contract": "visual-profile/v1",
+  "id": "modern_pixel",
+  "views": ["top_down", "side"],
+  "asset_families": ["sprite", "tile", "ui", "effect"],
+  "palette_style": "explicit_extension",
+  "outline": "selective_selout",
+  "aa": "region_driven",
+  "material_language": "round_planar_and_cloth",
+  "animation_phases": ["anticipation", "contact", "recovery", "squash", "smear"],
+  "scene_layering": ["background", "stage", "world", "effect", "ui"],
+  "positive_examples": ["32x32 tiles", "48x64 sprites", "multi-family palettes", "module composition"],
+  "negative_examples": ["NES four-color tiles", "全屏13色硬约束", "automatic pillow shading"],
+  "exceptions": ["smear frames", "dissolve effects"],
+  "source": { "kind": "original", "license": "MIT" }
+}

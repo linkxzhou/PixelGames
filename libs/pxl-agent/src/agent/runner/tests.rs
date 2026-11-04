@@ -2,6 +2,10 @@ use super::*;
 use crate::agent::provider::{FakeProvider, FakeTurn};
 use crate::agent::tools::{ToolDef, ToolOutcome, ToolSource};
 use crate::policy::{Permission, PermissionSet};
+use pxl_store::storage::{Event, EventLog};
+use crate::agent::tools::ToolRegistry;
+use crate::agent::tools::ToolContext;
+use crate::policy::budget::BudgetLedger;
 use std::sync::Arc;
 
 fn ctx(attempt: &std::path::Path) -> ToolContext {

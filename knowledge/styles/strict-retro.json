@@ -1,0 +1,16 @@
+{
+  "contract": "visual-profile/v1",
+  "id": "strict_retro",
+  "views": ["top_down", "side", "isometric", "screen"],
+  "asset_families": ["sprite", "tile", "ui", "effect", "overlay"],
+  "palette_style": "strict",
+  "outline": "selout_optional",
+  "aa": "declared_only",
+  "material_language": "hard_edge_and_planar",
+  "animation_phases": ["anticipation", "contact", "recovery"],
+  "scene_layering": ["background", "stage", "world", "effect", "ui"],
+  "positive_examples": ["one-pixel details at native 8px", "flat monochrome icons", "hard metal corners"],
+  "negative_examples": ["automatic volume on text", "global two-pixel detail threshold", "unrequested palette extension"],
+  "exceptions": ["black-white ramps", "legal holes", "one-pixel features"],
+  "source": { "kind": "original", "license": "MIT" }
+}

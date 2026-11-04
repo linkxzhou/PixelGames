@@ -1,47 +1,148 @@
 ---
 name: pxl-asset-gen
-description: Craft pixel-art materials with PixelGames step-300 (ASCII/shapes/recipe/ase) — brief → concept → palette → draw → shade → review → animate → export → fix/tileset. Use when generating or iterating sprites, tiles, sheets, GIFs, or .aseprite assets for this repo; not for the full brief→package→engine pipeline (use sibling skill `pxl` for that).
+description: Craft pixel-art materials with the bundled pxl-asset-gen binary (ASCII/shapes/recipe/ase) and deliver them as a browsable asset library folder (index.html + manifest + atlases + previews, like examples/stardew). Covers brief → concept → palette → draw → shade → review → animate → export → fix/tileset → library. Use when generating or iterating sprites, tiles, sheets, GIFs, .aseprite assets or a whole asset pack/gallery; not for the full brief→package→engine game pipeline (use sibling skill `pxl` for that).
+version: 0.1.0
 ---
 
 # pxl-asset-gen
 
-Standalone **asset craft** skill for PixelGames. Sibling of [`../pxl/SKILL.md`](../pxl/SKILL.md): that skill owns the five-stage pipeline (step-100…500). **This skill owns drawing craft only** — plan, generate, look, fix, export pixels via `step-300`.
+Self-contained **pixel asset craft** skill: one prebuilt binary + craft guides + a library kit. Plan, generate, look, fix and export pixels with the binary, then publish one folder with `index.html`. No sources, compilers or build steps are needed.
 
 ## Hard rules
 
-1. **All pixels from `step-300`.** Never invent or edit pixels with Python/PIL/ImageMagick paint tools.
-2. **Do not modify `games/`.** Work under `/tmp`, `examples/`, or a user-named output dir.
+1. **All pixels from the binary.** Python may only place palette glyphs into ASCII grids/recipes; never paint or edit pixels with PIL/ImageMagick (PIL is allowed read-only in `verify_library.py`).
+2. **Never write into the skill folder** or into existing reference packs (`games/`, `examples/stardew/`). Output goes to `/tmp/<pack>`, `examples/<new>/`, or a user-named dir.
 3. **Screenshots for visual delivery only** — no screen recordings.
-4. **Trust `--help` over memory.** Rebuild/use a current `step-300` after ase CLI changes.
-5. Keep skill files ≤500 lines (repo `AGENTS.md`).
+4. **Trust `--help` over memory.** Check `$PXL <cmd> --help` before using a flag.
+5. Keep every generated tools file ≤500 lines.
 
-## How to invoke `step-300`
+## Binary
+
+One executable per platform in `bin/`; pick the one matching the host:
+
+| Host | Binary |
+| --- | --- |
+| macOS Apple Silicon | `bin/pxl-asset-gen-darwin-arm64` |
+| Linux x86_64 | `bin/pxl-asset-gen-linux` |
 
 ```bash
-# Prefer a freshly built binary on this machine:
-PXL=./target/debug/step-300
-# Or:
-# cargo +1.95.0 run -p pxl-cli --bin step-300 --
-# When the sibling `pxl` skill launcher is available, use that for step-300 instead.
-$PXL --help
-$PXL ase --help
+SKILL=<absolute path of this skill folder>
+PXL=$SKILL/bin/pxl-asset-gen-darwin-arm64          # or $SKILL/bin/pxl-asset-gen-linux
+$PXL --help; $PXL ascii render --help; $PXL ase --help
 ```
 
-Global flags worth knowing: `--json`, `--seed`, `--overwrite`, `--strict`.
+- If the host's binary is missing from `bin/`, stop and tell the user — do not try to build or fetch one.
+- If it is not executable (permission denied), run `chmod +x "$PXL"`; on macOS quarantine, `xattr -d com.apple.quarantine "$PXL"`.
+- Includes `ase` (headless Aseprite IO, frame/tag/layer edit, Rhai `ase script`).
+- Global flags: `--json`, `--seed`, `--overwrite`, `--strict`. Exit 5 = QA fail.
+- Library-kit scripts find the binary automatically (or take `--pxl $PXL` / `PXL_BIN`).
 
-## Studio loop (always)
+## Pick a workflow
 
-1. **Decide intent** → pick subskills below (do not improvise order).
-2. **Inspect** existing inputs (`inspect`, `ase inspect`, `validate`).
-3. **Generate a small batch** (ASCII block-in, shapes, bollinger, recipe, or ase edit).
-4. **Look** — `$PXL render … -o preview.png --scale 8` and/or `inspect` text matrix; open PNG as screenshot when delivering to the user.
-5. **Fix** → re-validate → export only when review passes.
+| Request | Workflow |
+| --- | --- |
+| A pack / several assets / gallery / "like stardew" | **A. Asset library** (default; ends with `index.html`) |
+| One sprite or tile | **B. Single sprite** |
+| Change existing art (PNG / `.pxl.json` / `.aseprite`) | **C. Edit existing** |
 
-Default happy path for a new sprite:
+Never skip a step's **Done when**; if it fails, loop back to the step named in the fix hint.
 
-`brief` → `concept` (if from-scratch character/prop) → `new`/`palette` → `draw` → `shade` → `review` → (`animate`) → `export`
+## Workflow A — Asset library (step by step)
 
-Edits to existing art: `fix` (and only the craft steps that apply).
+Read [references/library.md](references/library.md) once before Step 4 (layout, `project.py` contract, `lib` API).
+
+```bash
+SKILL=<skill folder>; PXL=$SKILL/bin/pxl-asset-gen-darwin-arm64; KIT=$SKILL/assets/library-kit
+OUT=/tmp/<pack>                 # or examples/<pack> / user-named dir — never inside $SKILL
+```
+
+**Step 0 — Check the binary.** `$PXL --version`.
+Done when: it prints `pxl …`. Missing / not runnable → see "Binary" above; stop if the platform has no binary.
+
+**Step 1 — Brief** ([skills/brief](skills/brief/SKILL.md)). Lock: tile/sprite size, view, light direction, outline style, palette size, destination engine, theme/mood. Ask only if the user gave nothing to infer from; otherwise state defaults.
+Done when: a 5–8 line brief is written (it becomes `CONFIG['brief']` / `subtitle`).
+
+**Step 2 — Asset list** ([skills/concept](skills/concept/SKILL.md)). Write a table: `id` (snake_case), name, category, canvas (32/64/128/256), `source_rect`, tile?, variants/frames. Group by category (terrain, items, props, characters, buildings…).
+Done when: every requested asset has a row; counts per category are agreed/stated.
+
+**Step 3 — Palette** ([skills/palette](skills/palette/SKILL.md), [references/palette-and-color.md](references/palette-and-color.md)). Index 0 `#00000000`; one dark outline; 3–4 step hue-shifted ramps per material; one unique glyph per colour (`glyphs[0]='.'`).
+Done when: `CONFIG['palette']` has `colors`, `glyphs`, `ramps`; ≤16 colours per small asset is achievable.
+
+**Step 4 — Scaffold.**
+```bash
+mkdir -p $OUT/tools && cp $SKILL/assets/project_template/project.py $OUT/tools/
+```
+Fill `CONFIG` (id, title, subtitle, seed, brief, palette, `board_cell`). Replace the template's demo `populate` with stubs per category module (`tools/terrain.py` … each exposing `populate(lib)`).
+Done when: `python3 $KIT/build_library.py --project $OUT --limit 1` exits 0.
+
+**Step 5 — Block-in** ([skills/draw](skills/draw/SKILL.md), [references/silhouette-and-form.md](references/silhouette-and-form.md)). Per asset: silhouette with outline + 1 flat mass colour using `Grid.stamp/rect/oval/line/mirror_x`; parametrise variants instead of copy-pasting.
+```bash
+python3 $KIT/build_library.py --project $OUT --limit 8      # smoke build, manifest.partial=true
+```
+Look at `$OUT/previews/*.png` (screenshot). Done when: each asset reads at 1× by silhouette alone.
+
+**Step 6 — Shade & detail** ([skills/shade](skills/shade/SKILL.md), [references/shading-and-light.md](references/shading-and-light.md)). Apply ramps from the Step 1 light direction; selective outline; highlights 1–2 px only where earned. Tiles: `tile=True`, keep opposite edges matching.
+Done when: smoke previews show consistent light and no new colours outside the palette (build asserts colour budget).
+
+**Step 7 — Variants / frames (optional)** ([skills/animate](skills/animate/SKILL.md), [skills/tileset](skills/tileset/SKILL.md)). The library kit builds **static** assets: register each frame/direction as its own id (`farmer_south_0`, `_1` …, meta `frame=`/`direction=`). For playable animation GIFs/sheets use Workflow B's recipe `anims` on top.
+Done when: every frame id exists and frames of one set share canvas + `source_rect`.
+
+**Step 8 — Hero scene (optional).** Add `scene(lib)` composing only existing assets via `lib.place`.
+Done when: `previews/scene.png` appears after the full build.
+
+**Step 9 — Full build.**
+```bash
+python3 $KIT/build_library.py --project $OUT --clean
+```
+Done when: exit 0, JSON shows `"failed": []`, and `$OUT/manifest.json` has `"partial": false`. A failure lists the asset id → fix it in Step 5/6.
+
+**Step 10 — Verify.**
+```bash
+python3 $KIT/verify_library.py --project $OUT --samples <id>,<id>
+```
+Done when: `"status": "PASS"` (links, SHA-256, palette membership, `source_rect` bounds, tile seams, clean-rebuild determinism). Pillow missing → pixel checks `NOT_ASSESSED`, say so.
+
+**Step 11 — Visual review** ([skills/review](skills/review/SKILL.md), [references/review-checklist.md](references/review-checklist.md)).
+```bash
+python3 -m http.server 8000 --directory $OUT     # open http://127.0.0.1:8000/index.html
+```
+Screenshot `index.html` and 2+ preview boards; check readability at 1×, light consistency, style coherence across categories, search/lightbox working.
+Done when: checklist passes. Otherwise fix with [skills/fix](skills/fix/SKILL.md) → back to Step 9.
+
+**Step 12 — Deliver.** Report: `$OUT` path, asset/category counts, `validation.json` status, what was visually reviewed (else `visual_review: NOT_ASSESSED`), deferred items, and how to rebuild (`PXL_BIN=$PXL python3 $OUT/tools/build_library.py`). Never claim PASS without evidence.
+
+## Workflow B — Single sprite (step by step)
+
+```bash
+W=/tmp/<sprite>; mkdir -p $W/<id>       # palette.json in $W, sources in $W/<id>/
+```
+
+1. **Brief + concept** — size, view, light, palette ([skills/brief](skills/brief/SKILL.md), [skills/concept](skills/concept/SKILL.md)).
+2. **Palette** — write `$W/palette.json` (`{v, id, colors, ramps}`) or use built-in `p16` (`$PXL --json palette show p16`).
+3. **Scaffold** ([skills/new](skills/new/SKILL.md)) — `$W/<id>/<id>.ascii.json` (`$PXL schema ascii`) + `<id>.recipe.json` (`$PXL schema recipe`).
+4. **Block-in** ([skills/draw](skills/draw/SKILL.md)) — edit ASCII rows; preview fast: `$PXL ascii render $W/<id>/<id>.ascii.json --scale 8 -o $W/block.png`.
+5. **Shade** ([skills/shade](skills/shade/SKILL.md)) — remap masses to ramp glyphs; re-render.
+6. **Build + validate** — `$PXL build $W/<id>/<id>.recipe.json -o $W/out` then `$PXL validate $W/out/<id>.pxl.json --json` (exit 5 = QA fail → Step 4/5).
+7. **Look** — `$PXL inspect $W/out/<id>.pxl.json`; `$PXL render $W/out/<id>.pxl.json -o $W/preview.png --scale 8`; screenshot it ([skills/review](skills/review/SKILL.md)).
+8. **Animate (optional)** ([skills/animate](skills/animate/SKILL.md)) — add `anims` to the recipe; `$PXL render … --anim <name> -o walk.gif --scale 4`.
+9. **Export** ([skills/export](skills/export/SKILL.md)) — `$PXL render $W/out/<id>.pxl.json --asset -o $W/<id>.png`; sheets via `$PXL sheet`; `.aseprite` via `$PXL ase convert`.
+
+## Workflow C — Edit existing art (step by step)
+
+1. **Inspect** — `$PXL inspect <doc>` / `$PXL ase inspect <file.aseprite>`; PNG input → `$PXL pixelize --help` to get an indexed doc first.
+2. **Baseline** — `$PXL validate <doc> --json` and a `--scale 8` render; keep both for comparison.
+3. **Scope the change** with [skills/fix](skills/fix/SKILL.md): list what must stay untouched.
+4. **Edit** the source (ASCII/recipe) or use `$PXL op` / `$PXL ase layer|cel|frame|tag …` — smallest change first.
+5. **Re-validate + re-render**; compare before/after screenshots side by side.
+6. **Export** as in Workflow B Step 9 (write to a new path; never overwrite the user's original without `--overwrite` and consent).
+
+## Authoring tips (library)
+
+- Split art into sibling modules ≤500 lines each; `project.py` only imports and calls them.
+- 16×16 art: 32 canvas + `region=[0, 0, 16, 16]`; buildings 64; `tile=True` for seamless terrain.
+- `lib.g('wood', 2)` keeps code palette-agnostic; `lib.place` reuses assets in scenes.
+- `--limit N` for fast iterations, `--clean` after renaming/removing ids.
+- `build_library.py` copies the kit into `$OUT/tools/`, so the folder is self-describing like `examples/stardew`. Python 3.8+; Pillow optional.
 
 ## Route table
 
@@ -58,6 +159,7 @@ Edits to existing art: `fix` (and only the craft steps that apply).
 | PNG / GIF / sheet / ase export | [skills/export/SKILL.md](skills/export/SKILL.md) |
 | Iterate without wrecking good parts | [skills/fix/SKILL.md](skills/fix/SKILL.md) |
 | Seamless / noise tiles / tileset atlas | [skills/tileset/SKILL.md](skills/tileset/SKILL.md) |
+| Asset pack → `index.html` library | [references/library.md](references/library.md) |
 
 ## References (craft)
 
@@ -67,10 +169,12 @@ Edits to existing art: `fix` (and only the craft steps that apply).
 - [references/silhouette-and-form.md](references/silhouette-and-form.md)
 - [references/animation.md](references/animation.md)
 - [references/review-checklist.md](references/review-checklist.md)
-- [references/cli-cheatsheet.md](references/cli-cheatsheet.md) — real flags from this repo
+- [references/cli-cheatsheet.md](references/cli-cheatsheet.md) — real flags of the bundled binary
+- [references/library.md](references/library.md) — library folder, `project.py`, `lib` API, porting
 
 ## Out of scope
 
-- Full design→package→engine pipeline → use `pxl`.
+- Full design→package→engine game pipeline → use `pxl`.
+- Building or updating the binary (maintainers: repo `scripts/build-pxl-asset-gen.sh`).
 - Aseprite GUI / WebSocket / third-party MCP Lua bridges.
-- Tile-management plugins beyond what `step-300 ase export-tileset` / `tile gen` already do.
+- Tile-management plugins beyond what `$PXL ase export-tileset` / `tile gen` already do.

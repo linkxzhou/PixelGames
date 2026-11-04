@@ -1,0 +1,12 @@
+{
+  "contract": "semantic-palette/v1",
+  "id": "retro_8",
+  "colors": ["#00000000", "#181820", "#404048", "#707878", "#b0b8a8", "#e0f0d0", "#d05850", "#4080c0"],
+  "ramps": {
+    "main": [1, 2, 3, 4, 5],
+    "warm": [1, 2, 6, 5],
+    "cool": [1, 2, 7, 5]
+  },
+  "semantic_slots": { "outline": 1, "shadow": 2, "mid": 3, "light": 4, "highlight": 5, "accent_warm": 6, "accent_cool": 7 },
+  "source": { "kind": "original", "license": "MIT" }
+}

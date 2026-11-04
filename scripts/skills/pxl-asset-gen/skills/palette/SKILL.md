@@ -13,8 +13,8 @@ description: Choose, show, ramp, or apply a palette for PixelGames assets. Use w
 4. Default built-in: `p16` (tank set for battle-city-like art).
 
 ```bash
-$PXL list palettes
-$PXL palette show p16
+$PXL --json list palettes
+$PXL --json palette show p16
 $PXL palette ramp p16 --levels 4 --hue-shift 40 -o ramped.palette.json
 $PXL palette apply in.pxl.json ramped.palette.json -o out.pxl.json
 ```

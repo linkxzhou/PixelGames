@@ -1,0 +1,10 @@
+{
+  "schema_version": 2,
+  "stage": "design",
+  "files": [
+    { "path": "asset-requirements.json", "digest": "sha256:06750c027fbb6cdf9696081c4275d1a63e853ee88ec4f17f3aa9305131005ec6" },
+    { "path": "style-guide.json", "digest": "sha256:90807654a004ccf1d3286fe11bf956dbaa9cabf8ccdc28d282d6ec073dd814c2" },
+    { "path": "visual-intent.json", "digest": "sha256:3d605947a6878fc484a627fa89474f57636db349b6b12ca7922f43d5826931b8" }
+  ],
+  "manifest_digest": "sha256:71d2061454f2be717b11c748942b9f2447566be26f57f9338813fe0bbaecd5ff"
+}

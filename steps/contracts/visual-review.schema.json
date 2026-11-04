@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pxl/visual-review/v1",
+  "title": "visual-review.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "scale_version", "revision_digest", "subject_digest", "reviewers", "dimensions", "verdict", "exceptions"],
+  "properties": {
+    "contract": { "const": "visual-review/v1" },
+    "scale_version": { "type": "string", "minLength": 1 },
+    "revision_digest": { "$ref": "#/definitions/digest" },
+    "subject_digest": { "$ref": "#/definitions/digest" },
+    "reviewers": {
+      "type": "array", "minItems": 2,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["id"],
+        "properties": { "id": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "dimensions": {
+      "type": "object", "minProperties": 4,
+      "additionalProperties": {
+        "type": "object", "additionalProperties": false,
+        "required": ["status"],
+        "properties": {
+          "status": { "enum": ["pass", "concerns", "not_applicable"] },
+          "score": { "type": "integer", "minimum": 1, "maximum": 5 },
+          "reason": { "type": "string" },
+          "evidence": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+        }
+      }
+    },
+    "verdict": { "enum": ["PASS", "CONCERNS"] },
+    "exceptions": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["rule", "target", "reason", "evidence", "accepted_revision"],
+        "properties": {
+          "rule": { "type": "string", "minLength": 1 },
+          "target": { "type": "string", "minLength": 1 },
+          "reason": { "type": "string", "minLength": 1 },
+          "evidence": { "type": "string", "minLength": 1 },
+          "accepted_revision": { "$ref": "#/definitions/digest" }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  }
+}

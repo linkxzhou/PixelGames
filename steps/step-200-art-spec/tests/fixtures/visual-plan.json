@@ -1,0 +1,43 @@
+{
+  "contract": "visual-plan/v1",
+  "intent_digest": "sha256:3d605947a6878fc484a627fa89474f57636db349b6b12ca7922f43d5826931b8",
+  "assets": [
+    {
+      "asset_id": "bullet", "role": "actor", "native_size": [16, 16],
+      "finish": "hard_edge", "lighting": "baked",
+      "regions": [
+        { "region_id": "body", "material_id": "metal", "ramp": "main", "light_role": "base", "protect": false, "source": { "kind": "shape", "selector": "bullet.shapes.json#body" }, "mask": null },
+        { "region_id": "eye", "material_id": "metal", "ramp": "main", "light_role": "base", "protect": true, "source": { "kind": "shape", "selector": "bullet.shapes.json#eye" }, "mask": null }
+      ],
+      "animations": [{
+        "anim_id": "fly", "anchor": [8, 15], "contact": [8, 15],
+        "allow_squash": false, "allow_smear": false, "terminal_empty": false,
+        "phases": [
+          { "phase_id": "anticipation", "frames": ["bullet_fly_N_0"], "duration_ms": [1000], "transform": null },
+          { "phase_id": "contact", "frames": ["bullet_fly_N_1"], "duration_ms": [1000], "transform": { "kind": "translate", "offset": [0, 1], "rotate90": 0 } }
+        ]
+      }],
+      "tile": null,
+      "channels": { "material_labels": true, "emissive": false, "shadow": false }
+    },
+    {
+      "asset_id": "gem", "role": "pickup", "native_size": [6, 6],
+      "finish": "keep", "lighting": "hybrid",
+      "regions": [
+        { "region_id": "core", "material_id": "emissive", "ramp": "main", "light_role": "emissive", "protect": true, "source": { "kind": "shape", "selector": "gem.shapes.json#core" }, "mask": null },
+        { "region_id": "glow", "material_id": "emissive", "ramp": "main", "light_role": "emissive", "protect": false, "source": { "kind": "shape", "selector": "gem.shapes.json#glow" }, "mask": null }
+      ],
+      "animations": [{
+        "anim_id": "idle", "anchor": [3, 5], "contact": [3, 5],
+        "allow_squash": false, "allow_smear": false, "terminal_empty": false,
+        "phases": [
+          { "phase_id": "contact", "frames": ["gem_idle_0"], "duration_ms": [1000], "transform": null },
+          { "phase_id": "recovery", "frames": ["gem_idle_1"], "duration_ms": [1000], "transform": { "kind": "translate", "offset": [0, 1], "rotate90": 0 } }
+        ]
+      }],
+      "tile": null,
+      "channels": { "material_labels": true, "emissive": true, "shadow": false }
+    }
+  ],
+  "previews": [{ "scene_id": "main", "assets": ["bullet", "gem"] }]
+}

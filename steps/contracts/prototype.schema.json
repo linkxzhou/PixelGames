@@ -1,0 +1,379 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pxl/prototype/v1",
+  "title": "prototype.json",
+  "description": "A reviewed shape/structure record in the prototype library. Holds no colour: surfaces are separate records. Nothing here produces pixels; step 300 expands a frozen asset-instance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "id",
+    "version",
+    "kind",
+    "view",
+    "size_tiers",
+    "params",
+    "regions",
+    "connectors",
+    "footprint",
+    "layers",
+    "variants",
+    "source",
+    "requires",
+    "license",
+    "review"
+  ],
+  "properties": {
+    "contract": {
+      "const": "prototype/v1"
+    },
+    "id": {
+      "$ref": "#/definitions/id"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "kind": {
+      "enum": [
+        "building",
+        "plant",
+        "crop",
+        "terrain",
+        "prop",
+        "fence",
+        "scene_kit"
+      ]
+    },
+    "view": {
+      "enum": [
+        "top_down",
+        "side"
+      ]
+    },
+    "size_tiers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "size"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/definitions/id"
+          },
+          "size": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 256
+            }
+          }
+        }
+      }
+    },
+    "params": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]{0,63}$"
+      },
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "min",
+              "max",
+              "default"
+            ],
+            "properties": {
+              "kind": {
+                "const": "int"
+              },
+              "min": {
+                "type": "integer"
+              },
+              "max": {
+                "type": "integer"
+              },
+              "default": {
+                "type": "integer"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "options",
+              "default"
+            ],
+            "properties": {
+              "kind": {
+                "const": "choice"
+              },
+              "options": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "default": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "default"
+            ],
+            "properties": {
+              "kind": {
+                "const": "flag"
+              },
+              "default": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "regions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/id"
+      }
+    },
+    "connectors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "at",
+          "dir",
+          "width",
+          "accepts"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/definitions/id"
+          },
+          "at": {
+            "$ref": "#/definitions/point"
+          },
+          "dir": {
+            "enum": [
+              "N",
+              "E",
+              "S",
+              "W"
+            ]
+          },
+          "width": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "accepts": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "footprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "visual",
+        "sort_y",
+        "collision",
+        "interact"
+      ],
+      "properties": {
+        "visual": {
+          "$ref": "#/definitions/rect"
+        },
+        "sort_y": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "collision": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/rect"
+          }
+        },
+        "interact": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/point"
+            }
+          ]
+        }
+      }
+    },
+    "layers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "regions",
+          "layer"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/definitions/id"
+          },
+          "regions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/definitions/id"
+            }
+          },
+          "layer": {
+            "enum": [
+              "back",
+              "front"
+            ]
+          }
+        }
+      }
+    },
+    "variants": {
+      "type": "array",
+      "description": "Hand-authored structural variants selected by parameter value; parameters never synthesize geometry.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "param",
+          "equals",
+          "region",
+          "rows"
+        ],
+        "properties": {
+          "param": {
+            "$ref": "#/definitions/id"
+          },
+          "equals": {
+            "type": [
+              "boolean",
+              "integer",
+              "string"
+            ]
+          },
+          "region": {
+            "$ref": "#/definitions/id"
+          },
+          "rows": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "path",
+        "digest"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "ascii",
+            "shapes"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "digest": {
+          "$ref": "#/definitions/digest"
+        }
+      }
+    },
+    "requires": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/id"
+      }
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1
+    },
+    "review": {
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "description": "Set by a human reviewer only."
+    }
+  },
+  "definitions": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,63}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "point": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "integer"
+      }
+    },
+    "rect": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "integer"
+      }
+    }
+  }
+}

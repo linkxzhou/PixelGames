@@ -1,0 +1,4 @@
+interface:
+  display_name: "pxl crates dev"
+  short_description: "Reference for the pxl-* Rust crates"
+  default_prompt: "Use $pxl-crates-dev to change a pxl-ops macro safely."

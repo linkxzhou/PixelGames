@@ -1,0 +1,16 @@
+{
+  "contract": "visual-profile/v1",
+  "id": "monochrome",
+  "views": ["top_down", "side", "isometric", "screen"],
+  "asset_families": ["sprite", "tile", "ui", "effect", "overlay"],
+  "palette_style": "strict_monochrome_or_duotone",
+  "outline": "shape_driven",
+  "aa": "off_unless_declared",
+  "material_language": "flat_pattern_and_silhouette",
+  "animation_phases": ["anticipation", "contact", "recovery"],
+  "scene_layering": ["background", "stage", "world", "effect", "ui"],
+  "positive_examples": ["single-ramp icons", "black-white tiles", "contrast through negative space"],
+  "negative_examples": ["mandatory three-tone ramps", "colour-only material labels", "volume shading by default"],
+  "exceptions": ["single colour materials", "one-pixel strokes", "flat fills"],
+  "source": { "kind": "original", "license": "MIT" }
+}

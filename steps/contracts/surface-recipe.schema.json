@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pxl/surface-recipe/v1",
+  "title": "surface-recipe.json",
+  "description": "How a named region of a prototype looks. Names an existing step 300 recipe/finish operation; it adds no new pixel-producing code path.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "id", "version", "material_id", "applies_to", "recipe", "params", "scale_px", "license", "review"],
+  "properties": {
+    "contract": { "const": "surface-recipe/v1" },
+    "id": { "$ref": "#/definitions/id" },
+    "version": { "type": "integer", "minimum": 1 },
+    "material_id": { "$ref": "#/definitions/id" },
+    "applies_to": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/id" } },
+    "recipe": { "type": "string", "minLength": 1 },
+    "params": { "type": "object", "additionalProperties": { "type": "integer" } },
+    "scale_px": { "type": "integer", "minimum": 1, "description": "Pixels per texture cell; ties texture scale to the size tier." },
+    "license": { "type": "string", "minLength": 1 },
+    "review": { "enum": ["pending", "approved", "rejected"] }
+  },
+  "definitions": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$" }
+  }
+}

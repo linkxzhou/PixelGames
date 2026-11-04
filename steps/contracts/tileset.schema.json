@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pxl/tileset/v1",
+  "title": "tileset.json",
+  "description": "A family of same-sized tiles with 47-mask connection coverage. Holds no pixels; tiles reference compiled resource ids. Exact and approximate coverage are separate lists; a mask in neither is a reported gap, never a silent default.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "id",
+    "version",
+    "palette_family",
+    "tile_size",
+    "tiles",
+    "license",
+    "review"
+  ],
+  "properties": {
+    "contract": {
+      "const": "tileset/v1"
+    },
+    "id": {
+      "$ref": "#/definitions/id"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "palette_family": {
+      "$ref": "#/definitions/id"
+    },
+    "tile_size": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 256
+    },
+    "tiles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "resource_id"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/definitions/id"
+          },
+          "resource_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "exact_masks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/mask"
+            }
+          },
+          "approximate_masks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/mask"
+            }
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/id"
+            }
+          }
+        }
+      }
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1
+    },
+    "review": {
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "description": "Set by a human reviewer only."
+    }
+  },
+  "definitions": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,63}$"
+    },
+    "mask": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 255,
+      "description": "Reduced 8-neighbourhood mask: N=1 E=2 S=4 W=8 NE=16 SE=32 SW=64 NW=128; a diagonal bit only counts when both orthogonal neighbours are set (47 reachable masks)."
+    }
+  }
+}

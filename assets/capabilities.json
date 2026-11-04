@@ -1,0 +1,201 @@
+{
+  "schema_version": 4,
+  "capability_version": "capabilities/v4",
+  "pxl_version": "0.1.0",
+  "gen_version": 1,
+  "contracts": {
+    "design": "design/v3",
+    "art_spec": "art-spec/v3",
+    "asset_build": "asset-build/v5",
+    "asset_package": "asset-package/v3",
+    "engine": "engine/v4",
+    "pipeline": "pipeline/v2"
+  },
+  "kinds": [
+    "sprite",
+    "tile",
+    "ui",
+    "effect",
+    "overlay"
+  ],
+  "strategies": [
+    "shapes",
+    "ascii",
+    "svg",
+    "parts",
+    "template",
+    "tile_gen",
+    "external"
+  ],
+  "generators": [
+    "shapes",
+    "ascii",
+    "sprite",
+    "bollinger",
+    "parts",
+    "noise-tile"
+  ],
+  "source_kinds": [
+    "ascii",
+    "svg",
+    "shapes",
+    "doc"
+  ],
+  "size_tiers": [
+    32,
+    64,
+    128,
+    256
+  ],
+  "max_dimension": 256,
+  "max_anim_frames": 16,
+  "direction_derivations": [
+    "mirror",
+    "rotate90",
+    "independent"
+  ],
+  "anim_modes": [
+    "dynamic",
+    "static"
+  ],
+  "warning_policy": "default reports all warnings; strict fails on any warning from the primary asset or a variant",
+  "acceptance_checks": [
+    "size.equals",
+    "anim.frames",
+    "anim.dirs",
+    "anim.anchor",
+    "asset.kind",
+    "palette.profile",
+    "tile.seamless",
+    "silhouette_readable",
+    "style_consistent",
+    "animation_readable"
+  ],
+  "svg_subset": [
+    "rect",
+    "circle",
+    "ellipse",
+    "line",
+    "polyline",
+    "polygon",
+    "path",
+    "transform",
+    "clipPath",
+    "linearGradient",
+    "radialGradient",
+    "data-min"
+  ],
+  "shapes": [
+    "rect",
+    "circle",
+    "ellipse",
+    "line",
+    "polygon",
+    "pixels",
+    "outline"
+  ],
+  "ascii": [
+    "rows",
+    "rle",
+    "tiles"
+  ],
+  "visual": {
+    "contracts": [
+      "visual-intent/v1",
+      "visual-intent/v2",
+      "visual-plan/v1",
+      "visual-plan/v2",
+      "visual-review/v1",
+      "knowledge.lock/v1"
+    ],
+    "region_sources": [
+      "shape",
+      "mask"
+    ],
+    "region_transforms": [
+      "translate"
+    ],
+    "palette_modes": [
+      "strict",
+      "explicit_extension"
+    ],
+    "channels": [
+      "material",
+      "emissive",
+      "shadow"
+    ],
+    "render_modes": [
+      "L0",
+      "L1",
+      "L2"
+    ],
+    "command_abi": 2,
+    "max_lights": 8,
+    "capability_ids": [
+      "modern-profile/v1",
+      "palette-family/v1",
+      "compiled-scene/v1"
+    ],
+    "palette_families": "visual-intent/v2 declares families; builds group sheets strictly per family and never quantise across families",
+    "compiled_scenes": "module/v1 trees compile deterministically into compiled-scene/v1; runtime draws instances and never re-expands scenes"
+  },
+  "prototype_library": {
+    "contracts": [
+      "prototype/v1",
+      "surface-recipe/v1",
+      "asset-instance/v1",
+      "catalog.lock/v1",
+      "scene-kit/v1"
+    ],
+    "prototype_kinds": [
+      "building",
+      "plant",
+      "crop",
+      "terrain",
+      "prop",
+      "fence",
+      "scene_kit"
+    ],
+    "views": [
+      "top_down",
+      "side"
+    ],
+    "source_kinds": [
+      "ascii",
+      "shapes"
+    ],
+    "param_kinds": [
+      "int",
+      "choice",
+      "flag"
+    ],
+    "max_tier_edge": 256,
+    "review_states": [
+      "pending",
+      "approved",
+      "rejected"
+    ]
+  },
+  "schemas": [
+    "recipe",
+    "sprite",
+    "ascii",
+    "shapes",
+    "parts",
+    "palette",
+    "ops",
+    "doc",
+    "visual-intent",
+    "visual-intent-v2",
+    "visual-plan",
+    "visual-plan-v2",
+    "prototype",
+    "surface-recipe",
+    "asset-instance",
+    "catalog-lock",
+    "scene-kit",
+    "tileset",
+    "module",
+    "compiled-scene"
+  ]
+}

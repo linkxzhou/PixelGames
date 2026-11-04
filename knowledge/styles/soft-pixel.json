@@ -1,0 +1,16 @@
+{
+  "contract": "visual-profile/v1",
+  "id": "soft_pixel",
+  "views": ["top_down", "side", "isometric", "screen"],
+  "asset_families": ["sprite", "tile", "ui", "effect", "overlay"],
+  "palette_style": "strict_or_explicit_extension",
+  "outline": "selective_selout",
+  "aa": "region_driven",
+  "material_language": "round_planar_and_cloth",
+  "animation_phases": ["anticipation", "contact", "recovery", "squash", "smear"],
+  "scene_layering": ["background", "stage", "world", "effect", "ui"],
+  "positive_examples": ["soft cloth regions", "declared corner AA", "finite squash exceptions"],
+  "negative_examples": ["whole-sprite pillow shading", "automatic tile borders", "unbounded colour generation"],
+  "exceptions": ["smear frames", "dissolve holes", "flat UI regions"],
+  "source": { "kind": "original", "license": "MIT" }
+}

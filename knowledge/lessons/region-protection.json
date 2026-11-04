@@ -1,0 +1,18 @@
+{
+  "contract": "lesson/v1",
+  "id": "region-protection",
+  "status": "active",
+  "applicability": {
+    "views": [],
+    "kinds": ["sprite", "tile", "ui", "effect", "overlay"],
+    "profiles": [],
+    "failures": ["protected_region_changed"],
+    "native_sizes": []
+  },
+  "summary": "Bind small features to named regions and masks; verify the region after every finish pass instead of applying a global detail threshold.",
+  "counter_examples": [
+    "One-pixel features are valid at native 8px and must not be removed by a generic 2px rule.",
+    "Hard materials may be shaded outside an explicitly protected region."
+  ],
+  "evidence_digests": []
+}

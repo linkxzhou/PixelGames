@@ -137,7 +137,7 @@ fn example_3_shapes_json_is_a_png() {
     )
     .unwrap();
     assert_eq!(out.format, OutputFormat::Png);
-    assert_eq!((out.width, out.height), (32 * 8, 32 * 8));
+    assert_eq!((out.width, out.height), (16 * 8, 16 * 8));
 }
 
 #[test]
@@ -330,9 +330,9 @@ fn render_reports_native_size_scale_and_purpose() {
         &none(),
     )
     .unwrap();
-    assert_eq!((out.native_width, out.native_height), (32, 32));
+    assert_eq!((out.native_width, out.native_height), (16, 16));
     assert_eq!(out.scale, 6);
-    assert_eq!((out.width, out.height), (32 * 6, 32 * 6));
+    assert_eq!((out.width, out.height), (16 * 6, 16 * 6));
     assert!(!out.grid);
     assert_eq!(out.purpose.name(), "preview");
 }

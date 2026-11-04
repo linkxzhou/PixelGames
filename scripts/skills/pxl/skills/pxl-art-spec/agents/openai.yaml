@@ -1,0 +1,4 @@
+interface:
+  display_name: "pxl art spec"
+  short_description: "step-200: requirements to art specs"
+  default_prompt: "Use $pxl-art-spec to author and lint art specs from a design directory."

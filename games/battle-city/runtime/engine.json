@@ -1,0 +1,25 @@
+{
+  "name": "battle-city-native",
+  "contract": "engine/v4",
+  "runtime": { "mode": "rust" },
+  "platforms": ["native", "wasm32"],
+  "capabilities": {
+    "audio": {
+      "js": false,
+      "rust": false,
+      "formats": ["wav"],
+      "cache_bytes_max": 33554432,
+      "sfx_voices_max": 16,
+      "bgm_voices_max": 1
+    },
+    "visual": {
+      "abi": 2,
+      "pivot": true,
+      "duration": true,
+      "material": true,
+      "emissive": true,
+      "lighting": ["L0", "L1", "L2"]
+    }
+  },
+  "limits": { "frame_max": 256, "palette_max": 62 }
+}

@@ -1,3 +1,5 @@
+use super::grid::reduce;
+
 use super::*;
 
 /// A 6x6 native picture blown up by `k` with an offset and a soft fringe.

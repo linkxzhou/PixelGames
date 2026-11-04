@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pxl/audio-manifest/v1",
+  "title": "audio-manifest.json",
+  "description": "Record of one `step-300 audio render`. No timestamps, host names or absolute paths. pcm_sha256 covers the interleaved 16-bit little-endian samples only; file_sha256 covers the whole WAV; deps_sha256 covers the spec plus the song it renders. Byte-identical output is promised only for the same os, arch, node, adapter and synthesizer versions recorded in `toolchain`.",
+  "type": "object",
+  "required": ["schema_version", "contract", "asset", "root_seed", "sample_rate", "pcm_format", "spec_sha256", "toolchain", "qa_profile", "entries"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "contract": { "const": "audio-manifest/v1" },
+    "asset": { "type": "string" },
+    "root_seed": { "type": "integer", "minimum": 0 },
+    "sample_rate": { "const": 44100 },
+    "pcm_format": { "const": "pcm_s16le" },
+    "spec_sha256": { "$ref": "#/definitions/digest" },
+    "qa_profile": { "const": "audio-qa/v1" },
+    "toolchain": {
+      "type": "object",
+      "required": ["node", "adapter_version", "adapter_sha256", "beepbox", "zzfx", "os", "arch"],
+      "additionalProperties": false,
+      "properties": {
+        "node": { "type": "string" },
+        "adapter_version": { "type": "string" },
+        "adapter_sha256": { "$ref": "#/definitions/digest" },
+        "beepbox": { "type": "string" },
+        "zzfx": { "type": "string" },
+        "os": { "type": "string" },
+        "arch": { "type": "string" }
+      }
+    },
+    "entries": { "type": "array", "items": { "$ref": "#/definitions/entry" } }
+  },
+  "definitions": {
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "entry": {
+      "type": "object",
+      "required": ["id", "kind", "path", "engine", "seed", "channels", "frames", "file_sha256", "pcm_sha256", "deps_sha256", "qa"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "kind": { "enum": ["sfx", "bgm"] },
+        "path": { "type": "string", "description": "Relative to the manifest directory." },
+        "engine": { "enum": ["zzfx", "beepbox"] },
+        "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+        "channels": { "enum": [1, 2] },
+        "frames": { "type": "integer", "minimum": 1, "description": "Sample frames, not interleaved samples." },
+        "file_sha256": { "$ref": "#/definitions/digest" },
+        "pcm_sha256": { "$ref": "#/definitions/digest" },
+        "deps_sha256": { "$ref": "#/definitions/digest" },
+        "song_file": { "type": "string" },
+        "loop": {
+          "type": "object",
+          "required": ["start_frame", "end_frame_exclusive"],
+          "additionalProperties": false,
+          "properties": {
+            "start_frame": { "type": "integer", "minimum": 0 },
+            "end_frame_exclusive": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "qa": {
+          "type": "object",
+          "required": ["status", "peak_dbfs", "rms_dbfs", "clipped_samples", "failed"],
+          "additionalProperties": false,
+          "properties": {
+            "status": { "enum": ["pass", "warning", "fail"] },
+            "peak_dbfs": { "type": "number" },
+            "rms_dbfs": { "type": "number" },
+            "clipped_samples": { "type": "integer", "minimum": 0 },
+            "failed": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    }
+  }
+}

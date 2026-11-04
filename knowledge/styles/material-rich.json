@@ -1,0 +1,16 @@
+{
+  "contract": "visual-profile/v1",
+  "id": "material_rich",
+  "views": ["top_down", "side", "isometric", "screen"],
+  "asset_families": ["sprite", "tile", "ui", "effect", "overlay"],
+  "palette_style": "strict_or_explicit_extension",
+  "outline": "material_driven",
+  "aa": "region_driven",
+  "material_language": "labelled_regions_and_ramps",
+  "animation_phases": ["anticipation", "contact", "recovery", "squash", "smear"],
+  "scene_layering": ["background", "stage", "world", "effect", "ui"],
+  "positive_examples": ["hard metal edges", "wood grain inside labelled regions", "separate emissive masks"],
+  "negative_examples": ["material guessed only from colour", "one sphere response for every region", "baked and runtime double shadow"],
+  "exceptions": ["flat emissive regions", "unlit UI", "single-colour materials"],
+  "source": { "kind": "original", "license": "MIT" }
+}

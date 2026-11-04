@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "step": "step-100-design",
+  "step_version": "0.1.0",
+  "contract": "design/v3",
+  "status": "ok",
+  "scope": "all",
+  "inputs": [],
+  "outputs": [],
+  "verdict": "PASS",
+  "gates": { "required_artifacts": [], "quality_checks": [], "not_assessed": [] },
+  "error": null
+}

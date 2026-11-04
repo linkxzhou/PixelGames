@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pxl/audio-spec/v1",
+  "title": "audio.spec.json",
+  "description": "Text spec for offline audio synthesis (step-300 audio). SFX are named ZzFX parameters; BGM refers to a BeepBox JSON song file inside the same directory. Unknown fields are errors. Limits here mirror pxl-audio/src/limits.rs; the Rust validator is authoritative for cross-field rules (tempo divisibility, song subset, path sandbox).",
+  "type": "object",
+  "required": ["contract", "asset", "seed"],
+  "additionalProperties": false,
+  "properties": {
+    "contract": { "const": "audio-spec/v1" },
+    "asset": { "$ref": "#/definitions/id" },
+    "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+    "sample_rate": { "const": 44100 },
+    "sfx": { "type": "array", "items": { "$ref": "#/definitions/sfx" } },
+    "bgm": { "type": "array", "items": { "$ref": "#/definitions/bgm" } }
+  },
+  "anyOf": [
+    { "required": ["sfx"], "properties": { "sfx": { "minItems": 1 } } },
+    { "required": ["bgm"], "properties": { "bgm": { "minItems": 1 } } }
+  ],
+  "definitions": {
+    "id": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,63}$" },
+    "gain": { "type": "number", "minimum": 0, "maximum": 2 },
+    "sfx": {
+      "type": "object",
+      "required": ["id", "engine", "params"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "engine": { "const": "zzfx" },
+        "gain": { "$ref": "#/definitions/gain" },
+        "params": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "waveform": { "enum": ["sine", "triangle", "saw", "tan", "noise", "square"] },
+            "volume": { "type": "number", "minimum": 0, "maximum": 2 },
+            "randomness": { "type": "number", "minimum": 0, "maximum": 1 },
+            "frequency_hz": { "type": "number", "minimum": 20, "maximum": 20000 },
+            "attack_sec": { "type": "number", "minimum": 0, "maximum": 2 },
+            "decay_sec": { "type": "number", "minimum": 0, "maximum": 2 },
+            "sustain_sec": { "type": "number", "minimum": 0, "maximum": 2 },
+            "release_sec": { "type": "number", "minimum": 0, "maximum": 2 },
+            "shape_curve": { "type": "number", "minimum": 0, "maximum": 10 },
+            "slide": { "type": "number", "minimum": -20, "maximum": 20 },
+            "delta_slide": { "type": "number", "minimum": -20, "maximum": 20 },
+            "pitch_jump_hz": { "type": "number", "minimum": -2000, "maximum": 2000 },
+            "pitch_jump_time_sec": { "type": "number", "minimum": 0, "maximum": 2 },
+            "repeat_time_sec": { "type": "number", "minimum": 0, "maximum": 2 },
+            "noise": { "type": "number", "minimum": 0, "maximum": 10 },
+            "modulation": { "type": "number", "minimum": -1000, "maximum": 1000 },
+            "bit_crush": { "type": "number", "minimum": 0, "maximum": 10 },
+            "delay_sec": { "type": "number", "minimum": 0, "maximum": 2 },
+            "sustain_volume": { "type": "number", "minimum": 0, "maximum": 2 },
+            "tremolo": { "type": "number", "minimum": 0, "maximum": 1 },
+            "filter_hz": { "type": "number", "minimum": -20000, "maximum": 20000 }
+          }
+        }
+      }
+    },
+    "bgm": {
+      "type": "object",
+      "required": ["id", "engine", "song_file", "loop"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "engine": { "const": "beepbox" },
+        "gain": { "$ref": "#/definitions/gain" },
+        "song_file": {
+          "type": "string",
+          "description": "Relative path inside the spec directory. Absolute paths, .., URLs, backslashes and symlinks leaving the directory are rejected."
+        },
+        "loop": {
+          "type": "object",
+          "required": ["start_bar", "end_bar_exclusive"],
+          "additionalProperties": false,
+          "properties": {
+            "start_bar": { "const": 0 },
+            "end_bar_exclusive": { "type": "integer", "minimum": 1, "maximum": 32 }
+          }
+        }
+      }
+    }
+  }
+}

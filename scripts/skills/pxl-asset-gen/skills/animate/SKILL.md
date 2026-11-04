@@ -7,7 +7,7 @@ description: Build idle/walk/attack cycles with timing and tags using recipe ani
 
 ## Prefer recipe macros when possible
 
-`build` expands `anims` + macros (see examples under `examples/`). Keep keys few; in-betweens cheap.
+`build` expands `anims` + macros (`$PXL --json list macros`, `$PXL schema recipe`; a generated library's `sources/*/*.recipe.json` is a working example). Keep keys few; in-betweens cheap.
 
 ```bash
 $PXL build my.recipe.json -o out/ --overwrite
@@ -23,7 +23,7 @@ $PXL ase tag add f.aseprite walk --from 0 --to 3 --direction forward -o f.asepri
 $PXL ase list-tags f.aseprite
 ```
 
-Rebuild `step-300` if `ase frame|tag` are missing from an older binary (source on main includes them).
+`$PXL ase frame --help` / `$PXL ase tag --help` list the exact edit flags.
 
 ## Timing notes
 

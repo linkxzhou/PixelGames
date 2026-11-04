@@ -4,7 +4,7 @@ Mark each: PASS / FAIL / NOT_ASSESSED.
 
 ## Mechanical
 
-- [ ] `step-300 validate` exit 0 (or documented override)
+- [ ] `$PXL validate` exit 0 (or documented override)
 - [ ] `inspect` size matches brief
 - [ ] Palette count within budget; no surprise off-palette (indexed)
 - [ ] Animation tags/ranges correct (`ase list-tags` / recipe anim names)

@@ -25,22 +25,25 @@
             [
               {
                 "op": "shift",
-                "dy": -1,
-                "wrap": false
+                "dy": -2,
+                "wrap": false,
+                "dx": 0
+              }
+            ],
+            [
+              {
+                "op": "shift",
+                "dy": -4,
+                "wrap": false,
+                "dx": 0
               }
             ],
             [
               {
                 "op": "shift",
                 "dy": -2,
-                "wrap": false
-              }
-            ],
-            [
-              {
-                "op": "shift",
-                "dy": -1,
-                "wrap": false
+                "wrap": false,
+                "dx": 0
               }
             ]
           ]
@@ -49,7 +52,7 @@
           "name": "blink",
           "fps": 2,
           "loop": true,
-          "macro": "blink(x=5, y=10, w=6, h=2, lid=5)"
+          "macro": "blink(x=10, y=20, w=12, h=4, lid=5)"
         }
       ]
     }
@@ -66,7 +69,7 @@
     {
       "source": "slime",
       "anim": "hop",
-      "scale": 8,
+      "scale": 4,
       "file": "hop.png"
     }
   ],

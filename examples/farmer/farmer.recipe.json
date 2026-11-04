@@ -105,5 +105,5 @@
     { "source": "farmer_blonde", "anim": "walk", "dir": "down", "scale": 4, "file": "blonde_walk_down.png" },
     { "source": "farmer_raven", "anim": "walk", "dir": "down", "scale": 4, "file": "raven_walk_down.png" }
   ],
-  "validate": { "rules": "character" }
+  "validate": { "rules": "default" }
 }

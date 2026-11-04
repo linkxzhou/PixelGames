@@ -1,10 +1,10 @@
 [package]
-name = "battle-city"
+name = "battle-city-runtime"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 publish.workspace = true
-description = "Battle City slice: macroquad window plus a headless fixed-step replay"
+description = "Battle City: a macroquad window over a deterministic fixed-step simulation, loading the pxl asset package"
 
 [lib]
 name = "battle_city"

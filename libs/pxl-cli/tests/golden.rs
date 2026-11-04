@@ -99,7 +99,7 @@ fn compute() -> BTreeMap<String, String> {
     .unwrap();
     push("shapes.stripe", &generate_shapes(&mirrored, &pal).unwrap());
 
-    let ascii_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../examples/ascii");
+    let ascii_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/ascii");
     let legend = pxl_format::parse_legend_file(
         &fs::read_to_string(ascii_root.join("shared/p16.legend.json")).unwrap(),
     )
@@ -273,7 +273,7 @@ fn compute() -> BTreeMap<String, String> {
         }
     }
 
-    let farmer_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../examples/farmer");
+    let farmer_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/farmer");
     let farmer_pal = pxl_format::parse_palette(
         &fs::read_to_string(farmer_dir.join("farmer.palette.json")).unwrap(),
         "farmer",

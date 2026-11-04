@@ -1,5 +1,14 @@
 use super::*;
 
+use std::fs;
+use std::path::PathBuf;
+
+use serde_json::Value;
+
+use super::helpers::{find_pxl_in, normalize};
+use super::repair::check_failed;
+use crate::process::ProcOutput;
+
 fn test_adapter() -> PxlAdapter {
     let cfg = crate::config::Config::default();
     PxlAdapter::discover(&cfg).unwrap_or_else(|_| PxlAdapter::unavailable())

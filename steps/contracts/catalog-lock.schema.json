@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pxl/catalog-lock/v1",
+  "title": "catalog.lock.json",
+  "description": "The build input closure: every prototype and surface recipe a run actually used, with versions and digests, sorted by id. Distinct from knowledge.lock.json, which records style/lesson knowledge.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "entries",
+    "digest"
+  ],
+  "properties": {
+    "contract": {
+      "const": "catalog.lock/v1"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "version",
+          "digest",
+          "requires",
+          "review"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/definitions/id"
+          },
+          "kind": {
+            "enum": [
+              "prototype",
+              "surface",
+              "kit"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "digest": {
+            "$ref": "#/definitions/digest"
+          },
+          "requires": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/id"
+            }
+          },
+          "review": {
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ]
+          }
+        }
+      }
+    },
+    "digest": {
+      "$ref": "#/definitions/digest"
+    }
+  },
+  "definitions": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,63}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    }
+  }
+}

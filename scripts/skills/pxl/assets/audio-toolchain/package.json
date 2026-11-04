@@ -1,0 +1,14 @@
+{
+  "name": "pxl-audio-adapter",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Offline PCM adapter for step-300 audio render. Vendored zzfx 1.4.0 and beepbox 4.2.0; no network, no node_modules.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}

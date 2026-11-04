@@ -1,0 +1,15 @@
+{
+  "contract": "material-dictionary/v1",
+  "materials": {
+    "flat": { "response": "flat", "default_finish": "keep" },
+    "metal": { "response": "hard_edge", "default_finish": "hard_edge" },
+    "wood": { "response": "planar", "default_finish": "volume" },
+    "stone": { "response": "hard_edge", "default_finish": "volume" },
+    "water": { "response": "planar", "default_finish": "flat" },
+    "foliage": { "response": "round", "default_finish": "volume" },
+    "cloth": { "response": "round", "default_finish": "volume" },
+    "skin": { "response": "round", "default_finish": "volume" },
+    "emissive": { "response": "emissive", "default_finish": "keep" }
+  },
+  "source": { "kind": "original", "license": "MIT" }
+}

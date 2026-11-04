@@ -1,0 +1,235 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pxl/visual-intent/v2",
+  "title": "visual-intent.json (v2 with modern profile)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "profile", "pixel_grid", "palette_policy", "roles", "value_script", "materials", "asset_policies", "animation_policy", "scene_previews", "review_policy", "sources", "risks"],
+  "properties": {
+    "contract": { "const": "visual-intent/v2" },
+    "profile": {
+      "type": "object", "additionalProperties": false, "required": ["id", "digest"],
+      "properties": { "id": { "$ref": "#/definitions/id" }, "digest": { "$ref": "#/definitions/digest" } }
+    },
+    "modern": {
+      "type": "object", "additionalProperties": false,
+      "required": ["profile_contract", "logical_canvas", "tile_size", "target_runtime", "sampling", "budgets"],
+      "properties": {
+        "profile_contract": { "const": "modern-pixel/v1" },
+        "logical_canvas": { "$ref": "#/definitions/canvas_size" },
+        "tile_size": { "$ref": "#/definitions/size" },
+        "target_runtime": { "enum": ["runtime-js", "rust-runtime"] },
+        "sampling": { "enum": ["nearest_integer"] },
+        "budgets": {
+          "type": "object", "additionalProperties": false,
+          "required": ["palette_entries", "frame_opaque_colors", "ramp_depth", "scene_rgb"],
+          "properties": {
+            "palette_entries": { "type": "integer", "minimum": 2, "maximum": 62 },
+            "frame_opaque_colors": { "type": "integer", "minimum": 1, "maximum": 61 },
+            "ramp_depth": { "type": "integer", "minimum": 1 },
+            "scene_rgb": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
+    },
+    "palette_families": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "palette", "digest", "semantic_digest", "transparent_index"],
+        "properties": {
+          "id": { "$ref": "#/definitions/id" },
+          "palette": { "type": "string", "minLength": 1 },
+          "digest": { "$ref": "#/definitions/digest" },
+          "semantic_digest": { "$ref": "#/definitions/digest" },
+          "transparent_index": { "type": "integer", "minimum": 0, "maximum": 255 }
+        }
+      }
+    },
+    "pixel_grid": {
+      "type": "object", "additionalProperties": false, "required": ["native_size", "display_scale", "snap"],
+      "properties": {
+        "native_size": { "$ref": "#/definitions/size" },
+        "display_scale": { "type": "integer", "minimum": 1, "maximum": 32 },
+        "snap": { "type": "boolean" }
+      }
+    },
+    "palette_policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode", "palette", "allowed_indices", "runtime_grade", "extension_budget"],
+      "properties": {
+        "mode": { "enum": ["strict", "explicit_extension"] },
+        "palette": { "type": "string", "minLength": 1 },
+        "allowed_indices": { "type": "array", "minItems": 1, "uniqueItems": true, "contains": { "const": 0 }, "items": { "type": "integer", "minimum": 0, "maximum": 255 } },
+        "ui_palette": { "type": ["string", "null"] },
+        "runtime_grade": { "type": "boolean" },
+        "extension_budget": { "type": "integer", "minimum": 0, "maximum": 255 }
+      }
+    },
+    "roles": {
+      "type": "object", "minProperties": 1,
+      "additionalProperties": { "$ref": "#/definitions/role" }
+    },
+    "value_script": {
+      "type": "object", "additionalProperties": false, "required": ["focal_roles", "rest_roles"],
+      "properties": {
+        "focal_roles": { "$ref": "#/definitions/id_list" },
+        "rest_roles": { "$ref": "#/definitions/id_list" }
+      }
+    },
+    "materials": {
+      "type": "object", "minProperties": 1,
+      "additionalProperties": { "$ref": "#/definitions/material" }
+    },
+    "asset_policies": {
+      "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/asset" }
+    },
+    "animation_policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["max_frames", "hold_terminal", "allow_squash", "allow_smear", "required_phases", "contact_tolerance"],
+      "properties": {
+        "max_frames": { "type": "integer", "minimum": 1, "maximum": 16 },
+        "hold_terminal": { "type": "boolean" },
+        "allow_squash": { "type": "boolean" },
+        "allow_smear": { "type": "boolean" },
+        "required_phases": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "contact_tolerance": { "type": "integer", "minimum": 0, "maximum": 256 }
+      }
+    },
+    "scene_previews": {
+      "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/scene" }
+    },
+    "review_policy": {
+      "type": "object", "additionalProperties": false, "required": ["required_dimensions", "min_reviewers"],
+      "properties": {
+        "required_dimensions": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "min_reviewers": { "type": "integer", "minimum": 2 }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": { "enum": ["user", "project", "profile", "default"] }
+    },
+    "risks": { "type": "array", "items": { "$ref": "#/definitions/risk" } }
+  },
+  "definitions": {
+    "id": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$" },
+    "id_list": { "type": "array", "items": { "$ref": "#/definitions/id" } },
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "size": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "items": { "type": "integer", "minimum": 1, "maximum": 256 }
+    },
+    "canvas_size": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "items": { "type": "integer", "minimum": 1, "maximum": 4096 }
+    },
+    "role": {
+      "type": "object", "additionalProperties": false, "required": ["value", "saturation", "relative_contrast"],
+      "properties": {
+        "value": { "$ref": "#/definitions/byte_range" },
+        "saturation": { "$ref": "#/definitions/byte_range" },
+        "relative_contrast": { "type": "integer", "minimum": -255, "maximum": 255 }
+      }
+    },
+    "byte_range": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "items": { "type": "integer", "minimum": 0, "maximum": 255 }
+    },
+    "finish": { "enum": ["keep", "flat", "volume", "selout", "hard_edge"] },
+    "material": {
+      "type": "object", "additionalProperties": false, "required": ["ramp", "finish", "response", "regions"],
+      "properties": {
+        "ramp": { "type": "string", "minLength": 1 },
+        "finish": { "$ref": "#/definitions/finish" },
+        "response": { "enum": ["flat", "planar", "round", "hard_edge", "emissive"] },
+        "regions": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/id" } }
+      }
+    },
+    "asset": {
+      "type": "object", "additionalProperties": false,
+      "required": ["asset_id", "kind", "role", "material_ids", "protected_regions", "finish", "lighting"],
+      "properties": {
+        "asset_id": { "$ref": "#/definitions/id" },
+        "kind": { "enum": ["sprite", "tile", "ui", "text", "effect", "overlay"] },
+        "role": { "$ref": "#/definitions/id" },
+        "native_size": { "$ref": "#/definitions/size" },
+        "palette_family": { "$ref": "#/definitions/id" },
+        "facing": { "enum": ["symmetric", "left", "right", "four_way"] },
+        "anchor": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "integer" } },
+        "material_ids": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/id" } },
+        "protected_regions": { "$ref": "#/definitions/id_list" },
+        "finish": { "$ref": "#/definitions/finish" },
+        "lighting": { "enum": ["baked", "runtime_lit", "hybrid", "unlit"] }
+      }
+    },
+    "scene": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "size", "background", "scale", "tick", "instances", "rois"],
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "size": { "$ref": "#/definitions/canvas_size" },
+        "background": { "type": "string", "minLength": 1 },
+        "scale": { "type": "integer", "minimum": 1, "maximum": 32 },
+        "tick": { "type": "integer", "minimum": 0 },
+        "instances": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "additionalProperties": false, "required": ["asset_id", "position", "layer"],
+            "properties": {
+              "asset_id": { "$ref": "#/definitions/id" },
+              "position": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "integer" } },
+              "layer": { "enum": ["background", "stage", "world", "effect", "ui"] },
+              "frame": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "rois": {
+          "type": "array",
+          "items": {
+            "type": "object", "additionalProperties": false, "required": ["id", "layer", "rect"],
+            "properties": {
+              "id": { "$ref": "#/definitions/id" },
+              "layer": { "enum": ["world", "ui"] },
+              "rect": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "type": "integer", "minimum": 0 } }
+            }
+          }
+        },
+        "render_mode": { "enum": ["L0", "L1", "L2"] },
+        "lights": {
+          "type": "array",
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["id", "position", "radius", "color"],
+            "properties": {
+              "id": { "$ref": "#/definitions/id" },
+              "position": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "integer" } },
+              "radius": { "type": "integer", "minimum": 1, "maximum": 256 },
+              "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$" }
+            }
+          }
+        }
+      }
+    },
+    "risk": {
+      "type": "object", "additionalProperties": false,
+      "required": ["risk_id", "target", "check", "evidence_required", "status"],
+      "properties": {
+        "risk_id": { "$ref": "#/definitions/id" },
+        "target": { "type": "string", "minLength": 1 },
+        "check": { "type": "string", "minLength": 1 },
+        "evidence_required": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["open", "resolved", "accepted"] },
+        "resolved_by": {
+          "type": ["object", "null"], "additionalProperties": false,
+          "required": ["report", "entry", "digest"],
+          "properties": {
+            "report": { "type": "string", "minLength": 1 },
+            "entry": { "type": "string", "minLength": 1 },
+            "digest": { "$ref": "#/definitions/digest" }
+          }
+        }
+      }
+    }
+  }
+}

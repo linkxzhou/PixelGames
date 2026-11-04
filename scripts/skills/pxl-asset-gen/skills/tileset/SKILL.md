@@ -1,6 +1,6 @@
 ---
 name: pxl-asset-gen-tileset
-description: Build seamless noise tiles or export ase tileset atlases with step-300 tile/ase tools. Use for terrain, repeating props, autotile inputs.
+description: Build seamless noise tiles or export ase tileset atlases with `$PXL tile` / `$PXL ase` tools. Use for terrain, repeating props, autotile inputs.
 ---
 
 # Tileset

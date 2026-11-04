@@ -14,8 +14,8 @@ pub struct OpenAiProvider {
     pub model: String,
     pub api_key_env: String,
     pub timeout_secs: u64,
-    retries: u32,
-    api_key: Option<String>,
+    pub(crate) retries: u32,
+    pub(crate) api_key: Option<String>,
     pub sampling: serde_json::Value,
     last_snapshot: Option<String>,
 }
@@ -40,7 +40,7 @@ impl OpenAiProvider {
         Self::from_env_text(cfg, &text)
     }
 
-    fn from_env_text(cfg: &crate::config::Config, text: &str) -> Result<Self> {
+    pub(crate) fn from_env_text(cfg: &crate::config::Config, text: &str) -> Result<Self> {
         let mut values = std::collections::BTreeMap::new();
         for (index, line) in text.lines().enumerate() {
             let line = line.trim();
@@ -175,7 +175,7 @@ impl ModelProvider for OpenAiProvider {
     }
 }
 
-fn build_request_body(
+pub(crate) fn build_request_body(
     messages: &[ChatMessage],
     tools: &[ToolSpec],
     model: &str,
@@ -217,7 +217,7 @@ fn build_request_body(
     })
 }
 
-fn parse_response(json: &serde_json::Value, model: &str) -> Result<ProviderResponse> {
+pub(crate) fn parse_response(json: &serde_json::Value, model: &str) -> Result<ProviderResponse> {
     let choice = json
         .get("choices")
         .and_then(|c| c.get(0))

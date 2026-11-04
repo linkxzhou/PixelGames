@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pxl/audio-requirements/v1",
+  "title": "audio-requirements.json",
+  "description": "Which sounds the game needs. A separate file next to asset-requirements.json: design/v3 is closed (additionalProperties false), so audio does not widen it. A game without this file simply has no audio requirement.",
+  "type": "object",
+  "required": ["schema_version", "requirements"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "requirements": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/requirement" } }
+  },
+  "definitions": {
+    "requirement": {
+      "type": "object",
+      "required": ["audio_id", "kind", "required", "trigger"],
+      "additionalProperties": false,
+      "properties": {
+        "audio_id": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,63}$" },
+        "kind": { "enum": ["sfx", "bgm"] },
+        "required": { "type": "boolean" },
+        "trigger": { "type": "string", "description": "Game event or scene that plays it, e.g. player_fire or stage_start." },
+        "max_seconds": { "type": "number", "exclusiveMinimum": 0, "maximum": 60 },
+        "loop": { "type": "boolean" },
+        "style": { "type": "string" },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

@@ -1,5 +1,9 @@
 use super::*;
 
+use std::collections::{BTreeMap, BTreeSet};
+
+use super::types::{LockedEntry, ReviewState};
+
 fn zero_digest() -> String {
     sha256_digest(b"source")
 }
@@ -99,23 +103,23 @@ fn rust_types_and_json_schemas_stay_in_step() {
     let proto = house();
     assert_matches_schema(
         &serde_json::to_value(&proto).unwrap(),
-        include_str!("../../../steps/contracts/prototype.schema.json"),
+        include_str!("../../../../steps/contracts/prototype.schema.json"),
         "prototype",
     );
     assert_matches_schema(
         &serde_json::to_value(roof_tile()).unwrap(),
-        include_str!("../../../steps/contracts/surface-recipe.schema.json"),
+        include_str!("../../../../steps/contracts/surface-recipe.schema.json"),
         "surface-recipe",
     );
     assert_matches_schema(
         &serde_json::to_value(instance(&proto)).unwrap(),
-        include_str!("../../../steps/contracts/asset-instance.schema.json"),
+        include_str!("../../../../steps/contracts/asset-instance.schema.json"),
         "asset-instance",
     );
     let lock = CatalogLock::seal(vec![entry("a", EntryKind::Prototype, &[], ReviewState::Approved)]);
     assert_matches_schema(
         &serde_json::to_value(&lock).unwrap(),
-        include_str!("../../../steps/contracts/catalog-lock.schema.json"),
+        include_str!("../../../../steps/contracts/catalog-lock.schema.json"),
         "catalog-lock",
     );
 }
@@ -124,7 +128,7 @@ fn rust_types_and_json_schemas_stay_in_step() {
 fn enums_serialize_to_the_values_the_schemas_allow() {
     let proto = serde_json::to_value(house()).unwrap();
     let schema: serde_json::Value =
-        serde_json::from_str(include_str!("../../../steps/contracts/prototype.schema.json")).unwrap();
+        serde_json::from_str(include_str!("../../../../steps/contracts/prototype.schema.json")).unwrap();
     let allowed = |path: &[&str]| -> Vec<String> {
         let mut node = &schema["properties"];
         for key in path {

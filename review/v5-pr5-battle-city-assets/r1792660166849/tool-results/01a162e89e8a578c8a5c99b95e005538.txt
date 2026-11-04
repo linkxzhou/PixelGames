@@ -1,2 +1,0 @@
-[ok] validated out/explosion/explosion.sheet.json (default)
-{"ok":true,"error_code":"","message":"","hint":null,"failed_checks":[]}

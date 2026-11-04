@@ -22,9 +22,9 @@ description: Scaffold a new canvas — ASCII/shapes/recipe/pxl.json or prepare a
 3. Scaffold:
    - Blank-ish parts canvas: `$PXL gen parts -o blank.pxl.json --palette p16` (omit `--dir` for empty-ish start when supported).
    - Or write ASCII block-in (one glyph = one mass).
-   - Or copy a nearest `examples/**/*.recipe.json` structure and rename ids (do not copy game runtimes).
+   - Or copy a nearest existing `*.recipe.json` (e.g. `sources/<id>/` of a built library; `$PXL schema recipe` for fields) and rename ids (do not copy game runtimes).
 4. `$PXL inspect <doc>` once to confirm size/palette.
 
 ## Ase path
 
-Prefer `step-300 ase …` for `.aseprite` roundtrip (v8). Create pixels via gen/ascii/shapes/recipe first, export to ase when needed (`ase convert` / import bridge), then tag/layer with `ase tag|layer|frame` (rebuild `step-300` if those subcommands are missing from an old binary).
+Prefer `$PXL ase …` for `.aseprite` roundtrip (v8). Create pixels via gen/ascii/shapes/recipe first, export to ase when needed (`ase convert` / import bridge), then tag/layer with `ase tag|layer|frame` (rebuild `step-300` if those subcommands are missing from an old binary).

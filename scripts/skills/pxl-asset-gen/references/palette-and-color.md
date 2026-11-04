@@ -18,6 +18,6 @@ Reserve indices for: transparent/empty, outline, deep shadow, mid, light, accent
 
 ## Tooling here
 
-- Built-ins: `p16`, `tank` (`step-300 list palettes`).
+- Built-ins: `p16`, `tank` (`$PXL --json list palettes`).
 - `palette ramp` for hue-shifted shadow/light steps.
 - `palette apply` / `swap` to remap without redrawing topology.

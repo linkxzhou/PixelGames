@@ -9,15 +9,66 @@
       "id": "steel",
       "kind": "tiles",
       "tile_ramp": "steel",
-      "base": {"gen": "shapes", "spec": "steel.shapes.json", "seed": 29},
+      "base": {
+        "gen": "shapes",
+        "spec": "steel.shapes.json",
+        "seed": 29
+      },
       "directions": [
-        {"id": "N", "from": "base", "ops": [{"op": "noop"}]}
+        {
+          "id": "N",
+          "from": "base",
+          "ops": [
+            {
+              "op": "noop"
+            }
+          ]
+        }
       ],
       "anims": [
-        {"name": "idle", "fps": 2, "loop": true, "dirs": ["N"], "mode": "static", "frames": [[{"op": "noop"}]]}
+        {
+          "name": "idle",
+          "fps": 2,
+          "loop": true,
+          "dirs": [
+            "N"
+          ],
+          "mode": "static",
+          "frames": [
+            [
+              {
+                "op": "noop"
+              }
+            ]
+          ]
+        }
       ]
     }
   ],
-  "sheet": {"sources": ["steel"], "layout": "rows-by-anim", "pad": 1, "file": "steel.sheet.png"},
-  "validate": {"rules": "default"}
+  "sheet": {
+    "sources": [
+      "steel"
+    ],
+    "layout": "rows-by-anim",
+    "pad": 1,
+    "file": "steel.sheet.png"
+  },
+  "validate": {
+    "rules": "default"
+  },
+  "preview": [
+    {
+      "source": "steel",
+      "anim": "idle",
+      "dir": "N",
+      "scale": 8,
+      "file": "steel_idle_x8.png"
+    },
+    {
+      "sheet": true,
+      "scale": 6,
+      "grid": true,
+      "file": "steel_sheet_x6.png"
+    }
+  ]
 }

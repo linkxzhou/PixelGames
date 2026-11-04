@@ -1,0 +1,4 @@
+interface:
+  display_name: "pxl design"
+  short_description: "step-100: brief to design package"
+  default_prompt: "Use $pxl-design to turn brief.json into an approved design package."

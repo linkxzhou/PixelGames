@@ -261,7 +261,7 @@ fn d2(a: [i64; 3], b: [i64; 3]) -> i64 {
 }
 
 /// One cell to one colour. Cells that are mostly clear stay clear.
-fn reduce(cell: &[[u8; 4]], method: Downscale, centre: [u8; 4]) -> [u8; 4] {
+pub(crate) fn reduce(cell: &[[u8; 4]], method: Downscale, centre: [u8; 4]) -> [u8; 4] {
     let solid: Vec<[u8; 4]> = cell.iter().copied().filter(|p| p[3] >= 128).collect();
     if solid.len() * 2 <= cell.len() {
         return [0, 0, 0, 0];

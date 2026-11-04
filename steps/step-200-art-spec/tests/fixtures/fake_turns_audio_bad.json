@@ -1,0 +1,72 @@
+[
+ [
+  [
+   "assets.read_requirements",
+   {}
+  ]
+ ],
+ [
+  [
+   "assets.write_candidate",
+   {
+    "path": "visual-plan.json",
+    "content": "{\"contract\":\"visual-plan/v1\",\"intent_digest\":\"sha256:3d605947a6878fc484a627fa89474f57636db349b6b12ca7922f43d5826931b8\",\"assets\":[{\"asset_id\":\"bullet\",\"role\":\"actor\",\"native_size\":[16,16],\"finish\":\"hard_edge\",\"lighting\":\"baked\",\"regions\":[{\"region_id\":\"body\",\"material_id\":\"metal\",\"ramp\":\"main\",\"light_role\":\"base\",\"protect\":false,\"source\":{\"kind\":\"shape\",\"selector\":\"bullet.shapes.json#body\"},\"mask\":null},{\"region_id\":\"eye\",\"material_id\":\"metal\",\"ramp\":\"main\",\"light_role\":\"base\",\"protect\":true,\"source\":{\"kind\":\"shape\",\"selector\":\"bullet.shapes.json#eye\"},\"mask\":null}],\"animations\":[{\"anim_id\":\"fly\",\"anchor\":[8,15],\"contact\":[8,15],\"allow_squash\":false,\"allow_smear\":false,\"terminal_empty\":false,\"phases\":[{\"phase_id\":\"anticipation\",\"frames\":[\"bullet_fly_N_0\"],\"duration_ms\":[1000],\"transform\":null},{\"phase_id\":\"contact\",\"frames\":[\"bullet_fly_N_1\"],\"duration_ms\":[1000],\"transform\":{\"kind\":\"translate\",\"offset\":[0,1],\"rotate90\":0}}]}],\"tile\":null,\"channels\":{\"material_labels\":true,\"emissive\":false,\"shadow\":false}},{\"asset_id\":\"gem\",\"role\":\"pickup\",\"native_size\":[6,6],\"finish\":\"keep\",\"lighting\":\"hybrid\",\"regions\":[{\"region_id\":\"core\",\"material_id\":\"emissive\",\"ramp\":\"main\",\"light_role\":\"emissive\",\"protect\":true,\"source\":{\"kind\":\"shape\",\"selector\":\"gem.shapes.json#core\"},\"mask\":null},{\"region_id\":\"glow\",\"material_id\":\"emissive\",\"ramp\":\"main\",\"light_role\":\"emissive\",\"protect\":false,\"source\":{\"kind\":\"shape\",\"selector\":\"gem.shapes.json#glow\"},\"mask\":null}],\"animations\":[{\"anim_id\":\"idle\",\"anchor\":[3,5],\"contact\":[3,5],\"allow_squash\":false,\"allow_smear\":false,\"terminal_empty\":false,\"phases\":[{\"phase_id\":\"contact\",\"frames\":[\"gem_idle_0\"],\"duration_ms\":[1000],\"transform\":null},{\"phase_id\":\"recovery\",\"frames\":[\"gem_idle_1\"],\"duration_ms\":[1000],\"transform\":{\"kind\":\"translate\",\"offset\":[0,1],\"rotate90\":0}}]}],\"tile\":null,\"channels\":{\"material_labels\":true,\"emissive\":true,\"shadow\":false}}],\"previews\":[{\"scene_id\":\"main\",\"assets\":[\"bullet\",\"gem\"]}]}"
+   }
+  ],
+  [
+   "assets.write_candidate",
+   {
+    "path": "palette.json",
+    "content": "{\n  \"v\": 1,\n  \"id\": \"p16\",\n  \"colors\": [\n    \"#00000000\", \"#140c1c\", \"#442434\", \"#30346d\",\n    \"#4e4a4e\", \"#854c30\", \"#346524\", \"#d04648\",\n    \"#757161\", \"#597dce\", \"#d27d2c\", \"#8595a1\",\n    \"#6daa2c\", \"#d2aa99\", \"#6dc2ca\", \"#deeed6\"\n  ],\n  \"ramps\": {},\n  \"cycles\": {}\n}\n"
+   }
+  ],
+  [
+   "assets.write_candidate",
+   {
+    "path": "bullet/bullet.recipe.json",
+    "content": "{\"v\":1,\"asset\":\"bullet\",\"gen_version\":1,\"seed\":5,\"palette\":\"../palette.json\",\"sprites\":[{\"id\":\"bullet\",\"base\":{\"gen\":\"shapes\",\"spec\":\"bullet.shapes.json\",\"seed\":5},\"directions\":[{\"id\":\"N\",\"from\":\"base\",\"ops\":[{\"op\":\"noop\"}]}],\"anims\":[{\"name\":\"fly\",\"fps\":1,\"loop\":false,\"dirs\":[\"N\"],\"frames\":[[{\"op\":\"noop\"}],[{\"op\":\"shift\",\"dy\":1}]]}]}],\"sheet\":{\"sources\":[\"bullet\"],\"layout\":\"rows-by-anim\",\"pad\":1,\"file\":\"bullet.sheet.png\"},\"validate\":{\"rules\":\"default\"}}"
+   }
+  ],
+  [
+   "assets.write_candidate",
+   {
+    "path": "bullet/bullet.shapes.json",
+    "content": "{\n  \"w\": 16,\n  \"h\": 16,\n  \"draw\": [\n    { \"x\": 0, \"y\": 0, \"pixels\": [\n      \"................\",\n      \"................\",\n      \"................\",\n      \"................\",\n      \"................\",\n      \"......4444......\",\n      \"......4334......\",\n      \"......4334......\",\n      \"......4334......\",\n      \"......4334......\",\n      \"......4334......\",\n      \"......4334......\",\n      \"................\",\n      \"................\",\n      \"................\",\n      \"................\"\n    ] }\n  ],\n  \"regions\": {\n    \"body\": { \"pixels\": [\n      \"................\",\"................\",\"................\",\"................\",\"................\",\n      \"......1111......\",\"......1111......\",\"......1111......\",\"......1111......\",\"......1111......\",\"......1111......\",\"......1111......\",\n      \"................\",\"................\",\"................\",\"................\"\n    ] },\n    \"eye\": { \"pixels\": [\n      \"................\",\"................\",\"................\",\"................\",\"................\",\n      \"......11........\",\"................\",\"................\",\"................\",\"................\",\"................\",\"................\",\n      \"................\",\"................\",\"................\",\"................\"\n    ] }\n  }\n}\n"
+   }
+  ]
+ ],
+ [
+  [
+   "assets.write_candidate",
+   {
+    "path": "gem/gem.recipe.json",
+    "content": "{\"v\":1,\"asset\":\"gem\",\"gen_version\":1,\"seed\":7,\"palette\":\"../palette.json\",\"sprites\":[{\"id\":\"gem\",\"base\":{\"gen\":\"shapes\",\"spec\":\"gem.shapes.json\",\"seed\":7},\"anims\":[{\"name\":\"idle\",\"fps\":1,\"loop\":true,\"frames\":[[{\"op\":\"noop\"}],[{\"op\":\"shift\",\"dy\":1}]]}]}],\"sheet\":{\"sources\":[\"gem\"],\"layout\":\"rows-by-anim\",\"pad\":1,\"file\":\"gem.sheet.png\"},\"validate\":{\"rules\":\"default\"}}"
+   }
+  ],
+  [
+   "assets.write_candidate",
+   {
+    "path": "gem/gem.shapes.json",
+    "content": "{\n  \"w\": 6,\n  \"h\": 6,\n  \"draw\": [\n    { \"x\": 0, \"y\": 0, \"pixels\": [\n      \"......\",\n      \".9909.\",\n      \".9009.\",\n      \".9009.\",\n      \".9909.\",\n      \"......\"\n    ] }\n  ],\n  \"regions\": {\n    \"core\": { \"pixels\": [\"......\", \".11...\", \"......\", \"......\", \"......\", \"......\"] },\n    \"glow\": { \"pixels\": [\"......\", \"....1.\", \".1..1.\", \".1..1.\", \".11.1.\", \"......\"] }\n  }\n}\n"
+   }
+  ]
+ ],
+ [
+  [
+   "assets.write_candidate",
+   {
+    "path": "audio/audio.spec.json",
+    "content": "{\"contract\": \"audio-spec/v1\", \"asset\": \"fixture_audio\", \"seed\": 5, \"sfx\": [{\"id\": \"beep\", \"engine\": \"zzfx\", \"params\": {\"waveform\": \"sine\", \"frequency_hz\": 1, \"sustain_sec\": 0.05, \"release_sec\": 0.05}, \"gain\": 0.4}], \"bgm\": [{\"id\": \"theme\", \"engine\": \"beepbox\", \"song_file\": \"songs/theme.beepbox.json\", \"loop\": {\"start_bar\": 0, \"end_bar_exclusive\": 2}}]}"
+   }
+  ]
+ ],
+ [
+  [
+   "assets.write_candidate",
+   {
+    "path": "audio/songs/theme.beepbox.json",
+    "content": "{\"format\": \"BeepBox\", \"version\": 9, \"scale\": \"normal :(\", \"key\": \"C\", \"introBars\": 0, \"loopBars\": 2, \"beatsPerBar\": 8, \"ticksPerBeat\": 4, \"beatsPerMinute\": 125, \"layeredInstruments\": false, \"patternInstruments\": false, \"channels\": [{\"type\": \"pitch\", \"instruments\": [{\"type\": \"chip\", \"volume\": 100, \"eqFilter\": [], \"effects\": [\"chord type\"], \"chord\": \"simultaneous\", \"fadeInSeconds\": 0, \"fadeOutTicks\": -3, \"wave\": \"square\", \"unison\": \"none\", \"envelopes\": []}], \"patterns\": [{\"notes\": [{\"pitches\": [24], \"points\": [{\"tick\": 0, \"pitchBend\": 0, \"volume\": 100}, {\"tick\": 8, \"pitchBend\": 0, \"volume\": 100}]}, {\"pitches\": [28], \"points\": [{\"tick\": 8, \"pitchBend\": 0, \"volume\": 100}, {\"tick\": 16, \"pitchBend\": 0, \"volume\": 100}]}]}], \"sequence\": [1, 1], \"octaveScrollBar\": 3}]}"
+   }
+  ]
+ ]
+]

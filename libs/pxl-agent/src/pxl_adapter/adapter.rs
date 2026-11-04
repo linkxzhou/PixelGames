@@ -56,7 +56,7 @@ impl PxlResult_ {
 
 #[derive(Debug, Clone)]
 pub struct PxlAdapter {
-    bin: PathBuf,
+    pub(crate) bin: PathBuf,
     version: Option<String>,
     binary_digest: Option<String>,
     timeout_secs: u64,

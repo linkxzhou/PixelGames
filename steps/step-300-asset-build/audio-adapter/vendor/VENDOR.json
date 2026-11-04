@@ -1,0 +1,21 @@
+{
+  "note": "Files are copied unmodified from the npm tarballs except that `//# sourceMappingURL` lines were removed and beepbox/index.js was replaced by a one-line re-export. Version, integrity and license come from npm.",
+  "packages": [
+    {
+      "name": "beepbox",
+      "version": "4.2.0",
+      "license": "MIT",
+      "integrity": "sha512-OQ1woUdH1MgPUYsQWrsJ/4v7f7NuY5OY76LksqP/Z2Yu/zb0mKLgPxqsEhqLyXXRCb4uYURQjeykcLY03qlt3w==",
+      "source": "https://registry.npmjs.org/beepbox/-/beepbox-4.2.0.tgz",
+      "files": ["synth.js", "SynthConfig.js", "FFT.js", "filtering.js", "Deque.js", "index.js", "LICENSE.md"]
+    },
+    {
+      "name": "zzfx",
+      "version": "1.4.0",
+      "license": "MIT",
+      "integrity": "sha512-yV/7JnIBPThWh/ZLVZLlmadms5bHQQeoWKKA+DafX4554FHypsop1BQrDHhsf2xxXweUmwjWrnpiB42uBGyGlQ==",
+      "source": "https://registry.npmjs.org/zzfx/-/zzfx-1.4.0.tgz",
+      "files": ["ZzFX.js", "LICENSE"]
+    }
+  ]
+}

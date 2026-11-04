@@ -1,0 +1,4 @@
+interface:
+  display_name: "pxl-asset-gen"
+  short_description: "Craft pixel assets and publish an index.html library"
+  default_prompt: "Use $pxl-asset-gen to build a small farm asset pack with an index.html gallery."
