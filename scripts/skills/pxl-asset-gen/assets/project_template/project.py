@@ -17,7 +17,7 @@ CONFIG = dict(
     license_note='原创素材',
     seed=1104,
     scope='模板示例，非完整资源',
-    deferred=['动画', '音频'],
+    deferred=['角色完整动作动画', '音频'],
     brief={'view': 'top-down three-quarter', 'light': 'upper-left', 'tile_size': 16, 'transparent_index': 0},
     palette=dict(
         id='starter-soft',
@@ -39,10 +39,13 @@ def terrain(lib):
     for x, y in [(3, 4), (9, 2), (12, 9), (5, 11), (7, 7), (11, 13)]:
         grass.mark(x, y, 'l').mark(x, y + 1, 'f')
     lib.add('tile_grass', '草地', 'terrain', grass, region=T16, tile=True)
-    water = Grid().rect(0, 0, 16, 16, 'u')
-    for x, y in [(2, 3), (8, 6), (4, 10), (10, 12)]:
-        water.rect(x, y, 3, 1, 's').mark(x + 1, y + 1, 'B')
-    lib.add('tile_water', '水面', 'terrain', water, region=T16, tile=True)
+    for frame in range(3):
+        water = Grid().rect(0, 0, 16, 16, 'u')
+        for x, y in [(2, 3), (8, 6), (4, 10), (10, 12)]:
+            water.rect(x - frame, y, 3, 1, 's').mark(x + 1 - frame, y + 1, 'B')
+        water_id = 'tile_water' if frame == 0 else f'tile_water_{frame}'
+        lib.add(water_id, f'水波·{frame + 1}', 'terrain', water, region=T16,
+                sequence='water', frame=frame, duration_ms=240)
     dirt = Grid().rect(0, 0, 16, 16, 't')
     for x, y in [(4, 3), (10, 5), (6, 9), (12, 11), (2, 13)]:
         dirt.mark(x, y, 'b').mark(x + 1, y, 'o')

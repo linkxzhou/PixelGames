@@ -5,6 +5,15 @@ description: Build idle/walk/attack cycles with timing and tags using recipe ani
 
 # Animate
 
+## Library preview (separate authored frame assets)
+
+For a pack/gallery, first read [../../references/library.md](../../references/library.md#animation-showcase-contract).
+Register `sequence`, zero-based contiguous `frame`, positive `duration_ms` and optional `direction` per asset.
+The library kit embeds a real frame player in `index.html`: play/pause, step, speed and integer pixel zoom.
+Reuse existing frame PNGs; do not replace real sprite motion with CSS movement or infer cycles from IDs.
+Verify original timing, wraparound, source cropping and reduced-motion pause. Static recipe/atlas `idle`
+durations are not playback timing. Gallery playback does not itself produce an animated GIF/sheet.
+
 ## Prefer recipe macros when possible
 
 `build` expands `anims` + macros (`$PXL --json list macros`, `$PXL schema recipe`; a generated library's `sources/*/*.recipe.json` is a working example). Keep keys few; in-betweens cheap.

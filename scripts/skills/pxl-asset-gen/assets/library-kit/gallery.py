@@ -1,6 +1,7 @@
 """Write <library>/index.html: a static, file://-safe browser for every asset."""
 from collections import defaultdict
 from html import escape
+import animation_gallery
 
 THEME = dict(bg='#1c2926', panel='#2b3b32', line='#415044', paper='#ede1c5',
              muted='#a6b5a1', accent='#e4bc57', check_a='#26352e', check_b='#2b3b33')
@@ -87,7 +88,11 @@ def write(root, config, entries, boards, atlases, hero):
     out.append('</div></header><main><div class="bar"><input id="search" aria-label="搜索素材" '
                'placeholder="搜索名称 / ID / 分类"><nav>')
     out.extend(f'<a href="#cat-{escape(c)}">{escape(c)} {len(g)}</a>' for c, g in groups.items())
+    motion = animation_gallery.render(entries)
+    if motion:
+        out.append('<a href="#animations">动效展示</a>')
     out.append('<a href="#atlases">atlases</a><a href="#boards">boards</a></nav></div>')
+    out.append(motion)
     for category, group in groups.items():
         out.append(f'<section data-category="{escape(category)}"><h2 id="cat-{escape(category)}">'
                    f'{escape(category)} <span>{len(group)}</span></h2><div class="grid">'

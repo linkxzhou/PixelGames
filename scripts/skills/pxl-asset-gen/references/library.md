@@ -23,7 +23,7 @@ Final delivery for any multi-asset request is a **self-contained folder** browsa
   sources/<id>/<id>.ascii.json | <id>.recipe.json   # the only authored inputs the binary consumes
   atlases/<category>.png|.json                      # `sheet --layout grid --pad 1`
   previews/<category>_NN.png|.index.json|.ascii.json, scene.png   # ascii render --scale 3 overview boards
-  tools/project.py (+ sibling modules) + vendored art_kit.py build_library.py gallery.py verify_library.py
+  tools/project.py (+ sibling modules) + vendored art_kit.py build_library.py gallery.py animation_gallery.py verify_library.py
 ```
 
 Manifest asset entry: `id name category section source_rect canvas png doc source recipe sha256` + any extra
@@ -61,8 +61,29 @@ Only `id`, `palette.colors` and `populate` are required. `glyphs[0]` must be `'.
 | `lib.place(target, id, x, y)` | stamp an asset's `source_rect` into a scene/board |
 
 Conventions: ids `snake_case`; 16×16 art goes top-left in a 32 canvas with `region=[0, 0, 16, 16]`;
-frames/directions are separate ids (`farmer_south_0`, `farmer_south_1`) with `frame=`/`direction=` meta;
+frames/directions are separate ids (`farmer_south_0`, `farmer_south_1`);
 seamless tiles pass `tile=True` (verifier compares opposite edges inside `source_rect`).
+
+### Animation showcase contract
+
+Register frames with `lib.add(..., sequence='farmer_walk_south', frame=0, duration_ms=180, direction='south')`.
+Use a distinct `sequence` per action/direction, contiguous integer `frame` indices from 0,
+positive integer `duration_ms`, and identical `canvas`, `source_rect`, and `direction` within a sequence.
+Author genuinely different poses/pixels. Register frames in order so `--limit` smoke builds contain a prefix.
+Do not infer animation from numeric ID suffixes: crop stages and colour variants are not automatically cycles.
+
+`animation_gallery.py` groups explicit sequences with 2+ frames and embeds a file-safe player in
+`index.html#animations`. It loops in frame order using each manifest duration, crops `source_rect`,
+preloads PNGs and provides play/pause, frame selection/step, speed and integer zoom.
+Single-frame sequences stay static; invalid metadata fails gallery generation instead of silently guessing.
+The player suspends in background tabs and defaults to paused under `prefers-reduced-motion`.
+No fetch/CDN/server is required; include the module in vendored `tools/` for standalone rebuilds.
+
+Individual frame recipes remain static `idle` assets. Their atlas `duration=1000` is not animation timing:
+use manifest `duration_ms` instead. GIF/animated sheet exports require a separate animated recipe.
+Preserve `animation_playback: NOT_ASSESSED` until playback is actually verified, even when asset validation passes.
+For existing packs, regenerate the gallery from the manifest without rebuilding unchanged PNGs;
+Stardew supports `python3 examples/stardew/tools/build.py --gallery-only`.
 
 ## Gotchas
 

@@ -31,7 +31,7 @@ sys.path.insert(0, str(HERE))
 from art_kit import ASCII_SIZES, Grid, Library, dump  # noqa: E402
 import gallery  # noqa: E402
 
-KIT_FILES = ('art_kit.py', 'build_library.py', 'gallery.py', 'verify_library.py')
+KIT_FILES = ('art_kit.py', 'build_library.py', 'gallery.py', 'animation_gallery.py', 'verify_library.py')
 OUTPUT_DIRS = ('assets', 'sources', 'atlases', 'previews')
 
 

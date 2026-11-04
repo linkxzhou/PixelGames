@@ -1,7 +1,9 @@
 ---
 name: pxl-asset-gen
-description: Craft pixel-art materials with the bundled pxl-asset-gen binary (ASCII/shapes/recipe/ase) and deliver them as a browsable asset library folder (index.html + manifest + atlases + previews, like examples/stardew). Covers brief → concept → palette → draw → shade → review → animate → export → fix/tileset → library. Use when generating or iterating sprites, tiles, sheets, GIFs, .aseprite assets or a whole asset pack/gallery; not for the full brief→package→engine game pipeline (use sibling skill `pxl` for that).
-version: 0.1.0
+description: Craft pixel-art materials with the bundled pxl-asset-gen binary (ASCII/shapes/recipe/ase) and deliver a browsable asset library (index.html + manifest + atlases + previews + interactive animation showcase, like examples/stardew). Covers brief → palette → draw → shade → review → animate → export → library. Use when generating or iterating sprites, tiles, sheets, GIFs, .aseprite assets, asset packs/galleries or frame-animation previews; not for the full brief→package→engine game pipeline (use sibling skill `pxl` for that).
+version: 0.2.0
+author: <NAME>
+license: CC0
 ---
 
 # pxl-asset-gen
@@ -11,7 +13,7 @@ Self-contained **pixel asset craft** skill: one prebuilt binary + craft guides +
 ## Hard rules
 
 1. **All pixels from the binary.** Python may only place palette glyphs into ASCII grids/recipes; never paint or edit pixels with PIL/ImageMagick (PIL is allowed read-only in `verify_library.py`).
-2. **Never write into the skill folder** or into existing reference packs (`games/`, `examples/stardew/`). Output goes to `/tmp/<pack>`, `examples/<new>/`, or a user-named dir.
+2. **Normal generation must not write into the skill folder** or existing reference packs (`games/`, `examples/stardew/`). Output goes to `/tmp/<pack>`, `examples/<new>/`, or a user-named dir. Explicit maintenance requests may modify the named skill/reference pack; preserve unrelated assets and change the generator as well as its generated page.
 3. **Screenshots for visual delivery only** — no screen recordings.
 4. **Trust `--help` over memory.** Check `$PXL <cmd> --help` before using a flag.
 5. Keep every generated tools file ≤500 lines.
@@ -32,6 +34,7 @@ $PXL --help; $PXL ascii render --help; $PXL ase --help
 ```
 
 - If the host's binary is missing from `bin/`, stop and tell the user — do not try to build or fetch one.
+- `bin/pxl-asset-gen-linux` must be a **static** build (`x86_64-unknown-linux-musl`); a glibc-linked one fails on older hosts. Maintainers verify with `scripts/build-pxl-asset-gen.sh --check` (never compiles).
 - If it is not executable (permission denied), run `chmod +x "$PXL"`; on macOS quarantine, `xattr -d com.apple.quarantine "$PXL"`.
 - Includes `ase` (headless Aseprite IO, frame/tag/layer edit, Rhai `ase script`).
 - Global flags: `--json`, `--seed`, `--overwrite`, `--strict`. Exit 5 = QA fail.
@@ -84,8 +87,8 @@ Look at `$OUT/previews/*.png` (screenshot). Done when: each asset reads at 1× b
 **Step 6 — Shade & detail** ([skills/shade](skills/shade/SKILL.md), [references/shading-and-light.md](references/shading-and-light.md)). Apply ramps from the Step 1 light direction; selective outline; highlights 1–2 px only where earned. Tiles: `tile=True`, keep opposite edges matching.
 Done when: smoke previews show consistent light and no new colours outside the palette (build asserts colour budget).
 
-**Step 7 — Variants / frames (optional)** ([skills/animate](skills/animate/SKILL.md), [skills/tileset](skills/tileset/SKILL.md)). The library kit builds **static** assets: register each frame/direction as its own id (`farmer_south_0`, `_1` …, meta `frame=`/`direction=`). For playable animation GIFs/sheets use Workflow B's recipe `anims` on top.
-Done when: every frame id exists and frames of one set share canvas + `source_rect`.
+**Step 7 — Variants / animation** ([skills/animate](skills/animate/SKILL.md), [skills/tileset](skills/tileset/SKILL.md)). When motion is requested or frames already exist, register each authored frame as a separate asset with `sequence`, zero-based `frame`, positive integer `duration_ms`, and optional `direction`. Give each direction its own sequence. The gallery automatically plays sequences with 2+ frames; static variants without `sequence` stay static. Do not fake sprite animation with CSS transforms. For downloadable GIFs/animated sheets use Workflow B's recipe `anims` separately.
+Done when: frame indices are unique and contiguous from zero; each sequence shares canvas, `source_rect` and direction; `index.html#animations` shows the expected sequences and original per-frame timing. See [references/library.md](references/library.md) for the metadata contract.
 
 **Step 8 — Hero scene (optional).** Add `scene(lib)` composing only existing assets via `lib.place`.
 Done when: `previews/scene.png` appears after the full build.
@@ -106,7 +109,7 @@ Done when: `"status": "PASS"` (links, SHA-256, palette membership, `source_rect`
 ```bash
 python3 -m http.server 8000 --directory $OUT     # open http://127.0.0.1:8000/index.html
 ```
-Screenshot `index.html` and 2+ preview boards; check readability at 1×, light consistency, style coherence across categories, search/lightbox working.
+Screenshot `index.html` and 2+ preview boards; check readability at 1×, light consistency, style coherence across categories, search/lightbox working. For animation, verify wraparound and non-uniform frame timing, play/pause, next-frame/frame selection, speed, integer zoom, cropped `source_rect`, background-tab suspension and reduced-motion default pause. Test direct `file://` opening (no manifest fetch) and narrow screens. Keep `animation_playback: NOT_ASSESSED` until playback has actually been checked; asset validation alone is not animation verification.
 Done when: checklist passes. Otherwise fix with [skills/fix](skills/fix/SKILL.md) → back to Step 9.
 
 **Step 12 — Deliver.** Report: `$OUT` path, asset/category counts, `validation.json` status, what was visually reviewed (else `visual_review: NOT_ASSESSED`), deferred items, and how to rebuild (`PXL_BIN=$PXL python3 $OUT/tools/build_library.py`). Never claim PASS without evidence.
