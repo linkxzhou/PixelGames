@@ -32,13 +32,20 @@ host_name() {
   if [[ $os == linux && $arch == x64 ]]; then echo "pxl-asset-gen-linux"; else echo "pxl-asset-gen-$os-$arch"; fi
 }
 
+sha256_of() {
+  if command -v sha256sum >/dev/null; then sha256sum "$1" | cut -d' ' -f1
+  elif command -v shasum >/dev/null; then shasum -a 256 "$1" | cut -d' ' -f1
+  else openssl dgst -sha256 -r "$1" | cut -d' ' -f1
+  fi
+}
+
 install_bin() {
   local src="$1" name="$2"
   mkdir -p "$OUT"
   cp "$src" "$OUT/$name"
   chmod +x "$OUT/$name"
   if command -v strip >/dev/null && [[ "$name" == "$(host_name)" ]]; then strip "$OUT/$name" 2>/dev/null || true; fi
-  printf '%s  %s\n' "$(shasum -a 256 "$OUT/$name" | cut -d' ' -f1)" "$name"
+  printf '%s  %s\n' "$(sha256_of "$OUT/$name")" "$name"
 }
 
 cd "$ROOT"

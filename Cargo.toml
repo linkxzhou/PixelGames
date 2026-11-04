@@ -18,20 +18,11 @@ members = [
     "libs/pxl-ase",
     "libs/pxl-arcade-kit",
     "libs/pxl-fight",
-    "games/todo-01-pac-man/runtime",
-    "games/todo-02-donkey-kong/runtime",
-    "games/todo-03-street-fighter-ii/runtime",
-    "games/todo-04-galaga/runtime",
-    "games/todo-05-ms-pac-man/runtime",
-    "games/todo-06-space-invaders/runtime",
-    "games/todo-07-mortal-kombat/runtime",
-    "games/todo-08-dig-dug/runtime",
-    "games/todo-09-frogger/runtime",
-    "games/todo-10-asteroids/runtime",
-    "games/battle-city/runtime",
-    "games/metal-slug/runtime",
-    "games/stardew/runtime",
-    "games/octopath/runtime",
+    # `games/` is NOT a member here on purpose: it is gitignored (only
+    # games/battle-city is tracked), so any games member makes `cargo metadata`
+    # fail on a clean clone and takes `cargo build -p pxl-cli` (and
+    # scripts/build-pxl-asset-gen.sh) down with it. Game runtimes are their own
+    # workspace, see games/Cargo.toml.
     "steps/step-100-design",
     "steps/step-200-art-spec",
     "steps/step-400-package",

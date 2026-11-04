@@ -23,7 +23,7 @@
 |---|---|---|
 | `libs/` | 可复用 `pxl-*` 库与 `pxl-cli`（bin 名仍为 `step-300`） | 是 |
 | `steps/` | 五步流水线阶段目录 + `contracts/` | 阶段 bin / 适配器；**不再**堆 `pxl-*` |
-| `games/` | 各游戏包（策划、runtime、work 产物） | runtime 可进 workspace |
+| `games/` | 各游戏包（策划、runtime、work 产物） | 是，但属 `games/Cargo.toml` 独立 workspace，非根 workspace |
 | `plan/` | 版本化设计与里程碑（`v1.0`…`v8.0`） | 否 |
 | `examples/` | 配方 / 示例资产 | 否（非库） |
 | `assets/` | 内置调色板、蒙版等 | 否 |
@@ -93,10 +93,12 @@ brief → work/100-design → work/200-art-spec → work/300-build → work/400-
 ```
 games/<game>/
   策划案.md | README
-  runtime/          # 可进 workspace 的 crate
+  runtime/          # 自有 workspace 的 crate（根在 games/Cargo.toml）
   work/             # 流水线产物（按步）
   runs/             # harness / playtest 记录（若有）
 ```
+
+`games/` **不是**根 workspace 的成员（`.gitignore` 忽略 `/games/`，仅 `games/battle-city` 被跟踪；缺失成员会让干净克隆上任何 `cargo` 命令直接失败）。游戏 crate 统一由 `games/Cargo.toml` 这个独立 workspace 承接，构建时进到 crate 目录，例如 `cd games/stardew/runtime && cargo run`；该 workspace 也带 `vendor/miniquad` 的 `[patch.crates-io]`，改动时与根 `Cargo.toml` 保持同步。
 
 未点名游戏时默认不动此树。
 

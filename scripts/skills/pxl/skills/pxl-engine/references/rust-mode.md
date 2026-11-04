@@ -5,10 +5,13 @@ Use the existing `games/<name>/runtime` implementation and the macroquad agent s
 For battle-city:
 
 ```bash
-cargo build -p battle-city-runtime
-cargo test -p battle-city-runtime
-cargo build --target wasm32-unknown-unknown -p battle-city-runtime
+cd games/battle-city/runtime
+cargo build
+cargo test
+cargo build --target wasm32-unknown-unknown
 ```
+
+Game runtimes live in their own workspace (`games/Cargo.toml`), not the repo-root one, so build them from their crate directory.
 
 Keep the gates `compile.native` and `compile.wasm32`, plus the existing native headless replay gates. Rust mode does not need Node or the JS browser runtime.
 

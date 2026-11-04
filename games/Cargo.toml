@@ -1,0 +1,32 @@
+# Workspace root for the game runtimes (`games/<name>/runtime`).
+#
+# Why games are not members of the repo-root workspace: `/games/` is gitignored
+# (only `games/battle-city` is tracked), so a clean clone — e.g. a Linux build
+# box producing scripts/skills/pxl-asset-gen/bin — has no other runtime dirs and
+# `cargo metadata` at the root would fail outright, breaking every workspace
+# command including `cargo build -p pxl-cli`.
+#
+# This file is tracked with `git add -f`; everything else under `games/` stays
+# ignored. Build a game from its own directory, e.g.
+#   cd games/stardew/runtime && cargo run
+[workspace]
+resolver = "2"
+members = ["*/runtime"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[workspace.dependencies]
+serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+png = "0.17"
+pxl-arcade-kit = { path = "../libs/pxl-arcade-kit" }
+pxl-fight = { path = "../libs/pxl-fight" }
+
+# Same macOS miniquad init-order fix as the root workspace (macroquad 0.4.13
+# pins miniquad =0.4.6, which panics on Apple Silicon); keep both in sync.
+[patch.crates-io]
+miniquad = { path = "../vendor/miniquad" }

@@ -89,16 +89,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
-name = "asteroids-runtime"
-version = "0.1.0"
-dependencies = [
- "macroquad",
- "pxl-arcade-kit",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "autocfg"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -109,16 +99,6 @@ name = "base64"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
-
-[[package]]
-name = "battle-city-runtime"
-version = "0.1.0"
-dependencies = [
- "macroquad",
- "png",
- "serde",
- "serde_json",
-]
 
 [[package]]
 name = "bit-set"
@@ -299,16 +279,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e9de72ce2ad1f90dc62fa25f0f430ef85eb4b0d8fa0be4f30373bc40a21d28e"
 
 [[package]]
-name = "dig-dug-runtime"
-version = "0.1.0"
-dependencies = [
- "macroquad",
- "pxl-arcade-kit",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "digest"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -327,16 +297,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 3.0.9",
-]
-
-[[package]]
-name = "donkey-kong-runtime"
-version = "0.1.0"
-dependencies = [
- "macroquad",
- "pxl-arcade-kit",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -418,16 +378,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "frogger-runtime"
-version = "0.1.0"
-dependencies = [
- "macroquad",
- "pxl-arcade-kit",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "futures-core"
 version = "0.3.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -449,16 +399,6 @@ dependencies = [
  "futures-task",
  "pin-project-lite",
  "slab",
-]
-
-[[package]]
-name = "galaga-runtime"
-version = "0.1.0"
-dependencies = [
- "macroquad",
- "pxl-arcade-kit",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -810,16 +750,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
-name = "metal-slug-runtime"
-version = "0.1.0"
-dependencies = [
- "macroquad",
- "png",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "miniquad"
 version = "0.4.6"
 dependencies = [
@@ -847,27 +777,6 @@ checksum = "b63fbc4a50860e98e7b2aa7804ded1db5cbc3aff9193adaff57a6931bf7c4b4c"
 dependencies = [
  "adler2",
  "simd-adler32",
-]
-
-[[package]]
-name = "mortal-kombat-runtime"
-version = "0.1.0"
-dependencies = [
- "macroquad",
- "pxl-arcade-kit",
- "pxl-fight",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "ms-pac-man-runtime"
-version = "0.1.0"
-dependencies = [
- "macroquad",
- "pxl-arcade-kit",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -979,16 +888,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "octopath-runtime"
-version = "0.1.0"
-dependencies = [
- "macroquad",
- "png",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "once_cell"
 version = "1.21.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -999,16 +898,6 @@ name = "once_cell_polyfill"
 version = "1.70.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
-
-[[package]]
-name = "pac-man-runtime"
-version = "0.1.0"
-dependencies = [
- "macroquad",
- "pxl-arcade-kit",
- "serde",
- "serde_json",
-]
 
 [[package]]
 name = "parking_lot"
@@ -1531,30 +1420,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "space-invaders-runtime"
-version = "0.1.0"
-dependencies = [
- "macroquad",
- "pxl-arcade-kit",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "stable_deref_trait"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
-
-[[package]]
-name = "stardew-runtime"
-version = "0.1.0"
-dependencies = [
- "macroquad",
- "png",
- "serde",
- "serde_json",
-]
 
 [[package]]
 name = "static_assertions"
@@ -1610,17 +1479,6 @@ dependencies = [
  "clap",
  "pxl-contract",
  "pxl-store",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "street-fighter-ii-runtime"
-version = "0.1.0"
-dependencies = [
- "macroquad",
- "pxl-arcade-kit",
- "pxl-fight",
  "serde",
  "serde_json",
 ]
